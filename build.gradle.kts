@@ -1,3 +1,7 @@
+plugins {
+    alias(libs.plugins.kotlin.jvm) apply false
+}
+
 tasks.register("mergeTranslations") {
     group = "ifl-general"
     description = "Loads latest translations from Crowdin into sources"

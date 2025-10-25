@@ -7,6 +7,7 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.io.File
 import java.io.FileInputStream
@@ -128,7 +129,7 @@ class Env {
 
             val request = Request.Builder()
                 .url("https://api.github.com/repos/mamiiblt/instafel_patch_runner/dispatches")
-                .post(RequestBody.create("application/json".toMediaTypeOrNull(), workflowData.toString()))
+                .post(workflowData.toString().toRequestBody("application/json".toMediaTypeOrNull()))
                 .addHeader("Authorization", "Bearer $github_pat")
                 .addHeader("Accept", "application/vnd.github+json")
                 .addHeader("X-GitHub-Api-Version", "2022-11-28")
