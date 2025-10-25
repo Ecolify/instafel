@@ -12,7 +12,7 @@ plugins {
 
 lateinit var patchesJsonFile: File
 
-group = "Ecolify"
+group = "instafel"
 version = project.getCommitHash()
 
 dependencies {
