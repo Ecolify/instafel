@@ -64,7 +64,7 @@ tasks.register("release") {
     doLast {
         registerGithubReleaseTask(
             token = getInstafelEnvProperty("GH_TOKEN"),
-            owner = "instafel",
+            owner = "Ecolify",
             repo = "p-rel",
             tagName = "v${Config.patcher.version}",
             name =  "Release v${Config.patcher.version}",
@@ -83,8 +83,8 @@ tasks.register("release") {
                 | ------------- | ------------- |
                 | Version  | v${Config.patcher.version} |
                 | Channel  | ${Config.patcher.tag} |
-                | Base Commit  | [${project.getCommitHash()}](https://github.com/mamiiblt/instafel/commit/${project.getCommitHash()}) |
-                | Branch  | [main](https://github.com/mamiiblt/instafel) |
+                | Base Commit  | [${project.getCommitHash()}](https://github.com/Ecolify/instafel/commit/${project.getCommitHash()}) |
+                | Branch  | [main](https://github.com/Ecolify/instafel) |
 
                 ## More Information?
 
