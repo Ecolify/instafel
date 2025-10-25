@@ -185,19 +185,23 @@ jobs:
           echo "Uploading release to API..."
           echo "Build info file: $BUILD_INFO_FILE"
 
-          # Read build info to get version and other metadata
-          BUILD_INFO=$(cat "$BUILD_INFO_FILE")
-
           # Upload build info to the release content API
-          curl -X POST \
+          HTTP_CODE=$(curl -X POST \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer ${{ secrets.GH_TOKEN }}" \
-            -d "$BUILD_INFO" \
+            --data-binary "@$BUILD_INFO_FILE" \
             "${{ secrets.RELEASE_CONTENT_API_URL }}" \
             -o response.json \
-            -w "\nHTTP Status: %{http_code}\n"
+            -w "%{http_code}" \
+            -s)
 
+          echo "HTTP Status: $HTTP_CODE"
           echo "API Response:"
           cat response.json
 
-          echo "Release uploaded to API successfully"
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "Release uploaded to API successfully"
+          else
+            echo "Error: Upload failed with HTTP status $HTTP_CODE"
+            exit 1
+          fi
