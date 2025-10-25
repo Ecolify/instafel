@@ -57,54 +57,21 @@ jobs:
           cat > config.properties << EOF
           email=${{ secrets.GPLAY_EMAIL }}
           aas_token=${{ secrets.GPLAY_AAS_TOKEN }}
-          release_content_api_url=${{ secrets.RELEASE_CONTENT_API_URL }}
+          release_content_api_url=${{ secrets.RELEASE_CONTENT_API_URL || 'https://example.com/api' }}
           github_pat=${{ secrets.GH_TOKEN }}
           EOF
           
-          # Build gplayapi
-          ./gradlew :gplayapi:build-jar
+          # Build gplayapi downloader
+          echo "Building gplayapi downloader..."
+          ./gradlew :gplayapi:downloaderJar
+          ls -lh .output/
           
-          # Create a simple downloader script
-          cat > download_instagram.kt << 'EOFKT'
-          import instafel.gplayapi.InstafelGplayapiInstance
-          import instafel.gplayapi.Env
-          import okhttp3.OkHttpClient
-          import okhttp3.Request
-          import java.io.File
-          import java.io.FileOutputStream
+          # Run the downloader
+          echo "Downloading Instagram Alpha APK..."
+          java -jar .output/ifl-gplayapi-downloader-*.jar instagram-alpha.apk
           
-          fun main() {
-              Env.updateEnvironment()
-              Env.updateDeviceProp("gplayapi_px_3a.properties")
-              
-              val instance = InstafelGplayapiInstance("com.instagram.android")
-              val appInfo = instance.getIgApk()
-              
-              if (appInfo != null) {
-                  println("Found Instagram ${appInfo.getVer_name()}")
-                  
-                  val client = OkHttpClient()
-                  val baseUrl = appInfo.getApkUrl("base_apk")
-                  
-                  println("Downloading base APK from: $baseUrl")
-                  val request = Request.Builder().url(baseUrl).build()
-                  client.newCall(request).execute().use { response ->
-                      if (!response.isSuccessful) throw Exception("Failed to download APK")
-                      
-                      FileOutputStream("instagram-alpha.apk").use { output ->
-                          response.body.byteStream().copyTo(output)
-                      }
-                  }
-                  println("Download complete!")
-              } else {
-                  println("Could not find Instagram Alpha APK")
-              }
-          }
-          EOFKT
-          
-          echo "Note: Full gplayapi integration would require a custom download script."
-          echo "For now, please use the instagram_apk_url input parameter."
-          exit 1
+          echo "Download completed:"
+          ls -lh instagram-alpha.apk
       
       - name: Validate APK exists
         run: |
