@@ -14,12 +14,61 @@ import instafel.app.utils.types.PreferenceKeys;
  * Based on InstaEclipse's ghost mode implementation.
  */
 public class GhostModeManager {
+    private static Context staticContext;
     private PreferenceManager prefManager;
     private Context context;
 
     public GhostModeManager(Context context) {
         this.context = context;
         this.prefManager = new PreferenceManager(context);
+        staticContext = context;
+    }
+
+    /**
+     * Initialize static context for smali patch calls
+     * This should be called during app initialization
+     */
+    public static void initializeStatic(Context context) {
+        staticContext = context;
+    }
+
+    // Static methods for smali patches to call
+    // These methods can be invoked from patched Instagram smali code
+
+    public static boolean checkGhostSeenEnabled() {
+        if (staticContext == null) return false;
+        PreferenceManager pm = new PreferenceManager(staticContext);
+        return pm.getPreferenceBoolean(PreferenceKeys.ifl_ghost_seen, false);
+    }
+
+    public static boolean checkGhostTypingEnabled() {
+        if (staticContext == null) return false;
+        PreferenceManager pm = new PreferenceManager(staticContext);
+        return pm.getPreferenceBoolean(PreferenceKeys.ifl_ghost_typing, false);
+    }
+
+    public static boolean checkGhostScreenshotEnabled() {
+        if (staticContext == null) return false;
+        PreferenceManager pm = new PreferenceManager(staticContext);
+        return pm.getPreferenceBoolean(PreferenceKeys.ifl_ghost_screenshot, false);
+    }
+
+    public static boolean checkGhostViewOnceEnabled() {
+        if (staticContext == null) return false;
+        PreferenceManager pm = new PreferenceManager(staticContext);
+        return pm.getPreferenceBoolean(PreferenceKeys.ifl_ghost_view_once, false);
+    }
+
+    public static boolean checkGhostStoryEnabled() {
+        if (staticContext == null) return false;
+        PreferenceManager pm = new PreferenceManager(staticContext);
+        return pm.getPreferenceBoolean(PreferenceKeys.ifl_ghost_story, false);
+    }
+
+    public static boolean checkGhostLiveEnabled() {
+        if (staticContext == null) return false;
+        PreferenceManager pm = new PreferenceManager(staticContext);
+        return pm.getPreferenceBoolean(PreferenceKeys.ifl_ghost_live, false);
     }
 
     /**
