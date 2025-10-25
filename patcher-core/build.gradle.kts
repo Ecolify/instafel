@@ -93,7 +93,7 @@ tasks.register("release") {
     doLast {
         registerGithubReleaseTask(
             token = getInstafelEnvProperty("GH_TOKEN"),
-            owner = "instafel",
+            owner = "Ecolify",
             repo = "pc-rel",
             tagName = "${project.getCommitHash()}-${Config.patcher.version}",
             name =  "Core ${project.getCommitHash()}",
@@ -111,8 +111,8 @@ tasks.register("release") {
         
                 | Property | Value |
                 | ------------- | ------------- |
-                | Commit  | [${project.getCommitHash()}](https://github.com/mamiiblt/instafel/commit/${project.getCommitHash()}) |
-                | Branch  | [main](https://github.com/mamiiblt/instafel) |
+                | Commit  | [${project.getCommitHash()}](https://github.com/Ecolify/instafel/commit/${project.getCommitHash()}) |
+                | Branch  | [main](https://github.com/Ecolify/instafel) |
                 | S. Version  | v${Config.patcher.version} |
                 
                 > Warning: This core package only supports Instafel Patcher v${Config.patcher.version} so you can't use that core package in newer or older patcher releases.
