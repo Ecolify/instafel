@@ -68,10 +68,38 @@ object CreateIflZip: CLIJob {
 
     fun copyInstafelSmaliSources() {
         Log.info("Copying Instafel smali sources")
-        val sourceFolder = File(Utils.mergePaths(Env.PROJECT_DIR, "sources", "smali", "instafel", "app"))
+        val sourcesDir = File(Utils.mergePaths(Env.PROJECT_DIR, "sources"))
         val destFolder = File(Utils.mergePaths(Env.PROJECT_DIR, "smali_sources"))
-        FileUtils.copyDirectoryToDirectory(sourceFolder, destFolder)
-        Log.info("Smali sources successfully copied")
+        
+        // Try smali directory first (single dex)
+        val singleSmaliFolder = File(Utils.mergePaths(sourcesDir.absolutePath, "smali", "instafel", "app"))
+        if (singleSmaliFolder.exists() && singleSmaliFolder.isDirectory) {
+            FileUtils.copyDirectoryToDirectory(singleSmaliFolder, destFolder)
+            Log.info("Smali sources successfully copied from smali/")
+            return
+        }
+        
+        // Handle multi-dex scenario (smali_classes, smali_classes2, etc.)
+        val smaliDirs = sourcesDir.listFiles { file ->
+            file.isDirectory && file.name.startsWith("smali")
+        }?.sortedBy { it.name } ?: emptyList()
+        
+        var copiedAny = false
+        for (smaliDir in smaliDirs) {
+            val instafelAppFolder = File(Utils.mergePaths(smaliDir.absolutePath, "instafel", "app"))
+            if (instafelAppFolder.exists() && instafelAppFolder.isDirectory) {
+                // For multi-dex, we need to merge all instafel/app directories
+                FileUtils.copyDirectory(instafelAppFolder, File(Utils.mergePaths(destFolder.absolutePath, "app")))
+                Log.info("Copied smali sources from ${smaliDir.name}/instafel/app")
+                copiedAny = true
+            }
+        }
+        
+        if (!copiedAny) {
+            throw Exception("No Instafel smali sources found in any smali directory")
+        }
+        
+        Log.info("Smali sources successfully copied from all dex files")
     }
 
     fun copyRawSources() {
