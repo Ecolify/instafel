@@ -92,7 +92,6 @@ jobs:
           cat > config.properties << EOF
           email=${{ secrets.GPLAY_EMAIL }}
           aas_token=${{ secrets.GPLAY_AAS_TOKEN }}
-          release_content_api_url=${{ secrets.RELEASE_CONTENT_API_URL }}
           github_pat=${{ secrets.GH_TOKEN }}
           EOF
           

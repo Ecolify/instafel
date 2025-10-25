@@ -18,7 +18,8 @@ import kotlin.system.exitProcess
 
 class Env {
     companion object {
-        var email: String? = null; var aas_token: String? = null; var release_content_api_url: String? = null; var github_pat: String? = null; var telegram_api_key: String? = null
+        var email: String? = null; var aas_token: String? = null; var github_pat: String? = null; var telegram_api_key: String? = null
+        const val INSTAFEL_PATCH_RUNNER_REPO = "https://github.com/Ecolify/instafel_patch_runner"
         lateinit var deviceProperties: Properties
         lateinit var client: OkHttpClient
 
@@ -37,13 +38,11 @@ class Env {
 
                 val emailP = props.getProperty("email", null)
                 val aasTokenP = props.getProperty("aas_token", null)
-                val relContentLink = props.getProperty("release_content_api_url", null)
                 val githubPatP = props.getProperty("github_pat", null)
 
-                if (emailP != null && aasTokenP != null && relContentLink != null && githubPatP != null) {
+                if (emailP != null && aasTokenP != null && githubPatP != null) {
                     email = emailP
                     aas_token = aasTokenP
-                    release_content_api_url = relContentLink
                     github_pat = githubPatP
 
                     Log.println("I", "User ($email) read from config file.")
@@ -158,15 +157,33 @@ class Env {
 
 
         fun getLatestInstafelVersion(): String? {
+            // Use GitHub API to get latest release from instafel_patch_runner repository
             val request = Request.Builder()
-                .url(release_content_api_url ?: "")
+                .url("https://api.github.com/repos/Ecolify/instafel_patch_runner/releases/latest")
+                .addHeader("Accept", "application/vnd.github+json")
+                .addHeader("X-GitHub-Api-Version", "2022-11-28")
+                .apply {
+                    if (github_pat != null) {
+                        addHeader("Authorization", "Bearer $github_pat")
+                    }
+                }
                 .build()
 
             client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) throw Exception("Instafel Release response code is ${response.code}")
 
                 val releaseInfo = JSONObject(response.body.string())
-                return releaseInfo.getJSONObject("patcherData").getString("igVersion")
+                // Check if the release has patcherData in the body or assets
+                return try {
+                    releaseInfo.getJSONObject("patcherData").getString("igVersion")
+                } catch (e: Exception) {
+                    // If patcherData is not in the release directly, try to parse from body
+                    val body = releaseInfo.optString("body", "")
+                    // Extract version from release body or tag name
+                    val tagName = releaseInfo.optString("tag_name", "")
+                    // Parse version from tag or body (adjust as needed based on actual release format)
+                    tagName.replace("v", "").takeIf { it.isNotEmpty() }
+                }
             }
         }
     }
