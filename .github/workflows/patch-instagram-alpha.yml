@@ -118,6 +118,13 @@ jobs:
           echo "APK file validated:"
           ls -lh instagram-alpha.apk
       
+      - name: Setup patcher environment
+        run: |
+          # Copy core JAR to current directory so patcher can find it locally
+          cp .output/ifl-patcher-core-*.jar .
+          echo "Core JAR copied to current directory:"
+          ls -lh ifl-patcher-core-*.jar
+      
       - name: Initialize Instafel project
         run: |
           # Run init command to extract and prepare the APK
