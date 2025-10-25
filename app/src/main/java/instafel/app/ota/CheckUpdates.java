@@ -122,14 +122,14 @@ public class CheckUpdates {
     private static void checkChangelog(Activity activity, long j, long j2) {
         int ifl_version = IflEnvironment.getIflVersion(activity);
         if (j - j2 < 3600000 || ifl_version == 204) {
-            new ChangelogTask(activity, ifl_version).execute("https://api.github.com/repos/instafel/instafel/contents/mcq.json");
+            new ChangelogTask(activity, ifl_version).execute("https://api.github.com/repos/Ecolify/instafel2/contents/mcq.json");
         }
     }
 
     public static void check(Activity activity, boolean checkType) {
         int ifl_version = IflEnvironment.getIflVersion(activity);
         String ifl_type = IflEnvironment.getType(activity);
-        new VersionTask(activity, ifl_type, ifl_version, checkType).execute("https://api.github.com/repos/mamiiblt/instafel/releases/latest");
+        new VersionTask(activity, ifl_type, ifl_version, checkType).execute("https://api.github.com/repos/Ecolify/instafel2/releases/latest");
     }
 
     public static void showBackupUpdateDialog(Activity activity, String languageCode, String backupId) {
