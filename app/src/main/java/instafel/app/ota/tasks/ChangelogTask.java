@@ -50,7 +50,7 @@ public class ChangelogTask extends AsyncTask<String, Void, String> {
             JSONObject mcqJson = new JSONObject(result);
             byte[] dataBytes = Base64.decode(mcqJson.getString("content"), Base64.DEFAULT);
             int clogVersion = new JSONObject(new String(dataBytes)).getInt("llog_ver");
-            String logUrl = "https://api.github.com/repos/instafel/instafel/contents/clogs/clog_" + clogVersion + ".txt";
+            String logUrl = "https://api.github.com/repos/Ecolify/instafel2/contents/clogs/clog_" + clogVersion + ".txt";
             boolean disableVersionControl = preferenceManager.getPreferenceBoolean(PreferenceKeys.ifl_clog_disable_version_control, false);
 
             if (!disableVersionControl) {
