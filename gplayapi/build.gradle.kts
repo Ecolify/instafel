@@ -1,4 +1,5 @@
 import IFLProjectManager.Config
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
     java
@@ -40,6 +41,25 @@ tasks.register("build-jar") {
     doLast {
         println("All tasks completed successfully")
     }
+}
+
+tasks.register<ShadowJar>("downloaderJar") {
+    group = "ifl-gplayapi"
+    description = "Builds downloader JAR with DownloadInstagramAlpha main class"
+    
+    archiveBaseName.set("ifl-gplayapi-downloader")
+    archiveClassifier.set("")
+    destinationDirectory.set(file("${rootProject.rootDir}/.output"))
+    
+    manifest {
+        attributes["Main-Class"] = "instafel.gplayapi.DownloadInstagramAlphaKt"
+    }
+    
+    from(sourceSets.main.get().output)
+    
+    configurations = listOf(project.configurations.runtimeClasspath.get())
+    
+    mergeServiceFiles()
 }
 
 tasks.withType<JavaCompile> {
