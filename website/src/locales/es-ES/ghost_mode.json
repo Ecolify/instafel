@@ -27,8 +27,8 @@
       "view_once": {
         "title": "Ver Una Vez Fantasma",
         "description": "Ver mensajes Ver Una Vez sin notificar al remitente",
-        "enabled": "Seguimiento de Ver Una Vez desactivado",
-        "disabled": "Seguimiento de Ver Una Vez activo"
+        "enabled": "Ver Una Vez sin notificar",
+        "disabled": "Ver Una Vez con notificación"
       },
       "story": {
         "title": "Historia Fantasma",
@@ -50,7 +50,7 @@
       "disable_all": "Desactivar Todo"
     },
     "warnings": {
-      "privacy_notice": "Las funciones del Modo Fantasma requieren hooks de Instagram apropiados para funcionar. Asegúrate de tener los parches necesarios aplicados.",
+      "privacy_notice": "Las funciones del Modo Fantasma requieren hooks de Instagram adecuados para funcionar. Asegúrate de tener los parches necesarios aplicados.",
       "instagram_updates": "Las actualizaciones de Instagram pueden romper la funcionalidad del Modo Fantasma. Mantén tus parches actualizados.",
       "use_responsibly": "Usa el Modo Fantasma de manera responsable y respeta la privacidad de los demás."
     }
