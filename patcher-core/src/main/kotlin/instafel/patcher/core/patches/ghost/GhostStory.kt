@@ -44,6 +44,7 @@ class GhostStory: InstafelPatch() {
             override fun execute() {
                 val fContent = smaliUtils.getSmaliFileContent(ghostStoryFile.absolutePath).toMutableList()
                 var methodLine = -1
+                var localsLine = -1
 
                 fContent.forEachIndexed { index, line ->
                     if (line.contains("media/seen/")) {
@@ -52,6 +53,13 @@ class GhostStory: InstafelPatch() {
                                 val methodDeclaration = fContent[i]
                                 if (methodDeclaration.contains("final")) {
                                     methodLine = i
+                                    // Find .locals line
+                                    for (j in methodLine until minOf(methodLine + 10, fContent.size)) {
+                                        if (fContent[j].contains(".locals")) {
+                                            localsLine = j
+                                            break
+                                        }
+                                    }
                                     break
                                 }
                             }
@@ -61,6 +69,9 @@ class GhostStory: InstafelPatch() {
                 }
 
                 if (methodLine != -1) {
+                    // Insert after .locals line or after method declaration
+                    val insertLine = if (localsLine != -1) localsLine + 1 else methodLine + 1
+                    
                     val lines = listOf(
                         "",
                         "    # Ghost Story - Block story seen tracking",
@@ -72,7 +83,7 @@ class GhostStory: InstafelPatch() {
                         ""
                     )
 
-                    fContent.add(methodLine + 2, lines.joinToString("\n"))
+                    fContent.add(insertLine, lines.joinToString("\n"))
                     FileUtils.writeLines(ghostStoryFile, fContent)
                     success("Ghost story patch successfully applied")
                 } else {

@@ -44,12 +44,20 @@ class GhostLive: InstafelPatch() {
             override fun execute() {
                 val fContent = smaliUtils.getSmaliFileContent(ghostLiveFile.absolutePath).toMutableList()
                 var methodLine = -1
+                var localsLine = -1
 
                 fContent.forEachIndexed { index, line ->
                     if (line.contains("live_viewer_invite")) {
                         for (i in index downTo 0) {
                             if (fContent[i].contains(".method")) {
                                 methodLine = i
+                                // Find .locals line
+                                for (j in methodLine until minOf(methodLine + 10, fContent.size)) {
+                                    if (fContent[j].contains(".locals")) {
+                                        localsLine = j
+                                        break
+                                    }
+                                }
                                 break
                             }
                         }
@@ -58,6 +66,9 @@ class GhostLive: InstafelPatch() {
                 }
 
                 if (methodLine != -1) {
+                    // Insert after .locals line or after method declaration
+                    val insertLine = if (localsLine != -1) localsLine + 1 else methodLine + 1
+                    
                     val lines = listOf(
                         "",
                         "    # Ghost Live - Block live viewer tracking",
@@ -69,7 +80,7 @@ class GhostLive: InstafelPatch() {
                         ""
                     )
 
-                    fContent.add(methodLine + 2, lines.joinToString("\n"))
+                    fContent.add(insertLine, lines.joinToString("\n"))
                     FileUtils.writeLines(ghostLiveFile, fContent)
                     success("Ghost live patch successfully applied")
                 } else {

@@ -146,82 +146,65 @@ public class GhostModeManager {
     }
 
     // Static convenience methods for patches
+    // These are called from injected smali code, so they must handle null instance gracefully
 
     public static boolean isGhostSeenEnabled() {
-        GhostModeManager manager = getInstance();
-        if (manager == null) return false;
-        return manager.isGhostFeatureEnabled(PreferenceKeys.ifl_ghost_seen);
-    }
-
-    public static void setGhostSeen(boolean enabled) {
-        GhostModeManager manager = getInstance();
-        if (manager != null) {
-            manager.setGhostFeature(PreferenceKeys.ifl_ghost_seen, enabled);
+        try {
+            GhostModeManager manager = getInstance();
+            if (manager == null || manager.prefManager == null) return false;
+            return manager.isGhostFeatureEnabled(PreferenceKeys.ifl_ghost_seen);
+        } catch (Exception e) {
+            return false;
         }
     }
 
     public static boolean isGhostTypingEnabled() {
-        GhostModeManager manager = getInstance();
-        if (manager == null) return false;
-        return manager.isGhostFeatureEnabled(PreferenceKeys.ifl_ghost_typing);
-    }
-
-    public static void setGhostTyping(boolean enabled) {
-        GhostModeManager manager = getInstance();
-        if (manager != null) {
-            manager.setGhostFeature(PreferenceKeys.ifl_ghost_typing, enabled);
+        try {
+            GhostModeManager manager = getInstance();
+            if (manager == null || manager.prefManager == null) return false;
+            return manager.isGhostFeatureEnabled(PreferenceKeys.ifl_ghost_typing);
+        } catch (Exception e) {
+            return false;
         }
     }
 
     public static boolean isGhostScreenshotEnabled() {
-        GhostModeManager manager = getInstance();
-        if (manager == null) return false;
-        return manager.isGhostFeatureEnabled(PreferenceKeys.ifl_ghost_screenshot);
-    }
-
-    public static void setGhostScreenshot(boolean enabled) {
-        GhostModeManager manager = getInstance();
-        if (manager != null) {
-            manager.setGhostFeature(PreferenceKeys.ifl_ghost_screenshot, enabled);
+        try {
+            GhostModeManager manager = getInstance();
+            if (manager == null || manager.prefManager == null) return false;
+            return manager.isGhostFeatureEnabled(PreferenceKeys.ifl_ghost_screenshot);
+        } catch (Exception e) {
+            return false;
         }
     }
 
     public static boolean isGhostViewOnceEnabled() {
-        GhostModeManager manager = getInstance();
-        if (manager == null) return false;
-        return manager.isGhostFeatureEnabled(PreferenceKeys.ifl_ghost_viewonce);
-    }
-
-    public static void setGhostViewOnce(boolean enabled) {
-        GhostModeManager manager = getInstance();
-        if (manager != null) {
-            manager.setGhostFeature(PreferenceKeys.ifl_ghost_viewonce, enabled);
+        try {
+            GhostModeManager manager = getInstance();
+            if (manager == null || manager.prefManager == null) return false;
+            return manager.isGhostFeatureEnabled(PreferenceKeys.ifl_ghost_viewonce);
+        } catch (Exception e) {
+            return false;
         }
     }
 
     public static boolean isGhostStoryEnabled() {
-        GhostModeManager manager = getInstance();
-        if (manager == null) return false;
-        return manager.isGhostFeatureEnabled(PreferenceKeys.ifl_ghost_story);
-    }
-
-    public static void setGhostStory(boolean enabled) {
-        GhostModeManager manager = getInstance();
-        if (manager != null) {
-            manager.setGhostFeature(PreferenceKeys.ifl_ghost_story, enabled);
+        try {
+            GhostModeManager manager = getInstance();
+            if (manager == null || manager.prefManager == null) return false;
+            return manager.isGhostFeatureEnabled(PreferenceKeys.ifl_ghost_story);
+        } catch (Exception e) {
+            return false;
         }
     }
 
     public static boolean isGhostLiveEnabled() {
-        GhostModeManager manager = getInstance();
-        if (manager == null) return false;
-        return manager.isGhostFeatureEnabled(PreferenceKeys.ifl_ghost_live);
-    }
-
-    public static void setGhostLive(boolean enabled) {
-        GhostModeManager manager = getInstance();
-        if (manager != null) {
-            manager.setGhostFeature(PreferenceKeys.ifl_ghost_live, enabled);
+        try {
+            GhostModeManager manager = getInstance();
+            if (manager == null || manager.prefManager == null) return false;
+            return manager.isGhostFeatureEnabled(PreferenceKeys.ifl_ghost_live);
+        } catch (Exception e) {
+            return false;
         }
     }
 }

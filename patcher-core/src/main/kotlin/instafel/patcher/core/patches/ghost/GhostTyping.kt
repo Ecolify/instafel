@@ -44,6 +44,7 @@ class GhostTyping: InstafelPatch() {
             override fun execute() {
                 val fContent = smaliUtils.getSmaliFileContent(ghostTypingFile.absolutePath).toMutableList()
                 var methodLine = -1
+                var localsLine = -1
 
                 fContent.forEachIndexed { index, line ->
                     if (line.contains("is_typing_indicator_enabled")) {
@@ -52,6 +53,13 @@ class GhostTyping: InstafelPatch() {
                                 val methodDeclaration = fContent[i]
                                 if (methodDeclaration.contains("static") && methodDeclaration.contains("final")) {
                                     methodLine = i
+                                    // Find .locals line
+                                    for (j in methodLine until minOf(methodLine + 10, fContent.size)) {
+                                        if (fContent[j].contains(".locals")) {
+                                            localsLine = j
+                                            break
+                                        }
+                                    }
                                     break
                                 }
                             }
@@ -61,6 +69,9 @@ class GhostTyping: InstafelPatch() {
                 }
 
                 if (methodLine != -1) {
+                    // Insert after .locals line or after method declaration
+                    val insertLine = if (localsLine != -1) localsLine + 1 else methodLine + 1
+                    
                     val lines = listOf(
                         "",
                         "    # Ghost Typing - Block typing indicator",
@@ -72,7 +83,7 @@ class GhostTyping: InstafelPatch() {
                         ""
                     )
 
-                    fContent.add(methodLine + 2, lines.joinToString("\n"))
+                    fContent.add(insertLine, lines.joinToString("\n"))
                     FileUtils.writeLines(ghostTypingFile, fContent)
                     success("Ghost typing patch successfully applied")
                 } else {
