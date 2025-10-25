@@ -71,7 +71,7 @@ jobs:
           cat > config.properties << EOF
           email=${{ secrets.GPLAY_EMAIL }}
           aas_token=${{ secrets.GPLAY_AAS_TOKEN }}
-          release_content_api_url=${{ secrets.RELEASE_CONTENT_API_URL || 'https://example.com/api' }}
+          release_content_api_url=${{ secrets.RELEASE_CONTENT_API_URL }}
           github_pat=${{ secrets.GH_TOKEN }}
           EOF
           
@@ -133,7 +133,7 @@ jobs:
           # Wait for build to complete
           echo "Waiting for build to complete..."
           for i in {1..120}; do
-            if [ -d "$PROJECT_DIR/build" ] && [ -f "$PROJECT_DIR/build/"*.apk ] 2>/dev/null; then
+            if [ -d "$PROJECT_DIR/build" ] && ls "$PROJECT_DIR/build/"*.apk >/dev/null 2>&1; then
               echo "Build completed successfully"
               break
             fi
