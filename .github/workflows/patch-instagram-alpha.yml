@@ -162,10 +162,8 @@ jobs:
           path: instagram-*/build/*.json
           if-no-files-found: warn
 
-      - name: Upload release to API
-        if: |
-          ${{ secrets.RELEASE_CONTENT_API_URL != '' &&
-              secrets.GH_TOKEN != '' }}
+      - name: Upload release to instafel_patch_runner
+        if: secrets.GH_TOKEN != ''
         run: |
           # Find the project directory and build files
           PROJECT_DIR=$(ls -d instagram-* 2>/dev/null | head -n 1)
@@ -178,29 +176,44 @@ jobs:
             -name "build_info.json" 2>/dev/null | head -n 1)
           if [ ! -f "$BUILD_INFO_FILE" ]; then
             echo "Warning: build_info.json not found"
-            echo "Skipping API upload"
+            echo "Skipping upload"
             exit 0
           fi
 
-          echo "Uploading release to API..."
+          echo "Uploading release to instafel_patch_runner..."
           echo "Build info file: $BUILD_INFO_FILE"
 
-          # Upload build info to the release content API
+          # Read build info to create dispatch payload
+          BUILD_INFO=$(cat "$BUILD_INFO_FILE")
+
+          # Create repository dispatch payload
+          PAYLOAD=$(jq -n \
+            --arg event_type "upload_release" \
+            --argjson build_info "$BUILD_INFO" \
+            '{event_type: $event_type,
+              client_payload: {build_info: $build_info}}')
+
+          # Trigger repository dispatch to instafel_patch_runner
+          DISPATCH_URL="https://api.github.com/repos/"
+          DISPATCH_URL+="Ecolify/instafel_patch_runner/dispatches"
           HTTP_CODE=$(curl -X POST \
-            -H "Content-Type: application/json" \
+            -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${{ secrets.GH_TOKEN }}" \
-            --data-binary "@$BUILD_INFO_FILE" \
-            "${{ secrets.RELEASE_CONTENT_API_URL }}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            -d "$PAYLOAD" \
+            "$DISPATCH_URL" \
             -o response.json \
             -w "%{http_code}" \
             -s)
 
           echo "HTTP Status: $HTTP_CODE"
-          echo "API Response:"
-          cat response.json
+          if [ -s response.json ]; then
+            echo "API Response:"
+            cat response.json
+          fi
 
-          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
-            echo "Release uploaded to API successfully"
+          if [ "$HTTP_CODE" -eq 204 ]; then
+            echo "Release uploaded successfully"
           else
             echo "Error: Upload failed with HTTP status $HTTP_CODE"
             exit 1

@@ -48,20 +48,20 @@ The workflow produces the following artifacts:
 - **instafel-patched-instagram-{version}**: Contains the patched APK files (both clone and unclone variants if applicable)
 - **instafel-build-info-{version}**: Contains build metadata and information JSON files
 
-Additionally, if `RELEASE_CONTENT_API_URL` and `GH_TOKEN` secrets are configured, the workflow will automatically upload the build information to the specified API endpoint.
+Additionally, if `GH_TOKEN` secret is configured, the workflow will automatically trigger a repository dispatch to `Ecolify/instafel_patch_runner` with the build information.
 
 ## Requirements
 
 - GitHub Actions enabled for the repository
 - For gplayapi usage: Valid Google Play credentials configured as secrets
-- For API upload: `RELEASE_CONTENT_API_URL` and `GH_TOKEN` secrets configured
+- For release upload: `GH_TOKEN` secret configured with repository dispatch permissions
 
 ## Notes
 
 - The patcher runs in non-production mode by default, generating `clone.apk` and `unclone.apk` files
 - The patching process can take several minutes depending on the APK size
 - The workflow uses JDK 17 for building the patcher and running the patching process
-- When `RELEASE_CONTENT_API_URL` is configured, build information is automatically uploaded to the API after successful builds
+- When `GH_TOKEN` is configured, build information is automatically sent to the `instafel_patch_runner` repository after successful builds
 
 ## Troubleshooting
 
