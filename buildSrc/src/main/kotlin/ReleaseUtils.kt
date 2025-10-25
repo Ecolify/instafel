@@ -28,7 +28,7 @@ fun Project.registerGithubReleaseTask(
         doOutput = true
     }
 
-    val body = JSONObject()
+    val requestBody = JSONObject()
         .put("tag_name", tagName)
         .put("target_commitish", "main")
         .put("name", name)
@@ -37,7 +37,7 @@ fun Project.registerGithubReleaseTask(
         .put("prerelease", false)
         .toString()
 
-    releaseConnection.outputStream.use { it.write(body.toByteArray(Charsets.UTF_8)) }
+    releaseConnection.outputStream.use { it.write(requestBody.toByteArray(Charsets.UTF_8)) }
 
     if (releaseConnection.responseCode !in 200..299) {
         val errorBody = releaseConnection.errorStream?.bufferedReader()?.readText()
@@ -94,7 +94,7 @@ fun Project.generatePatcherBuildJSON(
     version: String,
     commit: String,
     channel: String
-): File = writeBuildInfoJSON(buildDir, JSONObject()
+): File = writeBuildInfoJSON(layout.buildDirectory.get().asFile, JSONObject()
     .put("version", version)
     .put("channel", channel)
     .put("commit", commit))
@@ -104,7 +104,7 @@ fun Project.generateUpdaterBuildJSON(
     commit: String,
     channel: String,
     branch: String
-): File = writeBuildInfoJSON(buildDir, JSONObject()
+): File = writeBuildInfoJSON(layout.buildDirectory.get().asFile, JSONObject()
     .put("version", version)
     .put("channel", channel)
     .put("commit", commit)
@@ -114,7 +114,7 @@ fun Project.generatePatcherCoreBuildJSON(
     commit: String,
     branch: String,
     supportedVer: String
-): File = writeBuildInfoJSON(buildDir, JSONObject()
+): File = writeBuildInfoJSON(layout.buildDirectory.get().asFile, JSONObject()
     .put("commit", commit)
     .put("branch", branch)
     .put("supported_patcher_v", supportedVer))
