@@ -31,4 +31,19 @@ public class PreferenceKeys {
     public static String ifl_mapping_file_hash = "31";
     public static String ifl_debug_api_url = "32";
     public static String ifl_debug_content_api_url = "33";
+    
+    // Ghost Mode Settings
+    public static String ifl_ghost_mode_enabled = "34";
+    public static String ifl_ghost_seen = "35";
+    public static String ifl_ghost_typing = "36";
+    public static String ifl_ghost_screenshot = "37";
+    public static String ifl_ghost_viewonce = "38";
+    public static String ifl_ghost_story = "39";
+    public static String ifl_ghost_live = "40";
+    public static String ifl_quick_toggle_seen = "41";
+    public static String ifl_quick_toggle_typing = "42";
+    public static String ifl_quick_toggle_screenshot = "43";
+    public static String ifl_quick_toggle_viewonce = "44";
+    public static String ifl_quick_toggle_story = "45";
+    public static String ifl_quick_toggle_live = "46";
 }
