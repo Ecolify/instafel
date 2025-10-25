@@ -1,0 +1,99 @@
+name: Build and Release APK
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+      
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      
+      - name: Build Debug APK
+        run: ./gradlew :app:assembleDebug --no-daemon
+      
+      - name: Build Release APK
+        run: ./gradlew :app:assembleRelease --no-daemon
+      
+      - name: Get commit hash
+        id: commit
+        run: echo "hash=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      
+      - name: Rename APK files
+        run: |
+          mkdir -p apk-output
+          cp app/build/outputs/apk/debug/app-debug.apk apk-output/instafel-app-${{ steps.commit.outputs.hash }}-debug.apk
+          cp app/build/outputs/apk/release/app-release.apk apk-output/instafel-app-${{ steps.commit.outputs.hash }}-release.apk
+      
+      - name: Upload Debug APK as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: instafel-app-${{ steps.commit.outputs.hash }}-debug
+          path: apk-output/instafel-app-${{ steps.commit.outputs.hash }}-debug.apk
+          retention-days: 30
+      
+      - name: Upload Release APK as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: instafel-app-${{ steps.commit.outputs.hash }}-release
+          path: apk-output/instafel-app-${{ steps.commit.outputs.hash }}-release.apk
+          retention-days: 30
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Get commit hash
+        id: commit
+        run: echo "hash=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      
+      - name: Download Debug APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: instafel-app-${{ steps.commit.outputs.hash }}-debug
+          path: ./artifacts
+      
+      - name: Download Release APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: instafel-app-${{ steps.commit.outputs.hash }}-release
+          path: ./artifacts
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            ./artifacts/instafel-app-${{ steps.commit.outputs.hash }}-debug.apk
+            ./artifacts/instafel-app-${{ steps.commit.outputs.hash }}-release.apk
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
