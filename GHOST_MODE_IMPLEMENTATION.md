@@ -111,16 +111,44 @@ This implementation is based on the ghost mode features from [InstaEclipse](http
 1. `app/src/main/java/instafel/app/utils/types/PreferenceKeys.java`
    - Added 13 new preference keys for ghost mode settings
 
-2. `app/src/main/java/instafel/app/utils/ghost/GhostModeManager.java` (NEW)
+2. `app/src/main/java/instafel/app/utils/ghost/GhostModeManager.java` (NEW - 235 lines)
    - Main manager class for ghost mode functionality
-   - Provides methods to check and toggle ghost features
+   - Provides instance methods to check and toggle ghost features
+   - Provides static methods callable from smali patches (checkGhost{Feature}Enabled)
    - Convenience methods for each individual feature
 
-### Files to Create (Future Work)
+### Files Created (Patcher-Core Patches)
+3. `patcher-core/src/main/kotlin/instafel/patcher/core/patches/ghost/GhostSeen.kt`
+   - Patch to hide DM read receipts
+   - Searches for "mark_thread_seen-" and injects ghost mode check
+
+4. `patcher-core/src/main/kotlin/instafel/patcher/core/patches/ghost/GhostTyping.kt`
+   - Patch to hide typing indicators
+   - Searches for "is_typing_indicator_enabled" and injects ghost mode check
+
+5. `patcher-core/src/main/kotlin/instafel/patcher/core/patches/ghost/GhostScreenshot.kt`
+   - Patch to block screenshot notifications
+   - Searches for "ScreenshotNotificationManager" and injects ghost mode check
+
+6. `patcher-core/src/main/kotlin/instafel/patcher/core/patches/ghost/GhostStory.kt`
+   - Patch to view stories anonymously
+   - Searches for "media/seen/" and injects ghost mode check
+
+7. `patcher-core/src/main/kotlin/instafel/patcher/core/patches/ghost/GhostViewOnce.kt`
+   - Patch to view ViewOnce messages anonymously
+   - Searches for "visual_item_seen" and injects ghost mode check
+
+8. `patcher-core/src/main/kotlin/instafel/patcher/core/patches/ghost/GhostMode.kt`
+   - Patch group that bundles all ghost mode patches together
+
+9. `patcher-core/src/main/kotlin/instafel/patcher/core/patches/ghost/README.md`
+   - Developer guide for ghost mode patches
+
+### Files to Create (Future Work - UI Integration)
 1. UI components for ghost mode settings
 2. Integration with existing Instafel settings screens
-3. Localization strings for ghost mode features
-4. Patcher-core patches for actual hooking logic (if implementing as Xposed module)
+3. Localization strings for ghost mode features (DONE)
+4. Tests for ghost mode functionality
 
 ## Usage Example
 
@@ -150,10 +178,13 @@ ghostManager.toggleSelectedGhostOptions();
    - English strings for all ghost mode features
    - Spanish translations (as requested in issue)
 
-3. **Implement Hooking Logic** (if creating Xposed module):
-   - Create patcher-core patches based on InstaEclipse's hooks
-   - Use DexKit to find Instagram methods
-   - Hook methods to block tracking calls
+3. **Implement Hooking Logic** ✅ COMPLETED:
+   - Created patcher-core patches based on InstaEclipse's hooks
+   - Uses smali patching instead of runtime DexKit (adapts to Instafel architecture)
+   - Injects ghost mode checks into Instagram methods
+   - 5 patches: GhostSeen, GhostTyping, GhostScreenshot, GhostStory, GhostViewOnce
+   - All patches bundled in GhostMode patch group
+   - Static methods in GhostModeManager callable from smali code
 
 4. **Testing**:
    - Unit tests for GhostModeManager
