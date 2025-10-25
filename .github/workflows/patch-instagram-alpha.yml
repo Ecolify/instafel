@@ -116,7 +116,7 @@ jobs:
           echo "Project initialized successfully: $PROJECT_DIR"
           ls -la "$PROJECT_DIR"
       
-      - name: Apply Ghost Mode patches
+      - name: Apply patches
         run: |
           # Find the project directory
           PROJECT_DIR=$(ls -d instagram-* 2>/dev/null | head -n 1)
@@ -125,10 +125,10 @@ jobs:
             exit 1
           fi
           
-          echo "Applying Ghost Mode patches to: $PROJECT_DIR"
-          java -jar .output/ifl-patcher-*.jar run "$PROJECT_DIR" ghost_mode instafel
+          echo "Applying all patches to: $PROJECT_DIR"
+          java -jar .output/ifl-patcher-*.jar run "$PROJECT_DIR" ghost_mode instafel clone
           
-          echo "Patches applied successfully"
+          echo "All patches applied successfully"
       
       - name: Build patched Instagram APK
         run: |
