@@ -27,7 +27,7 @@ class GhostScreenshot: InstafelPatch() {
                     SearchUtils.getFileContainsAllCords(smaliUtils,
                         listOf(
                             listOf("ScreenshotNotificationManager"),
-                            listOf(".method", "(J)V")  // void method(long) signature
+                            listOf(".method")  // any method in the class
                         ))
                 }) {
                     is FileSearchResult.Success -> {
@@ -46,12 +46,15 @@ class GhostScreenshot: InstafelPatch() {
                 val fContent = smaliUtils.getSmaliFileContent(ghostScreenshotFile.absolutePath).toMutableList()
                 var methodLine = -1
 
-                // Find the method containing "ScreenshotNotificationManager" with (J)V signature
+                // Find the method containing "ScreenshotNotificationManager" with compatible signatures
                 fContent.forEachIndexed { index, line ->
                     if (line.contains("ScreenshotNotificationManager")) {
                         // Search backwards for the method signature
+                        // Looking for void method(long) which can be (J)V or (Ljava/lang/Long;)V
                         for (i in index downTo 0) {
-                            if (fContent[i].contains(".method") && fContent[i].contains("(J)V")) {
+                            val methodDef = fContent[i]
+                            if (methodDef.contains(".method") && 
+                                (methodDef.contains("(J)V") || methodDef.contains("(Ljava/lang/Long;)V"))) {
                                 methodLine = i
                                 break
                             }
