@@ -1,3 +1,17 @@
+# Workflow: Patch Instagram Alpha
+# 
+# This workflow automates the process of downloading Instagram Alpha APKs and patching them with Instafel.
+# 
+# Usage:
+#   1. Manual trigger via workflow_dispatch with APK URL input (recommended)
+#   2. Automatic download via gplayapi (requires GitHub Secrets configuration)
+#
+# Outputs:
+#   - Patched Instagram APK files (clone and unclone variants)
+#   - Build metadata JSON files
+#
+# See .github/workflows/README.md for detailed documentation
+
 name: Patch Instagram Alpha
 
 on:
