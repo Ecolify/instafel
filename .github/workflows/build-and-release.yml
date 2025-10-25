@@ -1,3 +1,20 @@
+# This workflow builds the Instafel Android app, uploads APKs as artifacts, and creates releases
+#
+# Triggers:
+# - Push to main branch: Builds APKs and uploads as artifacts
+# - Push tags (v*): Builds APKs, uploads artifacts, and creates a GitHub release
+# - Pull requests to main: Builds APKs for testing
+# - Manual dispatch: Can be triggered manually from the Actions tab
+#
+# Artifacts: 
+# - Debug and release APKs are uploaded as artifacts and retained for 30 days
+# - APK filenames include the commit hash for easy identification
+#
+# Releases:
+# - When a tag matching 'v*' is pushed, a GitHub release is automatically created
+# - Both debug and release APKs are attached to the release
+# - Release notes are auto-generated from commits
+
 name: Build and Release APK
 
 on:
