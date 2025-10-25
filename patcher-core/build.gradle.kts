@@ -67,9 +67,12 @@ tasks.register("generatePatchesJSON") {
         JarFile(jarFile).use { jar ->
             JarOutputStream(tempJar.outputStream()).use { jos ->
                 jar.entries().toList().forEach { entry ->
-                    jos.putNextEntry(JarEntry(entry.name))
-                    jar.getInputStream(entry).use { it.copyTo(jos) }
-                    jos.closeEntry()
+                    // Skip patches.json if it already exists in the jar
+                    if (entry.name != "patches.json") {
+                        jos.putNextEntry(JarEntry(entry.name))
+                        jar.getInputStream(entry).use { it.copyTo(jos) }
+                        jos.closeEntry()
+                    }
                 }
 
                 val entry = JarEntry("patches.json")

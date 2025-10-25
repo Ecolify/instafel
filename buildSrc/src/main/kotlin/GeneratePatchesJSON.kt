@@ -12,6 +12,9 @@ import kotlin.system.exitProcess
 
 const val patchesPath = "instafel/patcher/core/patches"
 
+// Regex to match nested anonymous inner classes (e.g., ClassName$1$2)
+val NESTED_ANONYMOUS_CLASS_PATTERN = Regex(".*\\$\\d+\\$.*\\$\\d+")
+
 fun filterPackageName(name: String): String = name.replace("instafel.patcher.core.", "")
 fun filterPackageNameAndUtilsPatchPkg(name: String): String = name.replace("instafel.patcher.core.utils.patch.", "")
 
@@ -164,6 +167,14 @@ fun Project.generatePatchesJSON(jarFile: File): File {
                     val className = entry.name
                         .replace('/', '.')
                         .removeSuffix(".class")
+
+                    // Skip Kotlin-generated inner anonymous classes that are not InstafelTask/InstafelPatch instances:
+                    // - Classes containing "$execute$": anonymous classes created within InstafelTask.execute() method
+                    //   (e.g., sealed class branches in when expressions)
+                    // - Nested anonymous classes matching pattern "$N$...$N": multiple levels of anonymous inner classes
+                    if (className.contains("\$execute\$") || className.matches(NESTED_ANONYMOUS_CLASS_PATTERN)) {
+                        continue
+                    }
 
                     val clazz = cl.loadClass(className)
                     when (filterPackageNameAndUtilsPatchPkg(clazz.superclass.name)) {
