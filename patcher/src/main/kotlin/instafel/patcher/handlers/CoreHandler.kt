@@ -69,7 +69,7 @@ object CoreHandler {
     }
 
     fun downloadCoreJAR(updateInfo: UpdateInfo, coreJarFile: File) {
-        val url = "https://github.com/instafel/pc-rel/releases/download/${updateInfo.commit}-${updateInfo.supported_pversion}/ifl-patcher-core-${updateInfo.commit}.jar"
+        val url = "https://github.com/Ecolify/pc-rel/releases/download/${updateInfo.commit}-${updateInfo.supported_pversion}/ifl-patcher-core-${updateInfo.commit}.jar"
         val client = OkHttpClient()
         val request = Request.Builder().url(url).build()
 
@@ -106,7 +106,7 @@ object CoreHandler {
     fun getLatestCoreUpdateInfo(): UpdateInfo {
         val client = OkHttpClient()
         val request = Request.Builder()
-            .url("https://api.github.com/repos/instafel/pc-rel/releases/latest")
+            .url("https://api.github.com/repos/Ecolify/pc-rel/releases/latest")
             .build()
 
         client.newCall(request).execute().use { response ->
