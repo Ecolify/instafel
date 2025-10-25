@@ -8,8 +8,9 @@ The workflow performs the following steps:
 1. Downloads Instagram Alpha APK (either from a provided URL or using gplayapi)
 2. Builds the Instafel patcher
 3. Initializes a patching project with the Instagram APK
-4. Builds the patched APK with Instafel features
-5. Uploads the patched APK as a workflow artifact
+4. Applies Instafel patches (instafel core features, developer options, ad removal, clone support)
+5. Builds the patched APK with Instafel features
+6. Uploads the patched APK as a workflow artifact
 
 ## Usage
 
@@ -55,6 +56,11 @@ The workflow produces the following artifacts:
 
 ## Notes
 
+- The workflow applies the following patches:
+  - **instafel** patch group: Core Instafel features (UI, menus, OTA updates, etc.)
+  - **unlock_developer_options**: Enables Instagram's hidden developer options
+  - **remove_ads**: Removes advertisements from Instagram
+  - **clone** patch group: Enables creation of both clone and unclone APK variants
 - The patcher runs in non-production mode by default, generating `clone.apk` and `unclone.apk` files
 - The patching process can take several minutes depending on the APK size
 - The workflow uses JDK 17 for building the patcher and running the patching process
