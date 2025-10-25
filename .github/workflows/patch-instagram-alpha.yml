@@ -123,7 +123,13 @@ jobs:
           cp .output/ifl-patcher-core-*.jar .
           echo "Core JAR copied to current directory:"
           ls -lh ifl-patcher-core-*.jar
-      
+
+          
+      - name: List Instafel patches
+        run: |
+          # Run init command to extract and prepare the APK
+          java -jar .output/ifl-patcher-v*.jar list
+          
       - name: Initialize Instafel project
         run: |
           # Run init command to extract and prepare the APK
@@ -150,7 +156,7 @@ jobs:
           fi
           
           echo "Applying Instafel patches (unclone variant) to: $PROJECT_DIR"
-          java -jar .output/ifl-patcher-v*.jar run "$PROJECT_DIR" instafel
+          java -jar .output/ifl-patcher-v*.jar run "$PROJECT_DIR" instafel ghost_mode
           
           echo "Unclone patches applied successfully"
       
