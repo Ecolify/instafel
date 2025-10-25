@@ -29,9 +29,9 @@ class AppInfo(val app: App) {
 
     fun getVer_name(): String = infoObject.getString("ver_name")
 
-    fun getVer_code(): String = infoObject.getString("ver_code")
+    fun getVer_code(): String = infoObject.optString("ver_code", infoObject.optInt("ver_code", 0).toString())
 
-    fun getTarget_sdk(): String = infoObject.getString("target_sdk")
+    fun getTarget_sdk(): String = infoObject.optString("target_sdk", infoObject.optInt("target_sdk", 0).toString())
 
     fun getUpdated_on(): String = infoObject.getString("updated_on")
 }
