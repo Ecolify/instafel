@@ -1,0 +1,30 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+  <!-- Eye outline -->
+  <path
+      android:pathData="M12,4.5C7,4.5 2.73,7.61 1,12c1.73,4.39 6,7.5 11,7.5s9.27,-3.11 11,-7.5c-1.73,-4.39 -6,-7.5 -11,-7.5z"
+      android:strokeLineJoin="round"
+      android:strokeWidth="2"
+      android:fillColor="#00000000"
+      android:strokeColor="#FF000000"
+      android:strokeLineCap="round"/>
+  <!-- Eye center -->
+  <path
+      android:pathData="M12,14.5a2.5,2.5 0,1 0,0 -5,2.5 2.5,0 0,0 0,5z"
+      android:strokeLineJoin="round"
+      android:strokeWidth="2"
+      android:fillColor="#00000000"
+      android:strokeColor="#FF000000"
+      android:strokeLineCap="round"/>
+  <!-- Slash for "off" -->
+  <path
+      android:pathData="M3,3L21,21"
+      android:strokeLineJoin="round"
+      android:strokeWidth="2"
+      android:fillColor="#00000000"
+      android:strokeColor="#FF000000"
+      android:strokeLineCap="round"/>
+</vector>
