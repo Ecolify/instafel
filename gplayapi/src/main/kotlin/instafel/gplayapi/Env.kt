@@ -127,7 +127,7 @@ class Env {
             Log.println("I", "Calling patcher for new version: ${appInfo.getVer_name()}")
 
             val request = Request.Builder()
-                .url("https://api.github.com/repos/mamiiblt/instafel_patch_runner/dispatches")
+                .url("https://api.github.com/repos/Ecolify/instafel_patch_runner/dispatches")
                 .post(RequestBody.create("application/json".toMediaTypeOrNull(), workflowData.toString()))
                 .addHeader("Authorization", "Bearer $github_pat")
                 .addHeader("Accept", "application/vnd.github+json")
