@@ -25,7 +25,7 @@ class GhostTyping : InstafelPatch() {
 
     override fun initializeTasks() = mutableListOf(
         @PInfos.TaskInfo("Find typing indicator method")
-        object : InstafelTask() {
+        object: InstafelTask() {
             override fun execute() {
                 when (val result = runBlocking {
                     SearchUtils.getFileContainsAllCords(
@@ -46,7 +46,7 @@ class GhostTyping : InstafelPatch() {
             }
         },
         @PInfos.TaskInfo("Add ghost typing check")
-        object : InstafelTask() {
+        object: InstafelTask() {
             override fun execute() {
                 val fContent = smaliUtils.getSmaliFileContent(typingFile.absolutePath).toMutableList()
                 var methodStartLine = -1

@@ -25,7 +25,7 @@ class GhostSeen : InstafelPatch() {
 
     override fun initializeTasks() = mutableListOf(
         @PInfos.TaskInfo("Find seen status method")
-        object : InstafelTask() {
+        object: InstafelTask() {
             override fun execute() {
                 when (val result = runBlocking {
                     SearchUtils.getFileContainsAllCords(
@@ -46,7 +46,7 @@ class GhostSeen : InstafelPatch() {
             }
         },
         @PInfos.TaskInfo("Add ghost seen check")
-        object : InstafelTask() {
+        object: InstafelTask() {
             override fun execute() {
                 val fContent = smaliUtils.getSmaliFileContent(seenFile.absolutePath).toMutableList()
                 var methodStartLine = -1

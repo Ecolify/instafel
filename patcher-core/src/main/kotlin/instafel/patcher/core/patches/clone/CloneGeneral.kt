@@ -67,7 +67,7 @@ class CloneGeneral: InstafelPatch() {
                                     assetPath,
                                     File(targetFile.absolutePath.replace("sources", "clone_ref"))
                                 )
-                                Log.info("${fileName.substringBeforeLast('.').replace('_', ' ').capitalize()} copied to clone_ref in ${dir.name}")
+                                Log.info("${fileName.substringBeforeLast('.').replace('_', ' ').replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }} copied to clone_ref in ${dir.name}")
                             }
                         }
                     }

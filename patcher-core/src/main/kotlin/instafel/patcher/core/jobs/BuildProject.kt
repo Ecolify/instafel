@@ -138,7 +138,7 @@ object BuildProject: CLIJob {
         )
 
         val bInfoFile = File(Utils.mergePaths(buildFolder.absolutePath, "build_info.json"))
-        FileUtils.writeStringToFile(bInfoFile, Env.gson.toJson(buildInfo, BuildInfo::class.java))
+        bInfoFile.writeText(Env.gson.toJson(buildInfo, BuildInfo::class.java))
         Log.info("Build information file saved.")
     }
 
@@ -306,12 +306,6 @@ object BuildProject: CLIJob {
                 .replace("\"", "\\\"")
 
             pairs["_patchesjson_"] = patchesTextEscaped
-
-            for ((key, value) in pairs) {
-                if (value == null) {
-                    Log.severe("Property \"$key\" is empty.")
-                }
-            }
 
             for (i in fContent.indices) {
                 var line = fContent[i]
