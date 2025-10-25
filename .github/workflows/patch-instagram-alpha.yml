@@ -126,7 +126,7 @@ jobs:
           fi
           
           echo "Applying all patches to: $PROJECT_DIR"
-          java -jar .output/ifl-patcher-*.jar run "$PROJECT_DIR" ghost_mode instafel clone
+          java -jar .output/ifl-patcher-*.jar run "$PROJECT_DIR" instafel clone
           
           echo "All patches applied successfully"
       
