@@ -25,7 +25,7 @@ class GhostScreenshot : InstafelPatch() {
 
     override fun initializeTasks() = mutableListOf(
         @PInfos.TaskInfo("Find screenshot notification method")
-        object : InstafelTask() {
+        object: InstafelTask() {
             override fun execute() {
                 when (val result = runBlocking {
                     SearchUtils.getFileContainsAllCords(
@@ -46,7 +46,7 @@ class GhostScreenshot : InstafelPatch() {
             }
         },
         @PInfos.TaskInfo("Add ghost screenshot check")
-        object : InstafelTask() {
+        object: InstafelTask() {
             override fun execute() {
                 val fContent = smaliUtils.getSmaliFileContent(screenshotFile.absolutePath).toMutableList()
                 var methodStartLine = -1

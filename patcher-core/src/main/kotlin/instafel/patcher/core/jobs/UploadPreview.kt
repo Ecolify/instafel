@@ -103,9 +103,8 @@ object UploadPreview: CLIJob {
             put("generate_release_notes", false)
         }
 
-        val requestBody = RequestBody.create(
-            "application/json".toMediaType(),
-            req.toString()
+        val requestBody = req.toString().toRequestBody(
+            "application/json".toMediaType()
         )
 
         val request = Request.Builder()
