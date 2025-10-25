@@ -67,7 +67,10 @@ class CloneGeneral: InstafelPatch() {
                                     assetPath,
                                     File(targetFile.absolutePath.replace("sources", "clone_ref"))
                                 )
-                                Log.info("${fileName.substringBeforeLast('.').replace('_', ' ').replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }} copied to clone_ref in ${dir.name}")
+                                val displayName = fileName.substringBeforeLast('.')
+                                    .replace('_', ' ')
+                                    .replaceFirstChar(Char::titlecase)
+                                Log.info("$displayName copied to clone_ref in ${dir.name}")
                             }
                         }
                     }
