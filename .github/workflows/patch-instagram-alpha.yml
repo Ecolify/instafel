@@ -1,0 +1,163 @@
+# Workflow: Patch Instagram Alpha
+# 
+# This workflow automates the process of downloading Instagram Alpha APKs and patching them with Instafel.
+# 
+# Usage:
+#   1. Manual trigger via workflow_dispatch with APK URL input (recommended)
+#   2. Automatic download via gplayapi (requires GitHub Secrets configuration)
+#
+# Outputs:
+#   - Patched Instagram APK files (clone and unclone variants)
+#   - Build metadata JSON files
+#
+# See .github/workflows/README.md for detailed documentation
+
+name: Patch Instagram Alpha
+
+on:
+  workflow_dispatch:
+    inputs:
+      instagram_apk_url:
+        description: 'Instagram Alpha APK download URL (required if not using gplayapi)'
+        required: false
+        type: string
+      instagram_version:
+        description: 'Instagram version (for naming, optional)'
+        required: false
+        type: string
+        default: 'latest'
+      use_gplayapi:
+        description: 'Use gplayapi to download latest Instagram Alpha (requires secrets)'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  patch-instagram:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+      
+      - name: Build Instafel Patcher
+        run: |
+          echo "Building Instafel Patcher..."
+          ./gradlew :patcher:build-jar
+          ls -lh .output/
+      
+      - name: Download Instagram Alpha APK (Direct URL)
+        if: ${{ !inputs.use_gplayapi && github.event.inputs.instagram_apk_url != '' }}
+        run: |
+          echo "Downloading Instagram Alpha APK from provided URL..."
+          wget -O instagram-alpha.apk "${{ github.event.inputs.instagram_apk_url }}"
+          ls -lh instagram-alpha.apk
+      
+      - name: Setup gplayapi and download (if enabled)
+        if: ${{ inputs.use_gplayapi }}
+        run: |
+          echo "Setting up gplayapi to download Instagram Alpha..."
+          
+          # Create config.properties file from GitHub Secrets
+          cat > config.properties << EOF
+          email=${{ secrets.GPLAY_EMAIL }}
+          aas_token=${{ secrets.GPLAY_AAS_TOKEN }}
+          release_content_api_url=${{ secrets.RELEASE_CONTENT_API_URL }}
+          github_pat=${{ secrets.GH_TOKEN }}
+          EOF
+          
+          # Build gplayapi downloader
+          echo "Building gplayapi downloader..."
+          ./gradlew :gplayapi:downloaderJar
+          ls -lh .output/
+          
+          # Run the downloader
+          echo "Downloading Instagram Alpha APK..."
+          java -jar .output/ifl-gplayapi-downloader-*.jar instagram-alpha.apk
+          
+          echo "Download completed:"
+          ls -lh instagram-alpha.apk
+      
+      - name: Validate APK exists
+        run: |
+          if [ ! -f instagram-alpha.apk ]; then
+            echo "Error: instagram-alpha.apk not found"
+            echo "Please provide instagram_apk_url parameter"
+            exit 1
+          fi
+          echo "APK file validated:"
+          ls -lh instagram-alpha.apk
+      
+      - name: Initialize Instafel project
+        run: |
+          # Run init command to extract and prepare the APK
+          java -jar .output/ifl-patcher-*.jar init instagram-alpha.apk
+          
+          # The patcher runs in a separate thread, wait for it to complete
+          echo "Waiting for initialization to complete..."
+          for i in {1..60}; do
+            if [ -d "instagram-"* ] 2>/dev/null; then
+              echo "Project initialized successfully"
+              break
+            fi
+            sleep 5
+            echo "Still waiting... ($i/60)"
+          done
+          
+          # List created directories
+          ls -la
+      
+      - name: Build patched Instagram APK
+        run: |
+          # Find the project directory created by init
+          PROJECT_DIR=$(ls -d instagram-* 2>/dev/null | head -n 1)
+          if [ -z "$PROJECT_DIR" ]; then
+            echo "Error: Project directory not found"
+            ls -la
+            exit 1
+          fi
+          
+          echo "Found project directory: $PROJECT_DIR"
+          echo "Building patched APK..."
+          java -jar .output/ifl-patcher-*.jar build "$PROJECT_DIR"
+          
+          # Wait for build to complete
+          echo "Waiting for build to complete..."
+          for i in {1..120}; do
+            if [ -d "$PROJECT_DIR/build" ] && ls "$PROJECT_DIR/build/"*.apk >/dev/null 2>&1; then
+              echo "Build completed successfully"
+              break
+            fi
+            sleep 5
+            echo "Still building... ($i/120)"
+          done
+          
+          # List output files
+          echo "Build output:"
+          find "$PROJECT_DIR/build" -type f 2>/dev/null || echo "Build directory not found"
+      
+      - name: Upload patched APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: instafel-patched-instagram-${{ github.event.inputs.instagram_version }}
+          path: instagram-*/build/*.apk
+          if-no-files-found: warn
+      
+      - name: Upload build info
+        uses: actions/upload-artifact@v4
+        with:
+          name: instafel-build-info-${{ github.event.inputs.instagram_version }}
+          path: instagram-*/build/*.json
+          if-no-files-found: warn
