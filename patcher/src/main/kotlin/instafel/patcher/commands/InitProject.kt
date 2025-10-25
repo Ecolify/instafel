@@ -21,7 +21,7 @@ class InitProject: Command {
                         return;
                     }
 
-                    Thread {
+                    val thread = Thread {
                         CoreHandler.invokeKotlinObjectWithParams(
                             "jobs.InitProject",
                             "runJob",
@@ -30,7 +30,9 @@ class InitProject: Command {
                                 apkFile
                             )
                         )
-                    }.start()
+                    }
+                    thread.start()
+                    thread.join() // Wait for the init thread to complete
                 } else {
                     Log.warning("Please select an .apk file")
                 }

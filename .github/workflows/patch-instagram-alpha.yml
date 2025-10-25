@@ -105,48 +105,52 @@ jobs:
           # Run init command to extract and prepare the APK
           java -jar .output/ifl-patcher-*.jar init instagram-alpha.apk
           
-          # The patcher runs in a separate thread, wait for it to complete
-          echo "Waiting for initialization to complete..."
-          for i in {1..60}; do
-            if [ -d "instagram-"* ] 2>/dev/null; then
-              echo "Project initialized successfully"
-              break
-            fi
-            sleep 5
-            echo "Still waiting... ($i/60)"
-          done
-          
-          # List created directories
-          ls -la
-      
-      - name: Build patched Instagram APK
-        run: |
-          # Find the project directory created by init
+          # Verify project was created
           PROJECT_DIR=$(ls -d instagram-* 2>/dev/null | head -n 1)
           if [ -z "$PROJECT_DIR" ]; then
-            echo "Error: Project directory not found"
+            echo "Error: Project directory not found after init"
             ls -la
             exit 1
           fi
           
-          echo "Found project directory: $PROJECT_DIR"
-          echo "Building patched APK..."
+          echo "Project initialized successfully: $PROJECT_DIR"
+          ls -la "$PROJECT_DIR"
+      
+      - name: Apply Ghost Mode patches
+        run: |
+          # Find the project directory
+          PROJECT_DIR=$(ls -d instagram-* 2>/dev/null | head -n 1)
+          if [ -z "$PROJECT_DIR" ]; then
+            echo "Error: Project directory not found"
+            exit 1
+          fi
+          
+          echo "Applying Ghost Mode patches to: $PROJECT_DIR"
+          java -jar .output/ifl-patcher-*.jar run "$PROJECT_DIR" ghost_mode instafel
+          
+          echo "Patches applied successfully"
+      
+      - name: Build patched Instagram APK
+        run: |
+          # Find the project directory
+          PROJECT_DIR=$(ls -d instagram-* 2>/dev/null | head -n 1)
+          if [ -z "$PROJECT_DIR" ]; then
+            echo "Error: Project directory not found"
+            exit 1
+          fi
+          
+          echo "Building patched APK for: $PROJECT_DIR"
           java -jar .output/ifl-patcher-*.jar build "$PROJECT_DIR"
           
-          # Wait for build to complete
-          echo "Waiting for build to complete..."
-          for i in {1..120}; do
-            if [ -d "$PROJECT_DIR/build" ] && ls "$PROJECT_DIR/build/"*.apk >/dev/null 2>&1; then
-              echo "Build completed successfully"
-              break
-            fi
-            sleep 5
-            echo "Still building... ($i/120)"
-          done
+          # Verify build output
+          if [ ! -d "$PROJECT_DIR/build" ]; then
+            echo "Error: Build directory not created"
+            exit 1
+          fi
           
-          # List output files
+          echo "Build completed successfully"
           echo "Build output:"
-          find "$PROJECT_DIR/build" -type f 2>/dev/null || echo "Build directory not found"
+          ls -lh "$PROJECT_DIR/build/"
       
       - name: Upload patched APK
         uses: actions/upload-artifact@v4

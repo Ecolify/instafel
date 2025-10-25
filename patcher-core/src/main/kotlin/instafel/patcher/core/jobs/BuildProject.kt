@@ -217,6 +217,9 @@ object BuildProject: CLIJob {
                 Log.severe("Environment file is not compatible for building..")
                 exitProcess(-1)
             }
+        } else {
+            IFL_VERSION = 0
+            GENERATION_ID = Env.Project.generationId.ifEmpty { "E" }
         }
 
         if (IG_VERSION == "E" && IG_VER_CODE == "E") {

@@ -23,7 +23,7 @@ class RunPatch: Command {
                 return;
             }
 
-            Thread {
+            val thread = Thread {
                 CoreHandler.invokeKotlinObjectWithParams(
                     "jobs.RunPatches",
                     "runJob",
@@ -32,7 +32,9 @@ class RunPatch: Command {
                         args.copyOf()
                     )
                 )
-            }.start()
+            }
+            thread.start()
+            thread.join() // Wait for the patch thread to complete
         } catch (e: Exception) {
             e.printStackTrace()
             Log.severe("Error while running patches")
