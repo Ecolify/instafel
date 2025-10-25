@@ -256,4 +256,24 @@
 
     <!-- CRASH TOAST -->
     <string name="ifl_crash_toast" translatable="false">Instafel crashed, visit Crash Reports for more details.</string>
+    
+    <!-- GHOST MODE -->
+    <string name="ifl_ghost_mode_title">Ghost Mode</string>
+    <string name="ifl_ghost_mode_desc">Enable or disable all ghost mode features</string>
+    <string name="ifl_ghost_seen_title">Ghost Seen (DM)</string>
+    <string name="ifl_ghost_seen_desc">Hide read receipts in Direct Messages</string>
+    <string name="ifl_ghost_typing_title">Ghost Typing</string>
+    <string name="ifl_ghost_typing_desc">Hide typing indicator in Direct Messages</string>
+    <string name="ifl_ghost_screenshot_title">Ghost Screenshot</string>
+    <string name="ifl_ghost_screenshot_desc">Block screenshot detection notifications</string>
+    <string name="ifl_ghost_viewonce_title">Ghost ViewOnce</string>
+    <string name="ifl_ghost_viewonce_desc">View once messages without marking as seen</string>
+    <string name="ifl_ghost_story_title">Ghost Story</string>
+    <string name="ifl_ghost_story_desc">View stories anonymously</string>
+    <string name="ifl_ghost_live_title">Ghost Live</string>
+    <string name="ifl_ghost_live_desc">Watch live videos anonymously</string>
+    <string name="ifl_ghost_features_section">Ghost Mode Features</string>
+    <string name="ifl_quick_toggle_section">Quick Toggle Options</string>
+    <string name="ifl_quick_toggle_desc">Include in quick toggle</string>
+    <string name="ifl_ghost_mode_menu_title">Ghost Mode</string>
 </resources>

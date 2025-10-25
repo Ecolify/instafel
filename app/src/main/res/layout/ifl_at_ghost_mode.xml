@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <instafel.app.ui.Page android:layout_width="fill_parent" android:layout_height="fill_parent"
                        xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
-    <instafel.app.ui.PageTitle android:id="@+id/ifl_page_title" android:layout_width="fill_parent" android:layout_height="wrap_content" app:ifl_attr_ui_titleText="Ghost Mode" />
+    <instafel.app.ui.PageTitle android:id="@+id/ifl_page_title" android:layout_width="fill_parent" android:layout_height="wrap_content" app:ifl_attr_ui_titleText="@string/ifl_ghost_mode_title" />
     <instafel.app.ui.PageContentArea android:layout_width="fill_parent" android:layout_height="0.0dip" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintTop_toBottomOf="@id/ifl_page_title">
         
         <!-- Main Ghost Mode Toggle -->
@@ -11,14 +11,14 @@
             android:layout_height="wrap_content" 
             app:ifl_attr_ui_iconRes="@drawable/ifl_misc" 
             app:ifl_attr_ui_spaceBottom="visible" 
-            app:ifl_attr_ui_subtitleText="Enable or disable all ghost mode features" 
-            app:ifl_attr_ui_titleText="Ghost Mode" />
+            app:ifl_attr_ui_subtitleText="@string/ifl_ghost_mode_desc" 
+            app:ifl_attr_ui_titleText="@string/ifl_ghost_mode_title" />
 
         <!-- Section Title -->
         <instafel.app.ui.TileTitle 
             android:layout_width="fill_parent" 
             android:layout_height="wrap_content" 
-            app:ifl_attr_ui_titleText="Ghost Mode Features" />
+            app:ifl_attr_ui_titleText="@string/ifl_ghost_features_section" />
 
         <!-- Ghost Seen -->
         <instafel.app.ui.TileLargeSwitch 
@@ -27,8 +27,8 @@
             android:layout_height="wrap_content" 
             app:ifl_attr_ui_iconRes="@drawable/ifl_misc" 
             app:ifl_attr_ui_spaceBottom="visible" 
-            app:ifl_attr_ui_subtitleText="Hide read receipts in Direct Messages" 
-            app:ifl_attr_ui_titleText="Ghost Seen (DM)" />
+            app:ifl_attr_ui_subtitleText="@string/ifl_ghost_seen_desc" 
+            app:ifl_attr_ui_titleText="@string/ifl_ghost_seen_title" />
 
         <!-- Ghost Typing -->
         <instafel.app.ui.TileLargeSwitch 
@@ -37,8 +37,8 @@
             android:layout_height="wrap_content" 
             app:ifl_attr_ui_iconRes="@drawable/ifl_misc" 
             app:ifl_attr_ui_spaceBottom="visible" 
-            app:ifl_attr_ui_subtitleText="Hide typing indicator in Direct Messages" 
-            app:ifl_attr_ui_titleText="Ghost Typing" />
+            app:ifl_attr_ui_subtitleText="@string/ifl_ghost_typing_desc" 
+            app:ifl_attr_ui_titleText="@string/ifl_ghost_typing_title" />
 
         <!-- Ghost Screenshot -->
         <instafel.app.ui.TileLargeSwitch 
@@ -47,8 +47,8 @@
             android:layout_height="wrap_content" 
             app:ifl_attr_ui_iconRes="@drawable/ifl_misc" 
             app:ifl_attr_ui_spaceBottom="visible" 
-            app:ifl_attr_ui_subtitleText="Block screenshot detection notifications" 
-            app:ifl_attr_ui_titleText="Ghost Screenshot" />
+            app:ifl_attr_ui_subtitleText="@string/ifl_ghost_screenshot_desc" 
+            app:ifl_attr_ui_titleText="@string/ifl_ghost_screenshot_title" />
 
         <!-- Ghost ViewOnce -->
         <instafel.app.ui.TileLargeSwitch 
@@ -57,8 +57,8 @@
             android:layout_height="wrap_content" 
             app:ifl_attr_ui_iconRes="@drawable/ifl_misc" 
             app:ifl_attr_ui_spaceBottom="visible" 
-            app:ifl_attr_ui_subtitleText="View once messages without marking as seen" 
-            app:ifl_attr_ui_titleText="Ghost ViewOnce" />
+            app:ifl_attr_ui_subtitleText="@string/ifl_ghost_viewonce_desc" 
+            app:ifl_attr_ui_titleText="@string/ifl_ghost_viewonce_title" />
 
         <!-- Ghost Story -->
         <instafel.app.ui.TileLargeSwitch 
@@ -67,8 +67,8 @@
             android:layout_height="wrap_content" 
             app:ifl_attr_ui_iconRes="@drawable/ifl_misc" 
             app:ifl_attr_ui_spaceBottom="visible" 
-            app:ifl_attr_ui_subtitleText="View stories anonymously" 
-            app:ifl_attr_ui_titleText="Ghost Story" />
+            app:ifl_attr_ui_subtitleText="@string/ifl_ghost_story_desc" 
+            app:ifl_attr_ui_titleText="@string/ifl_ghost_story_title" />
 
         <!-- Ghost Live -->
         <instafel.app.ui.TileLargeSwitch 
@@ -77,14 +77,14 @@
             android:layout_height="wrap_content" 
             app:ifl_attr_ui_iconRes="@drawable/ifl_misc" 
             app:ifl_attr_ui_spaceBottom="visible" 
-            app:ifl_attr_ui_subtitleText="Watch live videos anonymously" 
-            app:ifl_attr_ui_titleText="Ghost Live" />
+            app:ifl_attr_ui_subtitleText="@string/ifl_ghost_live_desc" 
+            app:ifl_attr_ui_titleText="@string/ifl_ghost_live_title" />
 
         <!-- Quick Toggle Section -->
         <instafel.app.ui.TileTitle 
             android:layout_width="fill_parent" 
             android:layout_height="wrap_content" 
-            app:ifl_attr_ui_titleText="Quick Toggle Options" />
+            app:ifl_attr_ui_titleText="@string/ifl_quick_toggle_section" />
 
         <!-- Quick Toggle Seen -->
         <instafel.app.ui.TileLargeSwitch 
@@ -93,7 +93,7 @@
             android:layout_height="wrap_content" 
             app:ifl_attr_ui_iconRes="@drawable/ifl_misc" 
             app:ifl_attr_ui_spaceBottom="visible" 
-            app:ifl_attr_ui_subtitleText="Include in quick toggle" 
+            app:ifl_attr_ui_subtitleText="@string/ifl_quick_toggle_desc" 
             app:ifl_attr_ui_titleText="Quick Toggle: Seen" />
 
         <!-- Quick Toggle Typing -->
@@ -103,7 +103,7 @@
             android:layout_height="wrap_content" 
             app:ifl_attr_ui_iconRes="@drawable/ifl_misc" 
             app:ifl_attr_ui_spaceBottom="visible" 
-            app:ifl_attr_ui_subtitleText="Include in quick toggle" 
+            app:ifl_attr_ui_subtitleText="@string/ifl_quick_toggle_desc" 
             app:ifl_attr_ui_titleText="Quick Toggle: Typing" />
 
         <!-- Quick Toggle Screenshot -->
@@ -113,7 +113,7 @@
             android:layout_height="wrap_content" 
             app:ifl_attr_ui_iconRes="@drawable/ifl_misc" 
             app:ifl_attr_ui_spaceBottom="visible" 
-            app:ifl_attr_ui_subtitleText="Include in quick toggle" 
+            app:ifl_attr_ui_subtitleText="@string/ifl_quick_toggle_desc" 
             app:ifl_attr_ui_titleText="Quick Toggle: Screenshot" />
 
         <!-- Quick Toggle ViewOnce -->
@@ -123,7 +123,7 @@
             android:layout_height="wrap_content" 
             app:ifl_attr_ui_iconRes="@drawable/ifl_misc" 
             app:ifl_attr_ui_spaceBottom="visible" 
-            app:ifl_attr_ui_subtitleText="Include in quick toggle" 
+            app:ifl_attr_ui_subtitleText="@string/ifl_quick_toggle_desc" 
             app:ifl_attr_ui_titleText="Quick Toggle: ViewOnce" />
 
         <!-- Quick Toggle Story -->
@@ -133,7 +133,7 @@
             android:layout_height="wrap_content" 
             app:ifl_attr_ui_iconRes="@drawable/ifl_misc" 
             app:ifl_attr_ui_spaceBottom="visible" 
-            app:ifl_attr_ui_subtitleText="Include in quick toggle" 
+            app:ifl_attr_ui_subtitleText="@string/ifl_quick_toggle_desc" 
             app:ifl_attr_ui_titleText="Quick Toggle: Story" />
 
         <!-- Quick Toggle Live -->
@@ -143,7 +143,7 @@
             android:layout_height="wrap_content" 
             app:ifl_attr_ui_iconRes="@drawable/ifl_misc" 
             app:ifl_attr_ui_spaceBottom="visible" 
-            app:ifl_attr_ui_subtitleText="Include in quick toggle" 
+            app:ifl_attr_ui_subtitleText="@string/ifl_quick_toggle_desc" 
             app:ifl_attr_ui_titleText="Quick Toggle: Live" />
 
     </instafel.app.ui.PageContentArea>
