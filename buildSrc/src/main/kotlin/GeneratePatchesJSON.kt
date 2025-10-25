@@ -191,7 +191,7 @@ fun Project.generatePatchesJSON(jarFile: File): File {
             val patchesInfo = PatchesInfo(2, "instafel.patcher.core", totalPatchSize, singles, groups)
 
             println("Writing patches.json file...")
-            val patchesFile = File("$buildDir/generated-build-infos/patches.json")
+            val patchesFile = File("${layout.buildDirectory.get().asFile}/generated-build-infos/patches.json")
             patchesFile.parentFile.mkdirs()
             patchesFile.writeText(gson.toJson(patchesInfo))
             println("Patches JSON file saved into ${patchesFile.absolutePath} successfully.")

@@ -24,6 +24,7 @@ object IFLProjectManager {
     val configPath = Paths.get("$rootDir/.config/ifl_config.json")
     val configObject = JSONObject(Files.readAllLines(configPath).joinToString("\n"))
 
+    @Suppress("DEPRECATION")
     fun Project.getCommitHash(): String =
         ByteArrayOutputStream().use { output ->
             exec {
