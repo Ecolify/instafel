@@ -161,3 +161,43 @@ jobs:
           name: instafel-build-info-${{ github.event.inputs.instagram_version }}
           path: instagram-*/build/*.json
           if-no-files-found: warn
+
+      - name: Upload release to API
+        if: |
+          ${{ secrets.RELEASE_CONTENT_API_URL != '' &&
+              secrets.GH_TOKEN != '' }}
+        run: |
+          # Find the project directory and build files
+          PROJECT_DIR=$(ls -d instagram-* 2>/dev/null | head -n 1)
+          if [ -z "$PROJECT_DIR" ]; then
+            echo "Error: Project directory not found"
+            exit 1
+          fi
+
+          BUILD_INFO_FILE=$(find "$PROJECT_DIR/build" \
+            -name "build_info.json" 2>/dev/null | head -n 1)
+          if [ ! -f "$BUILD_INFO_FILE" ]; then
+            echo "Warning: build_info.json not found"
+            echo "Skipping API upload"
+            exit 0
+          fi
+
+          echo "Uploading release to API..."
+          echo "Build info file: $BUILD_INFO_FILE"
+
+          # Read build info to get version and other metadata
+          BUILD_INFO=$(cat "$BUILD_INFO_FILE")
+
+          # Upload build info to the release content API
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.GH_TOKEN }}" \
+            -d "$BUILD_INFO" \
+            "${{ secrets.RELEASE_CONTENT_API_URL }}" \
+            -o response.json \
+            -w "\nHTTP Status: %{http_code}\n"
+
+          echo "API Response:"
+          cat response.json
+
+          echo "Release uploaded to API successfully"
