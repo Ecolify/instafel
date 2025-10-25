@@ -61,7 +61,7 @@ class GhostViewOnce: InstafelPatch() {
                     val lines = listOf(
                         "",
                         "    # Ghost ViewOnce - Block view once seen markers",
-                        "    invoke-static {}, Linstafel/app/managers/GhostModeManager;->isGhostViewOnceEnabled()Z",
+                        "    invoke-static {}, Linstafel/app/utils/ghost/GhostModeManager;->isGhostViewOnceEnabled()Z",
                         "    move-result v0",
                         "    if-eqz v0, :ghost_viewonce_continue",
                         "    return-void",

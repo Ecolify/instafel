@@ -66,7 +66,7 @@ class GhostSeen: InstafelPatch() {
                     val lines = listOf(
                         "",
                         "    # Ghost Seen - Block read receipts",
-                        "    invoke-static {}, Linstafel/app/managers/GhostModeManager;->isGhostSeenEnabled()Z",
+                        "    invoke-static {}, Linstafel/app/utils/ghost/GhostModeManager;->isGhostSeenEnabled()Z",
                         "    move-result v0",
                         "    if-eqz v0, :ghost_seen_continue",
                         "    return-void",

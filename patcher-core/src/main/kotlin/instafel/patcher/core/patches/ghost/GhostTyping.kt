@@ -64,7 +64,7 @@ class GhostTyping: InstafelPatch() {
                     val lines = listOf(
                         "",
                         "    # Ghost Typing - Block typing indicator",
-                        "    invoke-static {}, Linstafel/app/managers/GhostModeManager;->isGhostTypingEnabled()Z",
+                        "    invoke-static {}, Linstafel/app/utils/ghost/GhostModeManager;->isGhostTypingEnabled()Z",
                         "    move-result v0",
                         "    if-eqz v0, :ghost_typing_continue",
                         "    return-void",

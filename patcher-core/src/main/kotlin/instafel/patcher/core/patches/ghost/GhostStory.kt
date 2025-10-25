@@ -64,7 +64,7 @@ class GhostStory: InstafelPatch() {
                     val lines = listOf(
                         "",
                         "    # Ghost Story - Block story seen tracking",
-                        "    invoke-static {}, Linstafel/app/managers/GhostModeManager;->isGhostStoryEnabled()Z",
+                        "    invoke-static {}, Linstafel/app/utils/ghost/GhostModeManager;->isGhostStoryEnabled()Z",
                         "    move-result v0",
                         "    if-eqz v0, :ghost_story_continue",
                         "    return-void",

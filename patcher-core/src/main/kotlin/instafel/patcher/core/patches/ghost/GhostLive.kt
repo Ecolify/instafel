@@ -61,7 +61,7 @@ class GhostLive: InstafelPatch() {
                     val lines = listOf(
                         "",
                         "    # Ghost Live - Block live viewer tracking",
-                        "    invoke-static {}, Linstafel/app/managers/GhostModeManager;->isGhostLiveEnabled()Z",
+                        "    invoke-static {}, Linstafel/app/utils/ghost/GhostModeManager;->isGhostLiveEnabled()Z",
                         "    move-result v0",
                         "    if-eqz v0, :ghost_live_continue",
                         "    return-void",

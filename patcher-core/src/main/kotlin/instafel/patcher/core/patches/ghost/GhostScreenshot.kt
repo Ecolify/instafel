@@ -61,7 +61,7 @@ class GhostScreenshot: InstafelPatch() {
                     val lines = listOf(
                         "",
                         "    # Ghost Screenshot - Block screenshot detection",
-                        "    invoke-static {}, Linstafel/app/managers/GhostModeManager;->isGhostScreenshotEnabled()Z",
+                        "    invoke-static {}, Linstafel/app/utils/ghost/GhostModeManager;->isGhostScreenshotEnabled()Z",
                         "    move-result v0",
                         "    if-eqz v0, :ghost_screenshot_continue",
                         "    return-void",
