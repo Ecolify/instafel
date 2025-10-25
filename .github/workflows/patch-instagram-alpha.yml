@@ -119,6 +119,44 @@ jobs:
           # List created directories
           ls -la
       
+      - name: Apply Instafel patches
+        run: |
+          # Find the project directory created by init
+          PROJECT_DIR=$(ls -d instagram-* 2>/dev/null | head -n 1)
+          if [ -z "$PROJECT_DIR" ]; then
+            echo "Error: Project directory not found"
+            ls -la
+            exit 1
+          fi
+          
+          echo "Found project directory: $PROJECT_DIR"
+          echo "Applying Instafel patches..."
+          
+          # Apply the instafel patch group and other recommended patches
+          java -jar .output/ifl-patcher-*.jar run "$PROJECT_DIR" instafel unlock_developer_options remove_ads clone
+          
+          # Wait for patches to complete
+          # The patcher runs in a separate thread, give it time to complete
+          echo "Waiting for patches to apply..."
+          for i in {1..60}; do
+            # Check if project.json has been updated (indicates patches completed)
+            if [ -f "$PROJECT_DIR/project.json" ]; then
+              PATCH_COUNT=$(grep -o '"appliedPatches"' "$PROJECT_DIR/project.json" | wc -l)
+              if [ "$PATCH_COUNT" -gt 0 ]; then
+                echo "Patches applied successfully"
+                break
+              fi
+            fi
+            sleep 5
+            echo "Still applying patches... ($i/60)"
+          done
+          
+          # Verify patches were applied
+          if [ -f "$PROJECT_DIR/project.json" ]; then
+            echo "Applied patches:"
+            cat "$PROJECT_DIR/project.json"
+          fi
+      
       - name: Build patched Instagram APK
         run: |
           # Find the project directory created by init
