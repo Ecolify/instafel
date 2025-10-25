@@ -109,7 +109,7 @@ object UploadPreview: CLIJob {
         )
 
         val request = Request.Builder()
-            .url("https://api.github.com/repos/mamiiblt/instafel_previews/releases")
+            .url("https://api.github.com/repos/Ecolify/instafel_previews/releases")
             .addHeader("Authorization", "Bearer $GITHUB_PAT")
             .addHeader("Accept", "application/vnd.github+json")
             .addHeader("X-GitHub-Api-Version", "2022-11-28")
