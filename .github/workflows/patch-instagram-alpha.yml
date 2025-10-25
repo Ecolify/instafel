@@ -92,7 +92,6 @@ jobs:
           cat > config.properties << EOF
           email=${{ secrets.GPLAY_EMAIL }}
           aas_token=${{ secrets.GPLAY_AAS_TOKEN }}
-          release_content_api_url=${{ secrets.RELEASE_CONTENT_API_URL }}
           github_pat=${{ secrets.GH_TOKEN }}
           EOF
           
@@ -118,10 +117,17 @@ jobs:
           echo "APK file validated:"
           ls -lh instagram-alpha.apk
       
+      - name: Setup patcher environment
+        run: |
+          # Copy core JAR to current directory so patcher can find it locally
+          cp .output/ifl-patcher-core-*.jar .
+          echo "Core JAR copied to current directory:"
+          ls -lh ifl-patcher-core-*.jar
+      
       - name: Initialize Instafel project
         run: |
           # Run init command to extract and prepare the APK
-          java -jar .output/ifl-patcher-*.jar init instagram-alpha.apk
+          java -jar .output/ifl-patcher-v*.jar init instagram-alpha.apk
           
           # Verify project was created
           PROJECT_DIR=$(ls -d instagram-* 2>/dev/null | head -n 1)
@@ -144,7 +150,7 @@ jobs:
           fi
           
           echo "Applying Instafel patches (unclone variant) to: $PROJECT_DIR"
-          java -jar .output/ifl-patcher-*.jar run "$PROJECT_DIR" instafel
+          java -jar .output/ifl-patcher-v*.jar run "$PROJECT_DIR" instafel
           
           echo "Unclone patches applied successfully"
       
@@ -158,7 +164,7 @@ jobs:
           fi
           
           echo "Building patched APK (unclone variant) for: $PROJECT_DIR"
-          java -jar .output/ifl-patcher-*.jar build "$PROJECT_DIR"
+          java -jar .output/ifl-patcher-v*.jar build "$PROJECT_DIR"
           
           # Verify build output
           if [ ! -d "$PROJECT_DIR/build" ]; then
@@ -188,7 +194,7 @@ jobs:
           fi
           
           echo "Applying clone patches to: $PROJECT_DIR"
-          java -jar .output/ifl-patcher-*.jar run "$PROJECT_DIR" clone
+          java -jar .output/ifl-patcher-v*.jar run "$PROJECT_DIR" clone
           
           echo "Clone patches applied successfully"
       
@@ -202,7 +208,7 @@ jobs:
           fi
           
           echo "Building patched APK (clone variant) for: $PROJECT_DIR"
-          java -jar .output/ifl-patcher-*.jar build "$PROJECT_DIR"
+          java -jar .output/ifl-patcher-v*.jar build "$PROJECT_DIR"
           
           # Verify build output
           if [ ! -d "$PROJECT_DIR/build" ]; then
@@ -233,7 +239,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: instafel-patcher-${{ github.event.inputs.instagram_version }}
-          path: .output/ifl-patcher-*.jar
+          path: .output/ifl-patcher-v*.jar
           if-no-files-found: warn
       
       - name: Upload Patcher Core JAR
