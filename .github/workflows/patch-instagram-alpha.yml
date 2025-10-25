@@ -1,0 +1,145 @@
+name: Patch Instagram Alpha
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+jobs:
+  patch-instagram:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+      
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      
+      - name: Build GPlayAPI Downloader JAR
+        run: ./gradlew :gplayapi:build-downloader
+      
+      - name: Build Patcher JAR
+        run: ./gradlew :patcher:build-jar
+      
+      - name: Create config.properties for GPlayAPI
+        run: |
+          cat > config.properties << EOF
+          email=${{ secrets.GPLAY_EMAIL }}
+          aas_token=${{ secrets.GPLAY_AAS_TOKEN }}
+          release_content_api_url=${{ secrets.RELEASE_CONTENT_API_URL }}
+          github_pat=${{ secrets.GH_PAT }}
+          EOF
+      
+      - name: Download Instagram Alpha APK
+        run: |
+          # Run gplayapi downloader to download the latest Instagram Alpha APK
+          java -jar .output/ifl-gplayapi-downloader-*.jar
+        timeout-minutes: 10
+      
+      - name: Find downloaded APK files
+        id: find-apk
+        run: |
+          # Look for downloaded APK files
+          if [ -f "instagram-base.apk" ]; then
+            echo "base_apk=instagram-base.apk" >> $GITHUB_OUTPUT
+            echo "✓ Base APK found"
+          else
+            echo "✗ Base APK not found"
+            exit 1
+          fi
+      
+      - name: Initialize Patcher Project
+        run: |
+          # Initialize patcher project with the downloaded Instagram APK
+          timeout 600 java -jar .output/ifl-patcher-*.jar init ${{ steps.find-apk.outputs.base_apk }} || {
+            echo "✗ Initialization failed or timed out"
+            exit 1
+          }
+          
+          # Verify project was created  
+          WDIR=$(find . -maxdepth 1 -type d -name "instagram-*" 2>/dev/null | head -n 1)
+          if [ -z "$WDIR" ]; then
+            echo "✗ Patcher project directory not created"
+            ls -la
+            exit 1
+          fi
+          echo "✓ Patcher project initialized: $WDIR"
+        timeout-minutes: 15
+      
+      - name: Run All Patches
+        run: |
+          # Run all available patches on the initialized project
+          # The working directory should be created by the init command
+          WDIR=$(find . -maxdepth 1 -type d -name "instagram-*" | head -n 1)
+          if [ -z "$WDIR" ]; then
+            echo "Working directory not found"
+            exit 1
+          fi
+          echo "Working directory: $WDIR"
+          timeout 900 java -jar .output/ifl-patcher-*.jar run "$WDIR" || {
+            echo "✗ Patching failed or timed out"
+            exit 1
+          }
+          echo "✓ Patches applied successfully"
+        timeout-minutes: 20
+      
+      - name: Build Patched APK
+        run: |
+          # Build the final patched APK
+          WDIR=$(find . -maxdepth 1 -type d -name "instagram-*" | head -n 1)
+          if [ -z "$WDIR" ]; then
+            echo "Working directory not found"
+            exit 1
+          fi
+          echo "Building patched APK from: $WDIR"
+          timeout 1200 java -jar .output/ifl-patcher-*.jar build "$WDIR" || {
+            echo "✗ Build failed or timed out"
+            exit 1
+          }
+          echo "✓ APK built successfully"
+        timeout-minutes: 25
+      
+      - name: Find Patched APK
+        id: find-patched
+        run: |
+          # Find the patched APK in the output directory
+          PATCHED_APK=$(find . -name "*-patched.apk" -o -name "*instafel*.apk" | head -n 1)
+          if [ -z "$PATCHED_APK" ]; then
+            echo "Patched APK not found, searching in working directory..."
+            WDIR=$(find . -maxdepth 1 -type d -name "instagram-*" | head -n 1)
+            PATCHED_APK=$(find "$WDIR" -name "*.apk" | head -n 1)
+          fi
+          
+          if [ -n "$PATCHED_APK" ]; then
+            echo "patched_apk=$PATCHED_APK" >> $GITHUB_OUTPUT
+            echo "✓ Patched APK found: $PATCHED_APK"
+          else
+            echo "✗ Patched APK not found"
+            exit 1
+          fi
+      
+      - name: Upload Patched APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: instafel-patched-apk
+          path: ${{ steps.find-patched.outputs.patched_apk }}
+          retention-days: 30
+      
+      - name: Upload Build Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: |
+            **/*.log
+            .output/
+          retention-days: 7

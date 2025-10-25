@@ -31,6 +31,22 @@ tasks.shadowJar {
     }
 }
 
+tasks.register<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("downloadJar") {
+    group = "ifl-gplayapi"
+    description = "Builds downloader JAR file"
+    
+    archiveBaseName = "ifl-gplayapi-downloader"
+    archiveClassifier = ""
+    destinationDirectory.set(file("${rootProject.rootDir}/.output"))
+    
+    manifest {
+        attributes["Main-Class"] = "instafel.gplayapi.DownloadMainKt"
+    }
+    
+    from(sourceSets.main.get().output)
+    configurations = listOf(project.configurations.runtimeClasspath.get())
+}
+
 tasks.register("build-jar") {
     group = "ifl-gplayapi"
     description = "Builds JAR file"
@@ -39,6 +55,17 @@ tasks.register("build-jar") {
 
     doLast {
         println("All tasks completed successfully")
+    }
+}
+
+tasks.register("build-downloader") {
+    group = "ifl-gplayapi"
+    description = "Builds downloader JAR file"
+    
+    dependsOn("downloadJar")
+    
+    doLast {
+        println("Downloader JAR built successfully")
     }
 }
 
