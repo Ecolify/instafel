@@ -165,6 +165,12 @@ fun Project.generatePatchesJSON(jarFile: File): File {
                         .replace('/', '.')
                         .removeSuffix(".class")
 
+                    // Skip inner anonymous classes created by when expressions or other constructs
+                    // These have patterns like: ClassName$method$1$innerMethod$1
+                    if (className.contains("\$execute\$") || className.matches(Regex(".*\\$\\d+\\$.*\\$\\d+"))) {
+                        continue
+                    }
+
                     val clazz = cl.loadClass(className)
                     when (filterPackageNameAndUtilsPatchPkg(clazz.superclass.name)) {
                         "InstafelTask" -> taskClasses.add(clazz)
