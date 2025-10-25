@@ -5,11 +5,15 @@ This GitHub Actions workflow automates the process of downloading Instagram Alph
 ## Overview
 
 The workflow performs the following steps:
-1. Downloads Instagram Alpha APK (either from a provided URL or using gplayapi)
-2. Builds the Instafel patcher
+1. Builds all Instafel components:
+   - Instafel App (debug and release variants)
+   - Patcher Core JAR
+   - Patcher JAR
+2. Downloads Instagram Alpha APK (either from a provided URL or using gplayapi)
 3. Initializes a patching project with the Instagram APK
-4. Builds the patched APK with Instafel features
-5. Uploads the patched APK as a workflow artifact
+4. Applies Instafel patches and builds the unclone variant APK
+5. Applies clone patches and builds the clone variant APK
+6. Uploads all artifacts (Instafel app, patcher tools, and patched Instagram APKs)
 
 ## Usage
 
@@ -45,7 +49,10 @@ Then run the workflow with:
 
 The workflow produces the following artifacts:
 
-- **instafel-patched-instagram-{version}**: Contains the patched APK files (both clone and unclone variants if applicable)
+- **instafel-app-{version}**: Contains the Instafel App APKs (debug and release variants)
+- **instafel-patcher-{version}**: Contains the Patcher JAR file
+- **instafel-patcher-core-{version}**: Contains the Patcher Core JAR file
+- **instafel-patched-instagram-{version}**: Contains the patched Instagram APK files (both clone and unclone variants)
 - **instafel-build-info-{version}**: Contains build metadata and information JSON files
 
 ## Requirements
@@ -55,9 +62,13 @@ The workflow produces the following artifacts:
 
 ## Notes
 
-- The patcher runs in non-production mode by default, generating `clone.apk` and `unclone.apk` files
+- The workflow builds both clone and unclone variants of the patched Instagram:
+  - **Unclone variant**: Includes only the base Instafel patches
+  - **Clone variant**: Includes the clone feature patches in addition to base patches
+- All APK files are properly named with their variant suffix (`-unclone.apk` or `-clone.apk`)
 - The patching process can take several minutes depending on the APK size
 - The workflow uses JDK 17 for building the patcher and running the patching process
+- The Instafel App APK is built and included to resolve INSTALL_FAILED_MISSING_SPLIT errors
 
 ## Troubleshooting
 

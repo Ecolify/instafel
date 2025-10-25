@@ -52,6 +52,24 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
       
+      - name: Build Instafel App (Debug)
+        run: |
+          echo "Building Instafel App (Debug)..."
+          ./gradlew :app:generate-app-debug
+          ls -lh .output/
+      
+      - name: Build Instafel App (Release)
+        run: |
+          echo "Building Instafel App (Release)..."
+          ./gradlew :app:generate-app-release
+          ls -lh .output/
+      
+      - name: Build Patcher Core
+        run: |
+          echo "Building Patcher Core..."
+          ./gradlew :patcher-core:build-jar
+          ls -lh .output/
+      
       - name: Build Instafel Patcher
         run: |
           echo "Building Instafel Patcher..."
@@ -116,7 +134,7 @@ jobs:
           echo "Project initialized successfully: $PROJECT_DIR"
           ls -la "$PROJECT_DIR"
       
-      - name: Apply patches
+      - name: Apply patches (unclone variant)
         run: |
           # Find the project directory
           PROJECT_DIR=$(ls -d instagram-* 2>/dev/null | head -n 1)
@@ -125,12 +143,12 @@ jobs:
             exit 1
           fi
           
-          echo "Applying all patches to: $PROJECT_DIR"
-          java -jar .output/ifl-patcher-*.jar run "$PROJECT_DIR" instafel clone
+          echo "Applying Instafel patches (unclone variant) to: $PROJECT_DIR"
+          java -jar .output/ifl-patcher-*.jar run "$PROJECT_DIR" instafel
           
-          echo "All patches applied successfully"
+          echo "Unclone patches applied successfully"
       
-      - name: Build patched Instagram APK
+      - name: Build patched Instagram APK (unclone variant)
         run: |
           # Find the project directory
           PROJECT_DIR=$(ls -d instagram-* 2>/dev/null | head -n 1)
@@ -139,7 +157,7 @@ jobs:
             exit 1
           fi
           
-          echo "Building patched APK for: $PROJECT_DIR"
+          echo "Building patched APK (unclone variant) for: $PROJECT_DIR"
           java -jar .output/ifl-patcher-*.jar build "$PROJECT_DIR"
           
           # Verify build output
@@ -148,11 +166,84 @@ jobs:
             exit 1
           fi
           
-          echo "Build completed successfully"
+          # Rename the APK to indicate it's the unclone variant
+          for apk in "$PROJECT_DIR/build/"*.apk; do
+            if [ -f "$apk" ]; then
+              base=$(basename "$apk" .apk)
+              mv "$apk" "$PROJECT_DIR/build/${base}-unclone.apk"
+            fi
+          done
+          
+          echo "Build completed successfully (unclone variant)"
           echo "Build output:"
           ls -lh "$PROJECT_DIR/build/"
       
-      - name: Upload patched APK
+      - name: Apply patches (clone variant)
+        run: |
+          # Find the project directory
+          PROJECT_DIR=$(ls -d instagram-* 2>/dev/null | head -n 1)
+          if [ -z "$PROJECT_DIR" ]; then
+            echo "Error: Project directory not found"
+            exit 1
+          fi
+          
+          echo "Applying clone patches to: $PROJECT_DIR"
+          java -jar .output/ifl-patcher-*.jar run "$PROJECT_DIR" clone
+          
+          echo "Clone patches applied successfully"
+      
+      - name: Build patched Instagram APK (clone variant)
+        run: |
+          # Find the project directory
+          PROJECT_DIR=$(ls -d instagram-* 2>/dev/null | head -n 1)
+          if [ -z "$PROJECT_DIR" ]; then
+            echo "Error: Project directory not found"
+            exit 1
+          fi
+          
+          echo "Building patched APK (clone variant) for: $PROJECT_DIR"
+          java -jar .output/ifl-patcher-*.jar build "$PROJECT_DIR"
+          
+          # Verify build output
+          if [ ! -d "$PROJECT_DIR/build" ]; then
+            echo "Error: Build directory not created"
+            exit 1
+          fi
+          
+          # Rename the APK to indicate it's the clone variant
+          for apk in "$PROJECT_DIR/build/"*.apk; do
+            if [ -f "$apk" ] && [[ ! "$apk" =~ "-unclone.apk" ]]; then
+              base=$(basename "$apk" .apk)
+              mv "$apk" "$PROJECT_DIR/build/${base}-clone.apk"
+            fi
+          done
+          
+          echo "Build completed successfully (clone variant)"
+          echo "Build output:"
+          ls -lh "$PROJECT_DIR/build/"
+      
+      - name: Upload Instafel App APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: instafel-app-${{ github.event.inputs.instagram_version }}
+          path: .output/ifl-app-*.apk
+          if-no-files-found: warn
+      
+      - name: Upload Patcher JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: instafel-patcher-${{ github.event.inputs.instagram_version }}
+          path: .output/ifl-patcher-*.jar
+          if-no-files-found: warn
+      
+      - name: Upload Patcher Core JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: instafel-patcher-core-${{ github.event.inputs.instagram_version }}
+          path: .output/ifl-patcher-core-*.jar
+          if-no-files-found: warn
+      
+      - name: Upload patched Instagram APKs
         uses: actions/upload-artifact@v4
         with:
           name: instafel-patched-instagram-${{ github.event.inputs.instagram_version }}
