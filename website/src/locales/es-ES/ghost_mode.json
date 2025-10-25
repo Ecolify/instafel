@@ -1,0 +1,58 @@
+{
+  "ghost_mode": {
+    "title": "Modo Fantasma",
+    "description": "Navega Instagram de forma anónima sin enviar señales de seguimiento",
+    "enabled": "Modo Fantasma Activado",
+    "disabled": "Modo Fantasma Desactivado",
+    "no_options_selected": "¡No hay opciones de Modo Fantasma seleccionadas!",
+    "features": {
+      "seen": {
+        "title": "Visto Fantasma",
+        "description": "Ocultar confirmaciones de lectura en Mensajes Directos",
+        "enabled": "Confirmaciones de lectura ocultas",
+        "disabled": "Confirmaciones de lectura visibles"
+      },
+      "typing": {
+        "title": "Escritura Fantasma",
+        "description": "Ocultar indicadores de escritura en Mensajes Directos",
+        "enabled": "Indicadores de escritura ocultos",
+        "disabled": "Indicadores de escritura visibles"
+      },
+      "screenshot": {
+        "title": "Captura Fantasma",
+        "description": "Ocultar notificaciones de captura de pantalla en Mensajes Directos",
+        "enabled": "Notificaciones de captura bloqueadas",
+        "disabled": "Notificaciones de captura enviadas"
+      },
+      "view_once": {
+        "title": "Ver Una Vez Fantasma",
+        "description": "Ver mensajes Ver Una Vez sin notificar al remitente",
+        "enabled": "Seguimiento de Ver Una Vez desactivado",
+        "disabled": "Seguimiento de Ver Una Vez activo"
+      },
+      "story": {
+        "title": "Historia Fantasma",
+        "description": "Ver Historias sin ser visto",
+        "enabled": "Vistas de historias ocultas",
+        "disabled": "Vistas de historias visibles"
+      },
+      "live": {
+        "title": "Directo Fantasma",
+        "description": "Ver videos en Directo sin aparecer en la lista de espectadores",
+        "enabled": "Vistas de directos ocultas",
+        "disabled": "Vistas de directos visibles"
+      }
+    },
+    "quick_toggle": {
+      "title": "Opciones de Alternancia Rápida",
+      "description": "Selecciona qué funciones alternar con el botón de alternancia rápida",
+      "enable_all": "Activar Todo",
+      "disable_all": "Desactivar Todo"
+    },
+    "warnings": {
+      "privacy_notice": "Las funciones del Modo Fantasma requieren hooks de Instagram apropiados para funcionar. Asegúrate de tener los parches necesarios aplicados.",
+      "instagram_updates": "Las actualizaciones de Instagram pueden romper la funcionalidad del Modo Fantasma. Mantén tus parches actualizados.",
+      "use_responsibly": "Usa el Modo Fantasma de manera responsable y respeta la privacidad de los demás."
+    }
+  }
+}

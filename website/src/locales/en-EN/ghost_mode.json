@@ -1,0 +1,58 @@
+{
+  "ghost_mode": {
+    "title": "Ghost Mode",
+    "description": "Browse Instagram anonymously without sending tracking signals",
+    "enabled": "Ghost Mode Enabled",
+    "disabled": "Ghost Mode Disabled",
+    "no_options_selected": "No Ghost Mode options selected!",
+    "features": {
+      "seen": {
+        "title": "Ghost Seen",
+        "description": "Hide read receipts in Direct Messages",
+        "enabled": "Read receipts hidden",
+        "disabled": "Read receipts visible"
+      },
+      "typing": {
+        "title": "Ghost Typing",
+        "description": "Hide typing indicators in Direct Messages",
+        "enabled": "Typing indicators hidden",
+        "disabled": "Typing indicators visible"
+      },
+      "screenshot": {
+        "title": "Ghost Screenshot",
+        "description": "Hide screenshot notifications in Direct Messages",
+        "enabled": "Screenshot notifications blocked",
+        "disabled": "Screenshot notifications sent"
+      },
+      "view_once": {
+        "title": "Ghost ViewOnce",
+        "description": "View ViewOnce messages without notifying sender",
+        "enabled": "ViewOnce tracking disabled",
+        "disabled": "ViewOnce tracking active"
+      },
+      "story": {
+        "title": "Ghost Story",
+        "description": "View Stories without being seen",
+        "enabled": "Story views hidden",
+        "disabled": "Story views visible"
+      },
+      "live": {
+        "title": "Ghost Live",
+        "description": "Watch Live videos without appearing in viewer list",
+        "enabled": "Live views hidden",
+        "disabled": "Live views visible"
+      }
+    },
+    "quick_toggle": {
+      "title": "Quick Toggle Options",
+      "description": "Select which features to toggle with the quick toggle button",
+      "enable_all": "Enable All",
+      "disable_all": "Disable All"
+    },
+    "warnings": {
+      "privacy_notice": "Ghost Mode features require proper Instagram hooks to function. Ensure you have the necessary patches applied.",
+      "instagram_updates": "Instagram updates may break Ghost Mode functionality. Keep your patches up to date.",
+      "use_responsibly": "Use Ghost Mode responsibly and respect others' privacy."
+    }
+  }
+}
