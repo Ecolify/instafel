@@ -38,7 +38,7 @@ jobs:
 
       - name: Install apktool jar
         run: |
-          curl -L -f -o apktool.jar "https://release-assets.githubusercontent.com/github-production-release-asset/3766706/fbeb14a5-360e-48a2-af62-464b64a36edd?sp=r&sv=2018-11-09&sr=b&spr=https&se=2025-10-26T19%3A43%3A19Z&rscd=attachment%3B+filename%3Dapktool_2.12.1.jar&rsct=application%2Foctet-stream&skoid=96c2d410-5711-43a1-aedd-ab1947aa7ab0&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skt=2025-10-26T18%3A43%3A10Z&ske=2025-10-26T19%3A43%3A19Z&sks=b&skv=2018-11-09&sig=XEZv8mjCViBM6QUYnzi%2BYe6TJeLf%2BxQwmT78ktcWKZE%3D&jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmVsZWFzZS1hc3NldHMuZ2l0aHVidXNlcmNvbnRlbnQuY29tIiwia2V5Ijoia2V5MSIsImV4cCI6MTc2MTUwNzYxNSwibmJmIjoxNzYxNTA1ODE1LCJwYXRoIjoicmVsZWFzZWFzc2V0cHJvZHVjdGlvbi5ibG9iLmNvcmUud2luZG93cy5uZXQifQ.Qjggr0do0v2tj-kq9VcXkZ7Ys_34JG2zno5MORMUPrI&response-content-disposition=attachment%3B%20filename%3Dapktool_2.12.1.jar&response-content-type=application%2Foctet-stream"
+          curl -L -f -o apktool.jar "https://bitbucket.org/iBotPeaches/apktool/downloads/apktool_2.12.1.jar"
           chmod +x apktool.jar
 
       - name: Add framework for apktool
