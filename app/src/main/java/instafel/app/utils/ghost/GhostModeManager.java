@@ -85,14 +85,15 @@ public class GhostModeManager {
     
     /**
      * Toggle selected ghost mode options on/off
-     * If all selected options are enabled, disable them all.
-     * Otherwise, enable all selected options.
+     * Logic: If all selected options are currently enabled, disable them all.
+     *        If any selected option is disabled, enable all selected options.
+     * This provides an "all or nothing" toggle behavior for consistency.
      */
     public static void toggleSelectedGhostOptions(Context context, PreferenceManager prefManager) {
         boolean anySelected = false;
         boolean allSelectedEnabled = true;
         
-        // Check which options are selected and if they're all enabled
+        // Check which options are selected for quick toggle and their current state
         if (quickToggleSeen) {
             anySelected = true;
             if (!isGhostSeen) allSelectedEnabled = false;
@@ -123,7 +124,7 @@ public class GhostModeManager {
             return;
         }
         
-        // Toggle: if all selected are enabled, disable them; otherwise enable all selected
+        // Toggle logic: if all are enabled, turn off; otherwise turn all on
         boolean newState = !allSelectedEnabled;
         
         if (quickToggleSeen) isGhostSeen = newState;

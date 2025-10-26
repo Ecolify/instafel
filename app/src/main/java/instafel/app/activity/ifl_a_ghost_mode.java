@@ -31,7 +31,7 @@ public class ifl_a_ghost_mode extends AppCompatActivity {
         // Ghost Mode Main Toggle
         TileLargeSwitch tileGhostMode = findViewById(R.id.ifl_tile_ghost_mode_main);
         Switch ghostModeSwitch = tileGhostMode.getSwitchView();
-        ghostModeSwitch.setChecked(preferenceManager.getPreferenceBoolean(PreferenceKeys.ifl_ghost_mode_enabled, false));
+        ghostModeSwitch.setChecked(GhostModeManager.isGhostModeEnabled);
         ghostModeSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             GhostModeManager.isGhostModeEnabled = isChecked;
             preferenceManager.setPreferenceBoolean(PreferenceKeys.ifl_ghost_mode_enabled, isChecked);
@@ -43,7 +43,7 @@ public class ifl_a_ghost_mode extends AppCompatActivity {
         // Ghost Seen (DM Read Receipts)
         TileLargeSwitch tileGhostSeen = findViewById(R.id.ifl_tile_ghost_seen);
         Switch ghostSeenSwitch = tileGhostSeen.getSwitchView();
-        ghostSeenSwitch.setChecked(preferenceManager.getPreferenceBoolean(PreferenceKeys.ifl_ghost_seen, false));
+        ghostSeenSwitch.setChecked(GhostModeManager.isGhostSeen);
         ghostSeenSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             GhostModeManager.isGhostSeen = isChecked;
             preferenceManager.setPreferenceBoolean(PreferenceKeys.ifl_ghost_seen, isChecked);
@@ -52,7 +52,7 @@ public class ifl_a_ghost_mode extends AppCompatActivity {
         // Ghost Typing
         TileLargeSwitch tileGhostTyping = findViewById(R.id.ifl_tile_ghost_typing);
         Switch ghostTypingSwitch = tileGhostTyping.getSwitchView();
-        ghostTypingSwitch.setChecked(preferenceManager.getPreferenceBoolean(PreferenceKeys.ifl_ghost_typing, false));
+        ghostTypingSwitch.setChecked(GhostModeManager.isGhostTyping);
         ghostTypingSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             GhostModeManager.isGhostTyping = isChecked;
             preferenceManager.setPreferenceBoolean(PreferenceKeys.ifl_ghost_typing, isChecked);
@@ -61,7 +61,7 @@ public class ifl_a_ghost_mode extends AppCompatActivity {
         // Ghost Screenshot
         TileLargeSwitch tileGhostScreenshot = findViewById(R.id.ifl_tile_ghost_screenshot);
         Switch ghostScreenshotSwitch = tileGhostScreenshot.getSwitchView();
-        ghostScreenshotSwitch.setChecked(preferenceManager.getPreferenceBoolean(PreferenceKeys.ifl_ghost_screenshot, false));
+        ghostScreenshotSwitch.setChecked(GhostModeManager.isGhostScreenshot);
         ghostScreenshotSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             GhostModeManager.isGhostScreenshot = isChecked;
             preferenceManager.setPreferenceBoolean(PreferenceKeys.ifl_ghost_screenshot, isChecked);
@@ -70,7 +70,7 @@ public class ifl_a_ghost_mode extends AppCompatActivity {
         // Ghost ViewOnce
         TileLargeSwitch tileGhostViewOnce = findViewById(R.id.ifl_tile_ghost_viewonce);
         Switch ghostViewOnceSwitch = tileGhostViewOnce.getSwitchView();
-        ghostViewOnceSwitch.setChecked(preferenceManager.getPreferenceBoolean(PreferenceKeys.ifl_ghost_view_once, false));
+        ghostViewOnceSwitch.setChecked(GhostModeManager.isGhostViewOnce);
         ghostViewOnceSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             GhostModeManager.isGhostViewOnce = isChecked;
             preferenceManager.setPreferenceBoolean(PreferenceKeys.ifl_ghost_view_once, isChecked);
@@ -79,7 +79,7 @@ public class ifl_a_ghost_mode extends AppCompatActivity {
         // Ghost Story
         TileLargeSwitch tileGhostStory = findViewById(R.id.ifl_tile_ghost_story);
         Switch ghostStorySwitch = tileGhostStory.getSwitchView();
-        ghostStorySwitch.setChecked(preferenceManager.getPreferenceBoolean(PreferenceKeys.ifl_ghost_story, false));
+        ghostStorySwitch.setChecked(GhostModeManager.isGhostStory);
         ghostStorySwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             GhostModeManager.isGhostStory = isChecked;
             preferenceManager.setPreferenceBoolean(PreferenceKeys.ifl_ghost_story, isChecked);
@@ -88,7 +88,7 @@ public class ifl_a_ghost_mode extends AppCompatActivity {
         // Ghost Live
         TileLargeSwitch tileGhostLive = findViewById(R.id.ifl_tile_ghost_live);
         Switch ghostLiveSwitch = tileGhostLive.getSwitchView();
-        ghostLiveSwitch.setChecked(preferenceManager.getPreferenceBoolean(PreferenceKeys.ifl_ghost_live, false));
+        ghostLiveSwitch.setChecked(GhostModeManager.isGhostLive);
         ghostLiveSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             GhostModeManager.isGhostLive = isChecked;
             preferenceManager.setPreferenceBoolean(PreferenceKeys.ifl_ghost_live, isChecked);
@@ -97,7 +97,7 @@ public class ifl_a_ghost_mode extends AppCompatActivity {
         // Quick Toggle Settings Section
         TileLargeSwitch tileQuickToggleSeen = findViewById(R.id.ifl_tile_quick_toggle_seen);
         Switch quickToggleSeenSwitch = tileQuickToggleSeen.getSwitchView();
-        quickToggleSeenSwitch.setChecked(preferenceManager.getPreferenceBoolean(PreferenceKeys.ifl_quick_toggle_seen, false));
+        quickToggleSeenSwitch.setChecked(GhostModeManager.quickToggleSeen);
         quickToggleSeenSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             GhostModeManager.quickToggleSeen = isChecked;
             preferenceManager.setPreferenceBoolean(PreferenceKeys.ifl_quick_toggle_seen, isChecked);
@@ -105,7 +105,7 @@ public class ifl_a_ghost_mode extends AppCompatActivity {
 
         TileLargeSwitch tileQuickToggleTyping = findViewById(R.id.ifl_tile_quick_toggle_typing);
         Switch quickToggleTypingSwitch = tileQuickToggleTyping.getSwitchView();
-        quickToggleTypingSwitch.setChecked(preferenceManager.getPreferenceBoolean(PreferenceKeys.ifl_quick_toggle_typing, false));
+        quickToggleTypingSwitch.setChecked(GhostModeManager.quickToggleTyping);
         quickToggleTypingSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             GhostModeManager.quickToggleTyping = isChecked;
             preferenceManager.setPreferenceBoolean(PreferenceKeys.ifl_quick_toggle_typing, isChecked);
@@ -113,7 +113,7 @@ public class ifl_a_ghost_mode extends AppCompatActivity {
 
         TileLargeSwitch tileQuickToggleScreenshot = findViewById(R.id.ifl_tile_quick_toggle_screenshot);
         Switch quickToggleScreenshotSwitch = tileQuickToggleScreenshot.getSwitchView();
-        quickToggleScreenshotSwitch.setChecked(preferenceManager.getPreferenceBoolean(PreferenceKeys.ifl_quick_toggle_screenshot, false));
+        quickToggleScreenshotSwitch.setChecked(GhostModeManager.quickToggleScreenshot);
         quickToggleScreenshotSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             GhostModeManager.quickToggleScreenshot = isChecked;
             preferenceManager.setPreferenceBoolean(PreferenceKeys.ifl_quick_toggle_screenshot, isChecked);
@@ -121,7 +121,7 @@ public class ifl_a_ghost_mode extends AppCompatActivity {
 
         TileLargeSwitch tileQuickToggleViewOnce = findViewById(R.id.ifl_tile_quick_toggle_viewonce);
         Switch quickToggleViewOnceSwitch = tileQuickToggleViewOnce.getSwitchView();
-        quickToggleViewOnceSwitch.setChecked(preferenceManager.getPreferenceBoolean(PreferenceKeys.ifl_quick_toggle_view_once, false));
+        quickToggleViewOnceSwitch.setChecked(GhostModeManager.quickToggleViewOnce);
         quickToggleViewOnceSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             GhostModeManager.quickToggleViewOnce = isChecked;
             preferenceManager.setPreferenceBoolean(PreferenceKeys.ifl_quick_toggle_view_once, isChecked);
@@ -129,7 +129,7 @@ public class ifl_a_ghost_mode extends AppCompatActivity {
 
         TileLargeSwitch tileQuickToggleStory = findViewById(R.id.ifl_tile_quick_toggle_story);
         Switch quickToggleStorySwitch = tileQuickToggleStory.getSwitchView();
-        quickToggleStorySwitch.setChecked(preferenceManager.getPreferenceBoolean(PreferenceKeys.ifl_quick_toggle_story, false));
+        quickToggleStorySwitch.setChecked(GhostModeManager.quickToggleStory);
         quickToggleStorySwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             GhostModeManager.quickToggleStory = isChecked;
             preferenceManager.setPreferenceBoolean(PreferenceKeys.ifl_quick_toggle_story, isChecked);
@@ -137,7 +137,7 @@ public class ifl_a_ghost_mode extends AppCompatActivity {
 
         TileLargeSwitch tileQuickToggleLive = findViewById(R.id.ifl_tile_quick_toggle_live);
         Switch quickToggleLiveSwitch = tileQuickToggleLive.getSwitchView();
-        quickToggleLiveSwitch.setChecked(preferenceManager.getPreferenceBoolean(PreferenceKeys.ifl_quick_toggle_live, false));
+        quickToggleLiveSwitch.setChecked(GhostModeManager.quickToggleLive);
         quickToggleLiveSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             GhostModeManager.quickToggleLive = isChecked;
             preferenceManager.setPreferenceBoolean(PreferenceKeys.ifl_quick_toggle_live, isChecked);
