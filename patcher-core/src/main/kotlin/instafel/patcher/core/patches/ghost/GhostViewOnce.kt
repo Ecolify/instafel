@@ -13,19 +13,19 @@ import java.io.File
  * Ghost ViewOnce patch - prevents view once media from being marked as seen
  * 
  * Based on InstaEclipse implementation (ps.reso.instaeclipse.mods.ghost.ViewOnce)
- * which hooks methods containing both "visual_item_seen" and "send_visual_item_seen_marker"
- * strings. This patch adapts that approach for smali patching by:
+ * which finds and hooks methods containing "visual_item_seen" with signature (?,?,?) -> void.
  * 
- * 1. Using multiple search patterns to find the correct file:
- *    - Pattern 1: Search for files with "visual_item_seen", "send_visual_item_seen_marker", and "permanent"
- *    - Pattern 2: Search for files with "visual_item_seen", "send_visual_item_seen_marker", and "replayed"
- *    - Pattern 3: Fallback to just "visual_item_seen" and "send_visual_item_seen_marker"
- * 2. Finding the method that contains both marker strings within its body
- * 3. Injecting an early return when ghost viewonce is enabled
+ * Analysis of Instagram smali shows:
+ * - LX/GTu is a class with method A01() returning "visual_item_seen" string
+ * - LX/5nb is the ViewOnce message class that has a field of type LX/GTu
+ * - LX/5nc is the HANDLER that sends the visual_item_seen marker
+ * - Method Fe3(LX/2vp;LX/Qff;LX/5eh;)V in 5nc handles sending the marker
  * 
- * The method signature in InstaEclipse is (?,?,AbstractClassType) -> void,
- * and it checks the third parameter at runtime. For smali patching, we instead
- * inject a static check that prevents the method from executing.
+ * Search strategy:
+ * 1. Find handler class that implements an interface and contains "visual_item_seen"
+ * 2. Identify method with 3 parameters, void return, containing "visual_item_seen"
+ * 3. Additional validation: method should cast third parameter (check-cast instruction)
+ * 4. Inject early return when ghost viewonce is enabled
  */
 @PInfos.PatchInfo(
     name = "Ghost ViewOnce",
@@ -41,24 +41,26 @@ class GhostViewOnce: InstafelPatch() {
         @PInfos.TaskInfo("Find ghost viewonce source file")
         object: InstafelTask() {
             override fun execute() {
-                // Try multiple search patterns in order of specificity
+                // Strategy: Find the handler class, not the message class
+                // The handler implements an interface and contains "visual_item_seen"
+                // with a method that has 3 parameters and casts the third one
                 val searchPatterns = listOf(
-                    // Pattern 1: Include "permanent" - likely in view once handling
+                    // Pattern 1: Handler class implementing interface with visual_item_seen
                     listOf(
-                        listOf("visual_item_seen"),
-                        listOf("send_visual_item_seen_marker"),
-                        listOf("permanent")
+                        listOf("# interfaces"),
+                        listOf(".implements"),
+                        listOf("visual_item_seen")
                     ),
-                    // Pattern 2: Include "replayed" - related to view once replay
+                    // Pattern 2: More relaxed - just interface implementation and visual_item_seen
                     listOf(
-                        listOf("visual_item_seen"),
-                        listOf("send_visual_item_seen_marker"),
-                        listOf("replayed")
+                        listOf("implements"),
+                        listOf("visual_item_seen")
                     ),
-                    // Pattern 3: Just the two main strings
+                    // Pattern 3: Fallback - files with visual_item_seen and check-cast
+                    // (the handler casts the third parameter)
                     listOf(
                         listOf("visual_item_seen"),
-                        listOf("send_visual_item_seen_marker")
+                        listOf("check-cast")
                     )
                 )
                 
@@ -69,17 +71,17 @@ class GhostViewOnce: InstafelPatch() {
                         is FileSearchResult.Success -> {
                             ghostViewOnceFile = result.file
                             val patternDesc = when (index) {
-                                0 -> "with permanent marker"
-                                1 -> "with replayed marker"
-                                else -> "basic search"
+                                0 -> "interface handler with visual_item_seen"
+                                1 -> "implements with visual_item_seen"
+                                else -> "check-cast pattern"
                             }
-                            success("Ghost viewonce source class found successfully ($patternDesc)")
+                            success("Ghost viewonce handler class found successfully ($patternDesc)")
                             break
                         }
                         is FileSearchResult.NotFound -> {
                             if (index == searchPatterns.size - 1) {
                                 // Last pattern and still not found
-                                failure("Patch aborted because no classes found for ghost viewonce. Found ${result.scannedFiles} candidate files.")
+                                failure("Patch aborted because no handler class found for ghost viewonce. Found ${result.scannedFiles} candidate files.")
                             }
                             // Try next pattern
                             continue
@@ -95,48 +97,62 @@ class GhostViewOnce: InstafelPatch() {
                 var methodLine = -1
                 var localsLine = -1
 
-                // Find the method that contains both marker strings
+                // Find method with:
+                // 1. 3 parameters (matches InstaEclipse signature)
+                // 2. void return type ()V
+                // 3. Contains "visual_item_seen" string
+                // 4. Contains "check-cast" (casts third parameter)
                 var foundMethod = false
+                var currentMethodStart = -1
+                var currentMethodEnd = -1
+                
                 fContent.forEachIndexed { index, line ->
                     if (foundMethod) return@forEachIndexed
                     
-                    if (line.contains("visual_item_seen") || line.contains("send_visual_item_seen_marker")) {
-                        // Search backwards to find the method declaration
-                        for (i in index downTo 0) {
-                            if (fContent[i].contains(".method")) {
-                                val methodDeclaration = fContent[i]
-                                // Prefer methods with static or final modifiers
-                                if (methodDeclaration.contains("static") || methodDeclaration.contains("final")) {
-                                    // Find method end to verify both strings are in this method
-                                    var methodEndLine = -1
-                                    for (j in i until fContent.size) {
-                                        if (fContent[j].contains(".end method")) {
-                                            methodEndLine = j
-                                            break
-                                        }
+                    // Track method boundaries
+                    if (line.contains(".method")) {
+                        currentMethodStart = index
+                        currentMethodEnd = -1
+                    } else if (line.contains(".end method")) {
+                        currentMethodEnd = index
+                        
+                        // Check if this method matches our criteria
+                        if (currentMethodStart != -1 && currentMethodEnd != -1) {
+                            val methodDeclaration = fContent[currentMethodStart]
+                            val methodContent = fContent.subList(currentMethodStart, currentMethodEnd + 1)
+                            
+                            // Check signature: 3 parameters (3 semicolons in param list) and void return
+                            val paramMatch = Regex("""\(([^)]*)\)V""").find(methodDeclaration)
+                            if (paramMatch != null) {
+                                val params = paramMatch.groupValues[1]
+                                val paramCount = params.count { it == ';' }
+                                
+                                // Must have exactly 3 parameters and return void
+                                if (paramCount == 3) {
+                                    // Check if method contains visual_item_seen
+                                    val hasVisualItemSeen = methodContent.any { 
+                                        it.contains("visual_item_seen") 
                                     }
                                     
-                                    // Check if both strings are in this method
-                                    if (methodEndLine != -1) {
-                                        val methodContent = fContent.subList(i, methodEndLine + 1)
-                                        val hasVisualItemSeen = methodContent.any { it.contains("visual_item_seen") }
-                                        val hasSendMarker = methodContent.any { it.contains("send_visual_item_seen_marker") }
-                                        
-                                        if (hasVisualItemSeen && hasSendMarker) {
-                                            methodLine = i
-                                            // Find .locals line
-                                            for (j in methodLine until minOf(methodLine + 10, fContent.size)) {
-                                                if (fContent[j].contains(".locals")) {
-                                                    localsLine = j
-                                                    break
-                                                }
+                                    // Check if method casts the third parameter (typical pattern)
+                                    val hasCheckCast = methodContent.any { 
+                                        it.trim().startsWith("check-cast p3,") || 
+                                        it.trim().startsWith("check-cast p2,")
+                                    }
+                                    
+                                    if (hasVisualItemSeen && hasCheckCast) {
+                                        methodLine = currentMethodStart
+                                        // Find .locals line
+                                        for (j in methodLine until minOf(methodLine + 15, fContent.size)) {
+                                            if (fContent[j].contains(".locals")) {
+                                                localsLine = j
+                                                break
                                             }
-                                            foundMethod = true
-                                            break
                                         }
+                                        foundMethod = true
+                                        return@forEachIndexed
                                     }
                                 }
-                                break // Exit method search once we've checked this method
                             }
                         }
                     }
@@ -159,9 +175,9 @@ class GhostViewOnce: InstafelPatch() {
 
                     fContent.add(insertLine, lines.joinToString("\n"))
                     FileUtils.writeLines(ghostViewOnceFile, fContent)
-                    success("Ghost viewonce patch successfully applied")
+                    success("Ghost viewonce patch successfully applied to method with 3 parameters")
                 } else {
-                    failure("Required method for ghost viewonce cannot be found.")
+                    failure("Required method (3 params, void return, visual_item_seen, check-cast) for ghost viewonce cannot be found.")
                 }
             }
         }
