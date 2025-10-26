@@ -55,7 +55,8 @@ class GhostTyping: InstafelPatch() {
                         for (i in index downTo 0) {
                             if (fContent[i].contains(".method")) {
                                 val methodDeclaration = fContent[i]
-                                if (methodDeclaration.contains("static") && methodDeclaration.contains("final")) {
+                                // Prefer methods with static or final modifiers
+                                if (methodDeclaration.contains("static") || methodDeclaration.contains("final")) {
                                     methodLine = i
                                     // Find .locals line
                                     for (j in methodLine until minOf(methodLine + 10, fContent.size)) {

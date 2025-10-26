@@ -49,15 +49,14 @@ class GhostSeen: InstafelPatch() {
                 val fContent = smaliUtils.getSmaliFileContent(ghostSeenFile.absolutePath).toMutableList()
                 var methodLine = -1
                 var localsLine = -1
-                var isStaticFinal = false
 
                 fContent.forEachIndexed { index, line ->
                     if (line.contains("mark_thread_seen-")) {
                         for (i in index downTo 0) {
                             if (fContent[i].contains(".method")) {
                                 val methodDeclaration = fContent[i]
-                                isStaticFinal = methodDeclaration.contains("static") && methodDeclaration.contains("final")
-                                if (isStaticFinal) {
+                                // Prefer methods with static or final modifiers
+                                if (methodDeclaration.contains("static") || methodDeclaration.contains("final")) {
                                     methodLine = i
                                     // Find .locals line
                                     for (j in methodLine until minOf(methodLine + 10, fContent.size)) {
