@@ -13,19 +13,28 @@ import java.io.File
  * Ghost ViewOnce patch - prevents view once media from being marked as seen
  * 
  * Based on InstaEclipse implementation (ps.reso.instaeclipse.mods.ghost.ViewOnce)
- * which hooks methods containing both "visual_item_seen" and "send_visual_item_seen_marker"
- * strings. This patch adapts that approach for smali patching by:
+ * which hooks methods containing "visual_item_seen" string. This patch adapts that 
+ * approach for smali patching by:
  * 
- * 1. Using multiple search patterns to find the correct file:
- *    - Pattern 1: Search for files with "visual_item_seen", "send_visual_item_seen_marker", and "permanent"
- *    - Pattern 2: Search for files with "visual_item_seen", "send_visual_item_seen_marker", and "replayed"
- *    - Pattern 3: Fallback to just "visual_item_seen" and "send_visual_item_seen_marker"
- * 2. Finding the method that contains both marker strings within its body
- * 3. Injecting an early return when ghost viewonce is enabled
+ * 1. Finding the implementation file that:
+ *    - Contains "visual_item_seen" string constant
+ *    - Has actual method invocations (not just string definitions)
+ *    - Is a moderate-sized file (50-2000 lines) indicating an implementation class
+ *    - References LX/KHI class (Instagram's internal API for sending markers)
  * 
- * The method signature in InstaEclipse is (?,?,AbstractClassType) -> void,
- * and it checks the third parameter at runtime. For smali patching, we instead
- * inject a static check that prevents the method from executing.
+ * 2. Finding the specific method that:
+ *    - Contains "visual_item_seen" const-string declaration
+ *    - Calls LX/KHI;->A00() to send the marker to Instagram's servers
+ *    - Example: Fe3 method in X/5nc class
+ * 
+ * 3. Injecting an early return when ghost viewonce is enabled:
+ *    - Checks GhostModeManager.isGhostViewOnceEnabled()
+ *    - Returns early if enabled, preventing the marker from being sent
+ *    - Otherwise continues with normal execution
+ * 
+ * The patch effectively blocks the "visual_item_seen" marker from being sent to
+ * Instagram servers, allowing users to view "view once" messages without the sender
+ * knowing they were viewed.
  */
 @PInfos.PatchInfo(
     name = "Ghost ViewOnce",
@@ -36,53 +45,61 @@ import java.io.File
 class GhostViewOnce: InstafelPatch() {
 
     lateinit var ghostViewOnceFile: File
+    
+    companion object {
+        private const val MIN_IMPLEMENTATION_LINES = 50
+        private const val MAX_IMPLEMENTATION_LINES = 2000
+        private const val MAX_LOCALS_SEARCH_OFFSET = 20
+    }
 
     override fun initializeTasks() = mutableListOf(
         @PInfos.TaskInfo("Find ghost viewonce source file")
         object: InstafelTask() {
             override fun execute() {
-                // Try multiple search patterns in order of specificity
-                val searchPatterns = listOf(
-                    // Pattern 1: Include "permanent" - likely in view once handling
-                    listOf(
-                        listOf("visual_item_seen"),
-                        listOf("send_visual_item_seen_marker"),
-                        listOf("permanent")
-                    ),
-                    // Pattern 2: Include "replayed" - related to view once replay
-                    listOf(
-                        listOf("visual_item_seen"),
-                        listOf("send_visual_item_seen_marker"),
-                        listOf("replayed")
-                    ),
-                    // Pattern 3: Just the two main strings
-                    listOf(
-                        listOf("visual_item_seen"),
-                        listOf("send_visual_item_seen_marker")
-                    )
+                // Search for files containing "visual_item_seen" string that also have method implementations
+                // Based on InstaEclipse approach: find methods that use visual_item_seen in their logic
+                val searchPattern = listOf(
+                    listOf("visual_item_seen"),
+                    listOf("invoke-static")  // Must have method calls, not just string constants
                 )
                 
-                for ((index, pattern) in searchPatterns.withIndex()) {
-                    when (val result = runBlocking {
-                        SearchUtils.getFileContainsAllCords(smaliUtils, pattern)
-                    }) {
-                        is FileSearchResult.Success -> {
-                            ghostViewOnceFile = result.file
-                            val patternDesc = when (index) {
-                                0 -> "with permanent marker"
-                                1 -> "with replayed marker"
-                                else -> "basic search"
-                            }
-                            success("Ghost viewonce source class found successfully ($patternDesc)")
-                            break
+                when (val result = runBlocking {
+                    SearchUtils.getFileContainsAllCords(smaliUtils, searchPattern)
+                }) {
+                    is FileSearchResult.Success -> {
+                        ghostViewOnceFile = result.file
+                        success("Ghost viewonce source class found successfully: ${ghostViewOnceFile.name}")
+                    }
+                    is FileSearchResult.NotFound -> {
+                        failure("Patch aborted because no classes found for ghost viewonce.")
+                    }
+                    is FileSearchResult.MultipleFound -> {
+                        // Filter candidates by file size - we want implementation files, not utility classes
+                        val candidates = result.files.filter { file ->
+                            // Use buffered counting for efficiency
+                            val lineCount = file.useLines { it.count() }
+                            // Filter files between MIN and MAX lines (implementation classes, not huge utility files)
+                            lineCount in MIN_IMPLEMENTATION_LINES..MAX_IMPLEMENTATION_LINES
                         }
-                        is FileSearchResult.NotFound -> {
-                            if (index == searchPatterns.size - 1) {
-                                // Last pattern and still not found
-                                failure("Patch aborted because no classes found for ghost viewonce. Found ${result.scannedFiles} candidate files.")
+                        
+                        if (candidates.size == 1) {
+                            ghostViewOnceFile = candidates[0]
+                            success("Ghost viewonce source class found after filtering: ${ghostViewOnceFile.name}")
+                        } else if (candidates.isEmpty()) {
+                            failure("Patch aborted: No suitable implementation files found among ${result.files.size} candidates")
+                        } else {
+                            // Multiple candidates after filtering - try to find the one with KHI reference
+                            val withKHI = candidates.filter { file ->
+                                // Use line-by-line processing to avoid loading entire file into memory
+                                file.useLines { lines -> lines.any { it.contains("LX/KHI;") } }
                             }
-                            // Try next pattern
-                            continue
+                            
+                            if (withKHI.size == 1) {
+                                ghostViewOnceFile = withKHI[0]
+                                success("Ghost viewonce source class found with KHI reference: ${ghostViewOnceFile.name}")
+                            } else {
+                                failure("Patch aborted: Found ${candidates.size} candidate files after filtering: ${candidates.map { it.name }}")
+                            }
                         }
                     }
                 }
@@ -95,45 +112,43 @@ class GhostViewOnce: InstafelPatch() {
                 var methodLine = -1
                 var localsLine = -1
 
-                // Find the method that contains both marker strings
+                // Find the method that contains "visual_item_seen" and calls KHI
+                // Based on analysis: target method Fe3 in 5nc.smali line 88 that calls LX/KHI;->A00
                 var foundMethod = false
                 fContent.forEachIndexed { index, line ->
                     if (foundMethod) return@forEachIndexed
                     
-                    if (line.contains("visual_item_seen") || line.contains("send_visual_item_seen_marker")) {
+                    // Look for methods that contain visual_item_seen const-string
+                    if (line.contains("const-string") && line.contains("visual_item_seen")) {
                         // Search backwards to find the method declaration
                         for (i in index downTo 0) {
                             if (fContent[i].contains(".method")) {
-                                val methodDeclaration = fContent[i]
-                                // Prefer methods with static or final modifiers
-                                if (methodDeclaration.contains("static") || methodDeclaration.contains("final")) {
-                                    // Find method end to verify both strings are in this method
-                                    var methodEndLine = -1
-                                    for (j in i until fContent.size) {
-                                        if (fContent[j].contains(".end method")) {
-                                            methodEndLine = j
-                                            break
-                                        }
+                                methodLine = i
+                                
+                                // Find method end to verify this method also has KHI call
+                                var methodEndLine = -1
+                                for (j in i until fContent.size) {
+                                    if (fContent[j].contains(".end method")) {
+                                        methodEndLine = j
+                                        break
                                     }
+                                }
+                                
+                                // Verify this method contains KHI reference
+                                if (methodEndLine != -1) {
+                                    val methodContent = fContent.subList(i, methodEndLine + 1)
+                                    val hasKHI = methodContent.any { it.contains("LX/KHI;") }
                                     
-                                    // Check if both strings are in this method
-                                    if (methodEndLine != -1) {
-                                        val methodContent = fContent.subList(i, methodEndLine + 1)
-                                        val hasVisualItemSeen = methodContent.any { it.contains("visual_item_seen") }
-                                        val hasSendMarker = methodContent.any { it.contains("send_visual_item_seen_marker") }
-                                        
-                                        if (hasVisualItemSeen && hasSendMarker) {
-                                            methodLine = i
-                                            // Find .locals line
-                                            for (j in methodLine until minOf(methodLine + 10, fContent.size)) {
-                                                if (fContent[j].contains(".locals")) {
-                                                    localsLine = j
-                                                    break
-                                                }
+                                    if (hasKHI) {
+                                        // Find .locals line
+                                        for (j in methodLine until minOf(methodLine + MAX_LOCALS_SEARCH_OFFSET, fContent.size)) {
+                                            if (fContent[j].contains(".locals")) {
+                                                localsLine = j
+                                                break
                                             }
-                                            foundMethod = true
-                                            break
                                         }
+                                        foundMethod = true
+                                        break
                                     }
                                 }
                                 break // Exit method search once we've checked this method
@@ -159,7 +174,7 @@ class GhostViewOnce: InstafelPatch() {
 
                     fContent.add(insertLine, lines.joinToString("\n"))
                     FileUtils.writeLines(ghostViewOnceFile, fContent)
-                    success("Ghost viewonce patch successfully applied")
+                    success("Ghost viewonce patch successfully applied to method at line $methodLine")
                 } else {
                     failure("Required method for ghost viewonce cannot be found.")
                 }
