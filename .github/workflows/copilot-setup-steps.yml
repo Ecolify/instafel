@@ -28,7 +28,11 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
         
       - name: Clone Instaeclipse Repo
-        run: git clone https://github.com/ReSo7200/InstaEclipse.git instaeclipse
+        run: | 
+          git clone https://github.com/ReSo7200/InstaEclipse.git instaeclipse
+          cd instaeclipse
+          rm -rf .git
+          cd ..
 
       - name: Download Instagram APKS
         run: |
