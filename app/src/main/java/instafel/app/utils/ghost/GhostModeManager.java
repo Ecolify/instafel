@@ -141,4 +141,52 @@ public class GhostModeManager {
             Toast.makeText(context, "❌ Ghost Mode Disabled", Toast.LENGTH_SHORT).show();
         }
     }
+    
+    /**
+     * Check if Ghost Seen is enabled
+     * Called from smali patches
+     */
+    public static boolean isGhostSeenEnabled() {
+        return isGhostSeen;
+    }
+    
+    /**
+     * Check if Ghost Typing is enabled
+     * Called from smali patches
+     */
+    public static boolean isGhostTypingEnabled() {
+        return isGhostTyping;
+    }
+    
+    /**
+     * Check if Ghost Screenshot is enabled
+     * Called from smali patches
+     */
+    public static boolean isGhostScreenshotEnabled() {
+        return isGhostScreenshot;
+    }
+    
+    /**
+     * Check if Ghost ViewOnce is enabled
+     * Called from smali patches
+     */
+    public static boolean isGhostViewOnceEnabled() {
+        return isGhostViewOnce;
+    }
+    
+    /**
+     * Check if Ghost Story is enabled
+     * Called from smali patches
+     */
+    public static boolean isGhostStoryEnabled() {
+        return isGhostStory;
+    }
+    
+    /**
+     * Check if Ghost Live is enabled
+     * Called from smali patches
+     */
+    public static boolean isGhostLiveEnabled() {
+        return isGhostLive;
+    }
 }

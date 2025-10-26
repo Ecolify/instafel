@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<instafel.app.ui.Page
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="instafel.app.activity.ifl_a_ghost_mode">
+
+    <instafel.app.ui.PageTitle
+        android:id="@+id/ifl_page_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:ifl_attr_ui_titleText="Ghost Mode" />
+
+    <instafel.app.ui.PageContentArea
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/ifl_page_title">
+
+        <instafel.app.ui.TileLargeSwitch
+            android:id="@+id/ifl_tile_ghost_mode_main"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:ifl_attr_ui_iconRes="@drawable/ifl_android"
+            app:ifl_attr_ui_spaceBottom="visible"
+            app:ifl_attr_ui_subtitleText="Enable or disable ghost mode features"
+            app:ifl_attr_ui_titleText="Ghost Mode" />
+
+        <instafel.app.ui.TileLargeSwitch
+            android:id="@+id/ifl_tile_ghost_seen"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:ifl_attr_ui_iconRes="@drawable/ifl_android"
+            app:ifl_attr_ui_spaceBottom="visible"
+            app:ifl_attr_ui_subtitleText="Hide DM read receipts"
+            app:ifl_attr_ui_titleText="Ghost Seen" />
+
+        <instafel.app.ui.TileLargeSwitch
+            android:id="@+id/ifl_tile_ghost_typing"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:ifl_attr_ui_iconRes="@drawable/ifl_android"
+            app:ifl_attr_ui_spaceBottom="visible"
+            app:ifl_attr_ui_subtitleText="Hide typing indicator"
+            app:ifl_attr_ui_titleText="Ghost Typing" />
+
+        <instafel.app.ui.TileLargeSwitch
+            android:id="@+id/ifl_tile_ghost_screenshot"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:ifl_attr_ui_iconRes="@drawable/ifl_android"
+            app:ifl_attr_ui_spaceBottom="visible"
+            app:ifl_attr_ui_subtitleText="Prevent screenshot detection"
+            app:ifl_attr_ui_titleText="Ghost Screenshot" />
+
+        <instafel.app.ui.TileLargeSwitch
+            android:id="@+id/ifl_tile_ghost_viewonce"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:ifl_attr_ui_iconRes="@drawable/ifl_android"
+            app:ifl_attr_ui_spaceBottom="visible"
+            app:ifl_attr_ui_subtitleText="View once messages without marking as seen"
+            app:ifl_attr_ui_titleText="Ghost ViewOnce" />
+
+        <instafel.app.ui.TileLargeSwitch
+            android:id="@+id/ifl_tile_ghost_story"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:ifl_attr_ui_iconRes="@drawable/ifl_android"
+            app:ifl_attr_ui_spaceBottom="visible"
+            app:ifl_attr_ui_subtitleText="View stories anonymously"
+            app:ifl_attr_ui_titleText="Ghost Story" />
+
+        <instafel.app.ui.TileLargeSwitch
+            android:id="@+id/ifl_tile_ghost_live"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:ifl_attr_ui_iconRes="@drawable/ifl_android"
+            app:ifl_attr_ui_spaceBottom="visible"
+            app:ifl_attr_ui_subtitleText="Watch live videos anonymously"
+            app:ifl_attr_ui_titleText="Ghost Live" />
+
+        <instafel.app.ui.TileLargeSwitch
+            android:id="@+id/ifl_tile_quick_toggle_seen"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:ifl_attr_ui_iconRes="@drawable/ifl_android"
+            app:ifl_attr_ui_spaceBottom="visible"
+            app:ifl_attr_ui_subtitleText="Quick toggle for Ghost Seen"
+            app:ifl_attr_ui_titleText="Quick Toggle Seen" />
+
+        <instafel.app.ui.TileLargeSwitch
+            android:id="@+id/ifl_tile_quick_toggle_typing"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:ifl_attr_ui_iconRes="@drawable/ifl_android"
+            app:ifl_attr_ui_spaceBottom="visible"
+            app:ifl_attr_ui_subtitleText="Quick toggle for Ghost Typing"
+            app:ifl_attr_ui_titleText="Quick Toggle Typing" />
+
+        <instafel.app.ui.TileLargeSwitch
+            android:id="@+id/ifl_tile_quick_toggle_screenshot"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:ifl_attr_ui_iconRes="@drawable/ifl_android"
+            app:ifl_attr_ui_spaceBottom="visible"
+            app:ifl_attr_ui_subtitleText="Quick toggle for Ghost Screenshot"
+            app:ifl_attr_ui_titleText="Quick Toggle Screenshot" />
+
+        <instafel.app.ui.TileLargeSwitch
+            android:id="@+id/ifl_tile_quick_toggle_viewonce"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:ifl_attr_ui_iconRes="@drawable/ifl_android"
+            app:ifl_attr_ui_spaceBottom="visible"
+            app:ifl_attr_ui_subtitleText="Quick toggle for Ghost ViewOnce"
+            app:ifl_attr_ui_titleText="Quick Toggle ViewOnce" />
+
+        <instafel.app.ui.TileLargeSwitch
+            android:id="@+id/ifl_tile_quick_toggle_story"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:ifl_attr_ui_iconRes="@drawable/ifl_android"
+            app:ifl_attr_ui_spaceBottom="visible"
+            app:ifl_attr_ui_subtitleText="Quick toggle for Ghost Story"
+            app:ifl_attr_ui_titleText="Quick Toggle Story" />
+
+        <instafel.app.ui.TileLargeSwitch
+            android:id="@+id/ifl_tile_quick_toggle_live"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:ifl_attr_ui_iconRes="@drawable/ifl_android"
+            app:ifl_attr_ui_spaceBottom="visible"
+            app:ifl_attr_ui_subtitleText="Quick toggle for Ghost Live"
+            app:ifl_attr_ui_titleText="Quick Toggle Live" />
+
+    </instafel.app.ui.PageContentArea>
+</instafel.app.ui.Page>

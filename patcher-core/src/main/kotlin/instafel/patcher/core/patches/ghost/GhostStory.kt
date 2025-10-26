@@ -9,55 +9,47 @@ import kotlinx.coroutines.runBlocking
 import org.apache.commons.io.FileUtils
 import java.io.File
 
-/**
- * Ghost Seen patch - prevents "seen" status from being sent
- * Based on InstaEclipse implementation
- */
 @PInfos.PatchInfo(
-    name = "Ghost Seen",
-    shortname = "ghost_seen",
-    desc = "Hide read receipts in Direct Messages",
+    name = "Ghost Story",
+    shortname = "ghost_story",
+    desc = "View stories anonymously",
     isSingle = true
 )
-class GhostSeen: InstafelPatch() {
+class GhostStory: InstafelPatch() {
 
-    lateinit var ghostSeenFile: File
+    lateinit var ghostStoryFile: File
 
     override fun initializeTasks() = mutableListOf(
-        @PInfos.TaskInfo("Find ghost seen source file")
+        @PInfos.TaskInfo("Find ghost story source file")
         object: InstafelTask() {
             override fun execute() {
                 when (val result = runBlocking {
                     SearchUtils.getFileContainsAllCords(smaliUtils,
-                        listOf(
-                            listOf("mark_thread_seen-"),
-                        ))
+                        listOf(listOf("media/seen/")))
                 }) {
                     is FileSearchResult.Success -> {
-                        ghostSeenFile = result.file
-                        success("Ghost seen source class found successfully")
+                        ghostStoryFile = result.file
+                        success("Ghost story source class found successfully")
                     }
                     is FileSearchResult.NotFound -> {
-                        failure("Patch aborted because no classes found for ghost seen.")
+                        failure("Patch aborted because no classes found for ghost story.")
                     }
                 }
             }
         },
-        @PInfos.TaskInfo("Apply ghost seen patch")
+        @PInfos.TaskInfo("Apply ghost story patch")
         object: InstafelTask() {
             override fun execute() {
-                val fContent = smaliUtils.getSmaliFileContent(ghostSeenFile.absolutePath).toMutableList()
+                val fContent = smaliUtils.getSmaliFileContent(ghostStoryFile.absolutePath).toMutableList()
                 var methodLine = -1
                 var localsLine = -1
-                var isStaticFinal = false
 
                 fContent.forEachIndexed { index, line ->
-                    if (line.contains("mark_thread_seen-")) {
+                    if (line.contains("media/seen/")) {
                         for (i in index downTo 0) {
                             if (fContent[i].contains(".method")) {
                                 val methodDeclaration = fContent[i]
-                                isStaticFinal = methodDeclaration.contains("static") && methodDeclaration.contains("final")
-                                if (isStaticFinal) {
+                                if (methodDeclaration.contains("final")) {
                                     methodLine = i
                                     // Find .locals line
                                     for (j in methodLine until minOf(methodLine + 10, fContent.size)) {
@@ -80,20 +72,20 @@ class GhostSeen: InstafelPatch() {
                     
                     val lines = listOf(
                         "",
-                        "    # Ghost Seen - Block read receipts",
-                        "    invoke-static {}, Linstafel/app/utils/ghost/GhostModeManager;->isGhostSeenEnabled()Z",
+                        "    # Ghost Story - Block story seen tracking",
+                        "    invoke-static {}, Linstafel/app/utils/ghost/GhostModeManager;->isGhostStoryEnabled()Z",
                         "    move-result v0",
-                        "    if-eqz v0, :ghost_seen_continue",
+                        "    if-eqz v0, :ghost_story_continue",
                         "    return-void",
-                        "    :ghost_seen_continue",
+                        "    :ghost_story_continue",
                         ""
                     )
 
                     fContent.add(insertLine, lines.joinToString("\n"))
-                    FileUtils.writeLines(ghostSeenFile, fContent)
-                    success("Ghost seen patch successfully applied")
+                    FileUtils.writeLines(ghostStoryFile, fContent)
+                    success("Ghost story patch successfully applied")
                 } else {
-                    failure("Required method for ghost seen cannot be found.")
+                    failure("Required method for ghost story cannot be found.")
                 }
             }
         }
