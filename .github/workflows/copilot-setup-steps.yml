@@ -30,39 +30,63 @@ jobs:
       - name: Clone Instaeclipse Repo
         run: git clone https://github.com/ReSo7200/InstaEclipse.git instaeclipse
 
-      - name: Create instagram directory
-        run: mkdir -p instagram
-
-      - name: Download Instagram APK
+      - name: Download Instagram APKS
         run: |
-          curl -L -o instagram.apk "https://eb5e7388c3df147b74dd2379b7cf8323.r2.cloudflarestorage.com/downloadprod/wp-content/uploads/2025/10/57/68f902d4ce111/com.instagram.android_404.0.0.0.67-381003510_1dpi_6feat_ad7502d3cf22786b49abe681b5e90492_apkmirror.com.apkm?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=72a5ba3a0b8a601e535d5525f12f8177%2F20251026%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20251026T190450Z&X-Amz-SignedHeaders=host&X-Amz-Expires=3600&X-Amz-Signature=ed2d58ba04c972192d468ca1048e13a1baee0496f4975c1adb4e3811bc05f995"
-          mv instagram.apk instagram/
+          mkdir -p instagram
+          curl -L -f -o instagram/instagram.apks "https://eb5e7388c3df147b74dd2379b7cf8323.r2.cloudflarestorage.com/downloadprod/wp-content/uploads/2025/10/57/68f902d4ce111/com.instagram.android_404.0.0.0.67-381003510_1dpi_6feat_ad7502d3cf22786b49abe681b5e90492_apkmirror.com.apkm?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=72a5ba3a0b8a601e535d5525f12f8177%2F20251026%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20251026T190450Z&X-Amz-SignedHeaders=host&X-Amz-Expires=3600&X-Amz-Signature=ed2d58ba04c972192d468ca1048e13a1baee0496f4975c1adb4e3811bc05f995"
+          ls -l instagram/instagram.apks
 
-      - name: Download apktool (jar) and wrapper
+      - name: Install apktool jar
         run: |
-          curl -L -o apktool.jar https://release-assets.githubusercontent.com/github-production-release-asset/3766706/fbeb14a5-360e-48a2-af62-464b64a36edd?sp=r&sv=2018-11-09&sr=b&spr=https&se=2025-10-26T19%3A43%3A19Z&rscd=attachment%3B+filename%3Dapktool_2.12.1.jar&rsct=application%2Foctet-stream&skoid=96c2d410-5711-43a1-aedd-ab1947aa7ab0&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skt=2025-10-26T18%3A43%3A10Z&ske=2025-10-26T19%3A43%3A19Z&sks=b&skv=2018-11-09&sig=XEZv8mjCViBM6QUYnzi%2BYe6TJeLf%2BxQwmT78ktcWKZE%3D&jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmVsZWFzZS1hc3NldHMuZ2l0aHVidXNlcmNvbnRlbnQuY29tIiwia2V5Ijoia2V5MSIsImV4cCI6MTc2MTUwNzYxNSwibmJmIjoxNzYxNTA1ODE1LCJwYXRoIjoicmVsZWFzZWFzc2V0cHJvZHVjdGlvbi5ibG9iLmNvcmUud2luZG93cy5uZXQifQ.Qjggr0do0v2tj-kq9VcXkZ7Ys_34JG2zno5MORMUPrI&response-content-disposition=attachment%3B%20filename%3Dapktool_2.12.1.jar&response-content-type=application%2Foctet-stream || true
-          # fallback official release if raw link not available
-          if [ ! -s apktool.jar ]; then
-            curl -L -o apktool.jar "https://bitbucket.org/iBotPeaches/apktool/downloads/apktool_2.12.1.jar"
-          fi
+          curl -L -f -o apktool.jar "https://release-assets.githubusercontent.com/github-production-release-asset/3766706/fbeb14a5-360e-48a2-af62-464b64a36edd?sp=r&sv=2018-11-09&sr=b&spr=https&se=2025-10-26T19%3A43%3A19Z&rscd=attachment%3B+filename%3Dapktool_2.12.1.jar&rsct=application%2Foctet-stream&skoid=96c2d410-5711-43a1-aedd-ab1947aa7ab0&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skt=2025-10-26T18%3A43%3A10Z&ske=2025-10-26T19%3A43%3A19Z&sks=b&skv=2018-11-09&sig=XEZv8mjCViBM6QUYnzi%2BYe6TJeLf%2BxQwmT78ktcWKZE%3D&jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmVsZWFzZS1hc3NldHMuZ2l0aHVidXNlcmNvbnRlbnQuY29tIiwia2V5Ijoia2V5MSIsImV4cCI6MTc2MTUwNzYxNSwibmJmIjoxNzYxNTA1ODE1LCJwYXRoIjoicmVsZWFzZWFzc2V0cHJvZHVjdGlvbi5ibG9iLmNvcmUud2luZG93cy5uZXQifQ.Qjggr0do0v2tj-kq9VcXkZ7Ys_34JG2zno5MORMUPrI&response-content-disposition=attachment%3B%20filename%3Dapktool_2.12.1.jar&response-content-type=application%2Foctet-stream"
           chmod +x apktool.jar
-          
-      - name: Add Framework with apktool
-        working-directory: instagram
+
+      - name: Add framework for apktool
+        run: |
+          mkdir -p frameworks
+          curl -L -f -o frameworks/framework-res.apk "https://dumps.tadiphone.dev/dumps/samsung/dm3q/-/raw/dm3qxxx-user-15-AP3A.240905.015.A2-S918BXXU8DYD9-release-keys/system/system/framework/framework-res.apk?ref_type=heads&inline=false"
+          test -s frameworks/framework-res.apk
+          java -jar apktool.jar if frameworks/framework-res.apk
+
+      - name: Unzip .apks and pick APK to decompile
         run: |
           set -e
-          mkdir -p ../frameworks
-          echo "Descargando framework-res.apk..."
-          curl -L -f -o ../frameworks/framework-res.apk "https://dumps.tadiphone.dev/dumps/samsung/dm3q/-/raw/dm3qxxx-user-15-AP3A.240905.015.A2-S918BXXU8DYD9-release-keys/system/system/framework/framework-res.apk?ref_type=heads&inline=false"
-          if [ ! -s ../frameworks/framework-res.apk ]; then
-            echo "ERROR: descarga fallida o archivo vacío: ../frameworks/framework-res.apk"
+          mkdir -p instagram/apks_extracted
+          unzip -q instagram/instagram.apks -d instagram/apks_extracted
+          # list extracted files
+          echo "Extracted files:"
+          ls -la instagram/apks_extracted | sed -n '1,200p'
+          # find candidate APKs
+          mapfile -t apks < <(find instagram/apks_extracted -type f -name '*.apk')
+          if [ ${#apks[@]} -eq 0 ]; then
+            echo "ERROR: no APKs found inside instagram.apks"
             exit 1
           fi
-          echo "Instalando framework en apktool..."
-          java -jar ../apktool.jar if ../frameworks/framework-res.apk
-          
-      - name: Decompile APK with apktool
+          # prefer base.apk or universal.apk otherwise pick largest
+          preferred=""
+          for f in "${apks[@]}"; do
+            if echo "$f" | grep -qi 'base.apk'; then preferred="$f"; break; fi
+            if echo "$f" | grep -qi 'universal.apk'; then preferred="$f"; fi
+          done
+          if [ -z "$preferred" ]; then
+            preferred=$(printf "%s\n" "${apks[@]}" | xargs -I{} ls -S {} | head -n1)
+          fi
+          echo "Selected APK for decompilation: $preferred"
+          mv "$preferred" instagram/instagram_selected.apk
+          ls -lh instagram/instagram_selected.apk
+
+      - name: Decompile selected APK with apktool
         working-directory: instagram
         run: |
-          java -jar ../apktool.jar d -f --keep-broken-res instagram.apk -o instagram_src
-          # move smali folders to instagram root for clarity
+          java -jar ../apktool.jar d -f --keep-broken-res instagram_selected.apk -o instagram_src || true
+          # collect all smali* dirs into repo root instagram/
+          for d in instagram_src/smali*; do
+            if [ -d "$d" ]; then
+              bn=$(basename "$d")
+              mv -f "$d" "./$bn" || true
+            fi
+          done
+          # ensure AndroidManifest and res exist
+          test -f instagram_src/AndroidManifest.xml || echo "Warning: AndroidManifest.xml missing"
+          test -d instagram_src/res || echo "Warning: res/ missing"
+          echo "Smali folders at: $(ls -d smali* 2>/dev/null || echo 'none')"
