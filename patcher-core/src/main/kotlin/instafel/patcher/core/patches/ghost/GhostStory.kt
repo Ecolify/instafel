@@ -25,7 +25,7 @@ class GhostStory: InstafelPatch() {
             override fun execute() {
                 when (val result = runBlocking {
                     SearchUtils.getFileContainsAllCords(smaliUtils,
-                        listOf("media/seen/"))
+                        listOf(listOf("media/seen/")))
                 }) {
                     is FileSearchResult.Success -> {
                         ghostStoryFile = result.file

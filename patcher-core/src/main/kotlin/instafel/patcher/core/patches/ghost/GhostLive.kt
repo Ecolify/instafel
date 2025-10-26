@@ -25,7 +25,7 @@ class GhostLive: InstafelPatch() {
             override fun execute() {
                 when (val result = runBlocking {
                     SearchUtils.getFileContainsAllCords(smaliUtils,
-                        listOf("live_viewer_invite"))
+                        listOf(listOf("live_viewer_invite")))
                 }) {
                     is FileSearchResult.Success -> {
                         ghostLiveFile = result.file

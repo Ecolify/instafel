@@ -25,7 +25,7 @@ class GhostViewOnce: InstafelPatch() {
             override fun execute() {
                 when (val result = runBlocking {
                     SearchUtils.getFileContainsAllCords(smaliUtils,
-                        listOf("visual_item_seen")
+                        listOf(listOf("visual_item_seen"))
                     )
                 }) {
                     is FileSearchResult.Success -> {
