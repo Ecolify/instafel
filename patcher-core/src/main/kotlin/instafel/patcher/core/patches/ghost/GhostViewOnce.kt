@@ -74,7 +74,7 @@ class GhostViewOnce: InstafelPatch() {
                                 else -> "basic search"
                             }
                             success("Ghost viewonce source class found successfully ($patternDesc)")
-                            return@execute
+                            break
                         }
                         is FileSearchResult.NotFound -> {
                             if (index == searchPatterns.size - 1) {
