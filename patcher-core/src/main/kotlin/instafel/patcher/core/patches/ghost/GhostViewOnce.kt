@@ -45,6 +45,12 @@ import java.io.File
 class GhostViewOnce: InstafelPatch() {
 
     lateinit var ghostViewOnceFile: File
+    
+    companion object {
+        private const val MIN_IMPLEMENTATION_LINES = 50
+        private const val MAX_IMPLEMENTATION_LINES = 2000
+        private const val MAX_LOCALS_SEARCH_OFFSET = 20
+    }
 
     override fun initializeTasks() = mutableListOf(
         @PInfos.TaskInfo("Find ghost viewonce source file")
@@ -70,9 +76,10 @@ class GhostViewOnce: InstafelPatch() {
                     is FileSearchResult.MultipleFound -> {
                         // Filter candidates by file size - we want implementation files, not utility classes
                         val candidates = result.files.filter { file ->
-                            val lineCount = file.readLines().size
-                            // Filter files between 50 and 2000 lines (implementation classes, not huge utility files)
-                            lineCount in 50..2000
+                            // Use buffered counting for efficiency
+                            val lineCount = file.useLines { it.count() }
+                            // Filter files between MIN and MAX lines (implementation classes, not huge utility files)
+                            lineCount in MIN_IMPLEMENTATION_LINES..MAX_IMPLEMENTATION_LINES
                         }
                         
                         if (candidates.size == 1) {
@@ -83,7 +90,8 @@ class GhostViewOnce: InstafelPatch() {
                         } else {
                             // Multiple candidates after filtering - try to find the one with KHI reference
                             val withKHI = candidates.filter { file ->
-                                file.readText().contains("LX/KHI;")
+                                // Use line-by-line processing to avoid loading entire file into memory
+                                file.useLines { lines -> lines.any { it.contains("LX/KHI;") } }
                             }
                             
                             if (withKHI.size == 1) {
@@ -133,7 +141,7 @@ class GhostViewOnce: InstafelPatch() {
                                     
                                     if (hasKHI) {
                                         // Find .locals line
-                                        for (j in methodLine until minOf(methodLine + 20, fContent.size)) {
+                                        for (j in methodLine until minOf(methodLine + MAX_LOCALS_SEARCH_OFFSET, fContent.size)) {
                                             if (fContent[j].contains(".locals")) {
                                                 localsLine = j
                                                 break
