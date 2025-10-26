@@ -31,7 +31,8 @@ class GhostScreenshot : InstafelPatch() {
                     SearchUtils.getFileContainsAllCords(
                         smaliUtils,
                         listOf(
-                            listOf("ScreenshotNotificationManager")
+                            listOf("ScreenshotNotificationManager"),
+                            listOf(".method", "(J)V")
                         )
                     )
                 }) {
