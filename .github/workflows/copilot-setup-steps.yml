@@ -50,8 +50,16 @@ jobs:
       - name: Add Framework with apktool
         working-directory: instagram
         run: |
-          curl -L -o 1.apk https://dumps.tadiphone.dev/dumps/samsung/dm3q/-/raw/dm3qxxx-user-15-AP3A.240905.015.A2-S918BXXU8DYD9-release-keys/system/system/framework/framework-res.apk?ref_type=heads&inline=false
-          java -jar ../apktool.jar if 1.apk
+          set -e
+          mkdir -p ../frameworks
+          echo "Descargando framework-res.apk..."
+          curl -L -f -o ../frameworks/framework-res.apk "https://dumps.tadiphone.dev/dumps/samsung/dm3q/-/raw/dm3qxxx-user-15-AP3A.240905.015.A2-S918BXXU8DYD9-release-keys/system/system/framework/framework-res.apk?ref_type=heads&inline=false"
+          if [ ! -s ../frameworks/framework-res.apk ]; then
+            echo "ERROR: descarga fallida o archivo vacío: ../frameworks/framework-res.apk"
+            exit 1
+          fi
+          echo "Instalando framework en apktool..."
+          java -jar ../apktool.jar if ../frameworks/framework-res.apk
           
       - name: Decompile APK with apktool
         working-directory: instagram
