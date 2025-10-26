@@ -45,21 +45,39 @@ class GhostScreenshot: InstafelPatch() {
             override fun execute() {
                 val fContent = smaliUtils.getSmaliFileContent(ghostScreenshotFile.absolutePath).toMutableList()
                 var methodLine = -1
+                var screenshotLineIndex = -1
 
-                // Find the method containing "ScreenshotNotificationManager" with compatible signatures
+                // First, find the line containing "ScreenshotNotificationManager"
                 fContent.forEachIndexed { index, line ->
                     if (line.contains("ScreenshotNotificationManager")) {
-                        // Search backwards for the method signature
-                        // Looking for void method(long) which can be (J)V or (Ljava/lang/Long;)V
-                        for (i in index downTo 0) {
-                            val methodDef = fContent[i]
-                            if (methodDef.contains(".method") && 
-                                (methodDef.contains("(J)V") || methodDef.contains("(Ljava/lang/Long;)V"))) {
-                                methodLine = i
-                                break
+                        screenshotLineIndex = index
+                        return@forEachIndexed
+                    }
+                }
+
+                if (screenshotLineIndex != -1) {
+                    // Search backwards from that line to find the method definition
+                    // Looking for void method(long) which matches: (J)V or (Ljava/lang/Long;)V
+                    for (i in screenshotLineIndex downTo 0) {
+                        val line = fContent[i]
+                        if (line.contains(".method")) {
+                            // Extract method signature - look for pattern like methodName(params)returnType
+                            val methodSignatureRegex = """\(([^)]*)\)(.+)""".toRegex()
+                            val match = methodSignatureRegex.find(line)
+                            
+                            if (match != null) {
+                                val params = match.groupValues[1]
+                                val returnType = match.groupValues[2]
+                                
+                                // Check if return type is void (V) and has exactly one long parameter
+                                // Long can be: J (primitive) or Ljava/lang/Long; (object)
+                                if (returnType.trim().startsWith("V") && 
+                                    (params == "J" || params == "Ljava/lang/Long;")) {
+                                    methodLine = i
+                                    break
+                                }
                             }
                         }
-                        if (methodLine != -1) return@forEachIndexed
                     }
                 }
 
@@ -83,7 +101,7 @@ class GhostScreenshot: InstafelPatch() {
                     FileUtils.writeLines(ghostScreenshotFile, fContent)
                     success("Ghost screenshot patch applied successfully")
                 } else {
-                    failure("Required method cannot be found.")
+                    failure("Could not find screenshot notification method")
                 }
             }
         }
