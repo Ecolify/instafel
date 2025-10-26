@@ -92,9 +92,9 @@ class GhostViewOnce: InstafelPatch() {
                 fContent.forEachIndexed { index, line ->
                     if (line.contains("const-string") && line.contains("visual_item_seen")) {
                         // Search backwards to find method declaration
-                        for (i in index downTo 0) {
-                            if (fContent[i].contains(".method")) {
-                                val methodDeclaration = fContent[i]
+                        for (methodIndex in index downTo 0) {
+                            if (fContent[methodIndex].contains(".method")) {
+                                val methodDeclaration = fContent[methodIndex]
                                 
                                 // Extract signature to match InstaEclipse: void(?, ?, ?)
                                 val signatureMatch = Regex("\\(([^)]*)\\)V").find(methodDeclaration)
@@ -109,7 +109,9 @@ class GhostViewOnce: InstafelPatch() {
                                             'L' -> {
                                                 // Object parameter - skip until semicolon
                                                 paramCount++
-                                                i = params.indexOf(';', i) + 1
+                                                val semicolonIdx = params.indexOf(';', i)
+                                                if (semicolonIdx == -1) break // Invalid signature, stop
+                                                i = semicolonIdx + 1
                                             }
                                             'I', 'J', 'Z', 'F', 'D', 'B', 'S', 'C' -> {
                                                 // Primitive parameter
@@ -126,7 +128,7 @@ class GhostViewOnce: InstafelPatch() {
                                     
                                     // InstaEclipse matches: void method with exactly 3 parameters
                                     if (paramCount == 3) {
-                                        methodLine = i
+                                        methodLine = methodIndex
                                         
                                         // Find .locals line
                                         for (j in methodLine until minOf(methodLine + MAX_LOCALS_SEARCH_OFFSET, fContent.size)) {

@@ -104,7 +104,9 @@ class GhostSeen: InstafelPatch() {
                                                 'L' -> {
                                                     // Object parameter - skip until semicolon
                                                     paramCount++
-                                                    idx = params.indexOf(';', idx) + 1
+                                                    val semicolonIdx = params.indexOf(';', idx)
+                                                    if (semicolonIdx == -1) break // Invalid signature, stop
+                                                    idx = semicolonIdx + 1
                                                 }
                                                 'I', 'J', 'Z', 'F', 'D', 'B', 'S', 'C' -> {
                                                     // Primitive parameter
