@@ -12,6 +12,7 @@ framework/
 instaeclipse/
 1.apk
 framework-res.apk
+apktool.jar
 
 # Ignore Instafel build output directory
 .output
