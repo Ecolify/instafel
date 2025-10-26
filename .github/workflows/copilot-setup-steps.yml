@@ -46,18 +46,15 @@ jobs:
             curl -L -o apktool.jar "https://bitbucket.org/iBotPeaches/apktool/downloads/apktool_2.12.1.jar"
           fi
           chmod +x apktool.jar
-
+          
+      - name: Add Framework with apktool
+        working-directory: instagram
+        run: |
+          curl -L -o 1.apk https://dumps.tadiphone.dev/dumps/samsung/dm3q/-/raw/dm3qxxx-user-15-AP3A.240905.015.A2-S918BXXU8DYD9-release-keys/system/system/framework/framework-res.apk?ref_type=heads&inline=false
+          java -jar ../apktool.jar if 1.apk
+          
       - name: Decompile APK with apktool
         working-directory: instagram
         run: |
-          java -jar ../apktool.jar d -f instagram.apk -o instagram_src
+          java -jar ../apktool.jar d -f --keep-broken-res -c instagram.apk -o instagram_src
           # move smali folders to instagram root for clarity
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-
-      - name: Install JavaScript dependencies
-        run: npm ci
