@@ -16,8 +16,11 @@ import java.io.File
  * which hooks methods containing both "visual_item_seen" and "send_visual_item_seen_marker"
  * strings. This patch adapts that approach for smali patching by:
  * 
- * 1. Searching for files containing both marker strings (narrows down from 8 files to 1)
- * 2. Finding the method that contains both strings within its body
+ * 1. Using multiple search patterns to find the correct file:
+ *    - Pattern 1: Search for files with "visual_item_seen", "send_visual_item_seen_marker", and "permanent"
+ *    - Pattern 2: Search for files with "visual_item_seen", "send_visual_item_seen_marker", and "replayed"
+ *    - Pattern 3: Fallback to just "visual_item_seen" and "send_visual_item_seen_marker"
+ * 2. Finding the method that contains both marker strings within its body
  * 3. Injecting an early return when ghost viewonce is enabled
  * 
  * The method signature in InstaEclipse is (?,?,AbstractClassType) -> void,
@@ -38,20 +41,49 @@ class GhostViewOnce: InstafelPatch() {
         @PInfos.TaskInfo("Find ghost viewonce source file")
         object: InstafelTask() {
             override fun execute() {
-                when (val result = runBlocking {
-                    SearchUtils.getFileContainsAllCords(smaliUtils,
-                        listOf(
-                            listOf("visual_item_seen"),
-                            listOf("send_visual_item_seen_marker")
-                        )
+                // Try multiple search patterns in order of specificity
+                val searchPatterns = listOf(
+                    // Pattern 1: Include "permanent" - likely in view once handling
+                    listOf(
+                        listOf("visual_item_seen"),
+                        listOf("send_visual_item_seen_marker"),
+                        listOf("permanent")
+                    ),
+                    // Pattern 2: Include "replayed" - related to view once replay
+                    listOf(
+                        listOf("visual_item_seen"),
+                        listOf("send_visual_item_seen_marker"),
+                        listOf("replayed")
+                    ),
+                    // Pattern 3: Just the two main strings
+                    listOf(
+                        listOf("visual_item_seen"),
+                        listOf("send_visual_item_seen_marker")
                     )
-                }) {
-                    is FileSearchResult.Success -> {
-                        ghostViewOnceFile = result.file
-                        success("Ghost viewonce source class found successfully")
-                    }
-                    is FileSearchResult.NotFound -> {
-                        failure("Patch aborted because no classes found for ghost viewonce.")
+                )
+                
+                for ((index, pattern) in searchPatterns.withIndex()) {
+                    when (val result = runBlocking {
+                        SearchUtils.getFileContainsAllCords(smaliUtils, pattern)
+                    }) {
+                        is FileSearchResult.Success -> {
+                            ghostViewOnceFile = result.file
+                            val patternDesc = when (index) {
+                                0 -> "with permanent marker"
+                                1 -> "with replayed marker"
+                                else -> "basic search"
+                            }
+                            success("Ghost viewonce source class found successfully ($patternDesc)")
+                            break
+                        }
+                        is FileSearchResult.NotFound -> {
+                            if (index == searchPatterns.size - 1) {
+                                // Last pattern and still not found
+                                failure("Patch aborted because no classes found for ghost viewonce. Found ${result.scannedFiles} candidate files.")
+                            }
+                            // Try next pattern
+                            continue
+                        }
                     }
                 }
             }
