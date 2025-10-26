@@ -56,13 +56,15 @@ class GhostScreenshot: InstafelPatch() {
                 }
 
                 if (screenshotLineIndex != -1) {
+                    // Compile regex once for performance
+                    val methodSignatureRegex = """\(([^)]*)\)(.+)""".toRegex()
+                    
                     // Search backwards from that line to find the method definition
                     // Looking for void method(long) which matches: (J)V or (Ljava/lang/Long;)V
                     for (i in screenshotLineIndex downTo 0) {
                         val line = fContent[i]
                         if (line.contains(".method")) {
                             // Extract method signature - look for pattern like methodName(params)returnType
-                            val methodSignatureRegex = """\(([^)]*)\)(.+)""".toRegex()
                             val match = methodSignatureRegex.find(line)
                             
                             if (match != null) {
@@ -71,7 +73,7 @@ class GhostScreenshot: InstafelPatch() {
                                 
                                 // Check if return type is void (V) and has exactly one long parameter
                                 // Long can be: J (primitive) or Ljava/lang/Long; (object)
-                                if (returnType.trim().startsWith("V") && 
+                                if (returnType.trim() == "V" && 
                                     (params == "J" || params == "Ljava/lang/Long;")) {
                                     methodLine = i
                                     break
