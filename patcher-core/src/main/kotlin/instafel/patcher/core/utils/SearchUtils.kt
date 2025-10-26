@@ -105,4 +105,96 @@ object SearchUtils {
             return@withContext FileSearchResult.Success(resultFiles[0])
         }
     }
+
+    /**
+     * Same as getFileContainsAllCords but returns MultipleFound when multiple files match
+     * instead of NotFound, allowing the caller to apply custom selection logic
+     */
+    suspend fun getFileContainsAllCordsAllowMultiple(
+        smaliUtils: SmaliUtils,
+        searchConditions: List<List<String>>
+    ): FileSearchResult = withContext(Dispatchers.IO) {
+
+        val threadCount = Utils.getSuggestedThreadCount()
+        val startTime = System.currentTimeMillis()
+        val foundFiles = Channel<File>(Channel.UNLIMITED)
+        val allFiles = mutableListOf<File>()
+        getXIterators(smaliUtils.smaliFolders).forEach { fileCollection ->
+            allFiles.addAll(fileCollection)
+        }
+
+        val totalFiles = allFiles.size
+        Log.info("Totally $totalFiles file got listed in X folder(s)")
+
+        val chunkSize = (totalFiles / threadCount) + 1
+        val chunks = allFiles.chunked(chunkSize)
+
+        val processedFiles = AtomicInteger(0)
+        val foundCount = AtomicInteger(0)
+
+        val jobs = chunks.mapIndexed { chunkIndex, chunk ->
+            async {
+                var chunkFoundCount = 0
+                var chunkProcessedCount = 0
+
+                chunk.forEach { file ->
+                    try {
+                        val fContent = smaliUtils.getSmaliFileContent(file.absolutePath)
+                        val passStatuses = BooleanArray(searchConditions.size)
+
+                        for (line in fContent) {
+                            searchConditions.forEachIndexed { i, lineConditions ->
+                                if (lineConditions.all { condition ->
+                                        line.contains(condition)
+                                    }) {
+                                    passStatuses[i] = true
+                                }
+                            }
+                            if (passStatuses.all { it }) break
+                        }
+
+                        if (passStatuses.all { it }) {
+                            Log.info("Found a file, ${Utils.makeSmaliPathShort(file)} by T$chunkIndex")
+                            foundFiles.send(file)
+                            chunkFoundCount++
+                            foundCount.incrementAndGet()
+                        }
+
+                    } catch (e: Exception) {
+                        Log.severe("IO/Read Error [Thread $chunkIndex]: ${file.absolutePath} - ${e.message}")
+                    }
+
+                    chunkProcessedCount++
+                    processedFiles.incrementAndGet()
+                }
+                chunkFoundCount
+            }
+        }
+
+        jobs.awaitAll()
+        foundFiles.close()
+
+        val resultFiles = mutableListOf<File>()
+        for (file in foundFiles) {
+            resultFiles.add(file)
+        }
+
+        val totalTime = (System.currentTimeMillis() - startTime) / 1000.0
+        Log.info("Search process ran with $threadCount threads in ${totalTime}s totally ($totalFiles file processed)")
+
+        when {
+            resultFiles.isEmpty() -> {
+                Log.severe("No files found matching the search criteria")
+                FileSearchResult.NotFound(0)
+            }
+            resultFiles.size == 1 -> {
+                Log.info("Class ${Utils.makeSmaliPathShort(resultFiles[0])} meets all requirements")
+                FileSearchResult.Success(resultFiles[0])
+            }
+            else -> {
+                Log.info("Found ${resultFiles.size} candidate files, caller will select the best match")
+                FileSearchResult.MultipleFound(resultFiles)
+            }
+        }
+    }
 }

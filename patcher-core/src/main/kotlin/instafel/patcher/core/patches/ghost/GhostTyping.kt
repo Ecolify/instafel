@@ -37,6 +37,9 @@ class GhostTyping: InstafelPatch() {
                         ghostTypingFile = result.file
                         success("Ghost typing source class found successfully")
                     }
+                    is FileSearchResult.MultipleFound -> {
+                        failure("Found multiple candidate files. Add more search conditions to narrow down results.")
+                    }
                     is FileSearchResult.NotFound -> {
                         failure("Patch aborted because no classes found for ghost typing.")
                     }

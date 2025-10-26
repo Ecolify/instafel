@@ -1,6 +1,7 @@
 package instafel.patcher.core.patches.ghost
 
 import instafel.patcher.core.utils.SearchUtils
+import instafel.patcher.core.utils.Utils
 import instafel.patcher.core.utils.modals.FileSearchResult
 import instafel.patcher.core.utils.patch.InstafelPatch
 import instafel.patcher.core.utils.patch.InstafelTask
@@ -14,18 +15,16 @@ import java.io.File
  * 
  * Based on InstaEclipse implementation (ps.reso.instaeclipse.mods.ghost.ViewOnce)
  * which hooks methods containing both "visual_item_seen" and "send_visual_item_seen_marker"
- * strings. This patch adapts that approach for smali patching by:
+ * strings.
  * 
- * 1. Using multiple search patterns to find the correct file:
- *    - Pattern 1: Search for files with "visual_item_seen", "send_visual_item_seen_marker", and "permanent"
- *    - Pattern 2: Search for files with "visual_item_seen", "send_visual_item_seen_marker", and "replayed"
- *    - Pattern 3: Fallback to just "visual_item_seen" and "send_visual_item_seen_marker"
- * 2. Finding the method that contains both marker strings within its body
- * 3. Injecting an early return when ghost viewonce is enabled
- * 
- * The method signature in InstaEclipse is (?,?,AbstractClassType) -> void,
- * and it checks the third parameter at runtime. For smali patching, we instead
- * inject a static check that prevents the method from executing.
+ * Strategy:
+ * 1. Search for files containing both marker strings
+ * 2. If multiple files found, select the one that best matches the target pattern:
+ *    - Prefer files with fewer methods (more focused classes)
+ *    - Exclude very large files (likely string constant tables)
+ *    - Exclude simple data classes (just getters/setters)
+ * 3. Find the method that contains both marker strings
+ * 4. Inject an early return when ghost viewonce is enabled
  */
 @PInfos.PatchInfo(
     name = "Ghost ViewOnce",
@@ -37,53 +36,90 @@ class GhostViewOnce: InstafelPatch() {
 
     lateinit var ghostViewOnceFile: File
 
+    /**
+     * Select the best candidate file from multiple matches
+     * Criteria:
+     * - Exclude files with >1000 lines (likely string constant tables like 000.smali, 6oh.smali)
+     * - Exclude files with <50 lines (too simple, likely just data classes)
+     * - Prefer files with moderate complexity (50-500 lines)
+     * - Prefer files with "send" or "marker" in method names
+     */
+    private fun selectBestCandidate(candidates: List<File>): File? {
+        data class FileScore(val file: File, val score: Int, val lineCount: Int)
+        
+        val scored = candidates.mapNotNull { file ->
+            val content = smaliUtils.getSmaliFileContent(file.absolutePath)
+            val lineCount = content.size
+            var score = 0
+            
+            // Scoring criteria
+            when {
+                lineCount > 1000 -> return@mapNotNull null // Exclude very large files
+                lineCount < 50 -> return@mapNotNull null // Exclude very small files
+                lineCount in 50..200 -> score += 50 // Prefer small to medium files
+                lineCount in 201..500 -> score += 30 // Medium files are OK
+                else -> score += 10 // Larger files are less preferred
+            }
+            
+            // Check for relevant method names
+            val hasRelevantMethods = content.any { line ->
+                line.contains(".method") && (
+                    line.contains("send", ignoreCase = true) ||
+                    line.contains("marker", ignoreCase = true) ||
+                    line.contains("visual", ignoreCase = true)
+                )
+            }
+            if (hasRelevantMethods) score += 20
+            
+            // Check if it's not just a string constant class
+            val methodCount = content.count { it.contains(".method") }
+            if (methodCount > 2) score += 10 // More than just init/getters
+            
+            // Check for constructor patterns (data classes usually have complex constructors)
+            val hasComplexConstructor = content.any { line ->
+                line.contains("<init>") && (
+                    line.contains("LX/") || // Takes custom types
+                    line.contains("parseFromJson") // JSON parsing
+                )
+            }
+            if (hasComplexConstructor) score += 15
+            
+            FileScore(file, score, lineCount)
+        }
+        
+        if (scored.isEmpty()) return null
+        
+        // Return the file with highest score
+        return scored.maxByOrNull { it.score }?.file
+    }
+
     override fun initializeTasks() = mutableListOf(
         @PInfos.TaskInfo("Find ghost viewonce source file")
         object: InstafelTask() {
             override fun execute() {
-                // Try multiple search patterns in order of specificity
-                val searchPatterns = listOf(
-                    // Pattern 1: Include "permanent" - likely in view once handling
-                    listOf(
-                        listOf("visual_item_seen"),
-                        listOf("send_visual_item_seen_marker"),
-                        listOf("permanent")
-                    ),
-                    // Pattern 2: Include "replayed" - related to view once replay
-                    listOf(
-                        listOf("visual_item_seen"),
-                        listOf("send_visual_item_seen_marker"),
-                        listOf("replayed")
-                    ),
-                    // Pattern 3: Just the two main strings
-                    listOf(
-                        listOf("visual_item_seen"),
-                        listOf("send_visual_item_seen_marker")
-                    )
-                )
-                
-                for ((index, pattern) in searchPatterns.withIndex()) {
-                    when (val result = runBlocking {
-                        SearchUtils.getFileContainsAllCords(smaliUtils, pattern)
-                    }) {
-                        is FileSearchResult.Success -> {
-                            ghostViewOnceFile = result.file
-                            val patternDesc = when (index) {
-                                0 -> "with permanent marker"
-                                1 -> "with replayed marker"
-                                else -> "basic search"
-                            }
-                            success("Ghost viewonce source class found successfully ($patternDesc)")
-                            break
+                // Search for files containing both marker strings
+                when (val result = runBlocking {
+                    SearchUtils.getFileContainsAllCordsAllowMultiple(smaliUtils,
+                        listOf(
+                            listOf("visual_item_seen"),
+                            listOf("send_visual_item_seen_marker")
+                        ))
+                }) {
+                    is FileSearchResult.Success -> {
+                        ghostViewOnceFile = result.file
+                        success("Ghost viewonce source class found successfully")
+                    }
+                    is FileSearchResult.MultipleFound -> {
+                        val selected = selectBestCandidate(result.files)
+                        if (selected != null) {
+                            ghostViewOnceFile = selected
+                            success("Ghost viewonce source class selected from ${result.files.size} candidates: ${Utils.makeSmaliPathShort(selected)}")
+                        } else {
+                            failure("Could not select best candidate from ${result.files.size} files. Candidates: ${result.files.map { Utils.makeSmaliPathShort(it) }}")
                         }
-                        is FileSearchResult.NotFound -> {
-                            if (index == searchPatterns.size - 1) {
-                                // Last pattern and still not found
-                                failure("Patch aborted because no classes found for ghost viewonce. Found ${result.scannedFiles} candidate files.")
-                            }
-                            // Try next pattern
-                            continue
-                        }
+                    }
+                    is FileSearchResult.NotFound -> {
+                        failure("Patch aborted because no classes found for ghost viewonce.")
                     }
                 }
             }

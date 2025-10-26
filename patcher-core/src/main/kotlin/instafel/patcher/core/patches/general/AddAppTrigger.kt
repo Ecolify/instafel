@@ -38,6 +38,9 @@ class AddAppTrigger: InstafelPatch() {
                         Log.info("Interface class name is $interfaceClassName")
                         success("Interface class found successfully")
                     }
+                    is FileSearchResult.MultipleFound -> {
+                        failure("Found multiple candidate files. Add more search conditions to narrow down results.")
+                    }
                     is FileSearchResult.NotFound -> {
                         failure("Patch aborted because no any classes found.")
                     }
@@ -60,6 +63,9 @@ class AddAppTrigger: InstafelPatch() {
                     is FileSearchResult.Success -> {
                         activityFile = result.file
                         success("Activity class found successfully")
+                    }
+                    is FileSearchResult.MultipleFound -> {
+                        failure("Found multiple candidate files. Add more search conditions to narrow down results.")
                     }
                     is FileSearchResult.NotFound -> {
                         failure("Patch aborted because no any classes found.")

@@ -40,6 +40,9 @@ class GhostScreenshot : InstafelPatch() {
                         screenshotFile = result.file
                         success("Ghost screenshot source class found successfully")
                     }
+                    is FileSearchResult.MultipleFound -> {
+                        failure("Found multiple candidate files. Add more search conditions to narrow down results.")
+                    }
                     is FileSearchResult.NotFound -> {
                         failure("Patch aborted because no matching class found for screenshot detection")
                     }
