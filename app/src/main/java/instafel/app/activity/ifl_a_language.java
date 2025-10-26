@@ -3,6 +3,7 @@ package instafel.app.activity;
 import static instafel.app.utils.GeneralFn.updateIflUi;
 import static instafel.app.utils.localization.LocalizationUtils.updateIflLocale;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import android.content.res.Resources;
 import android.os.Bundle;
@@ -70,12 +71,16 @@ public class ifl_a_language extends AppCompatActivity {
         LocalizationUtils.setLanguageClickListeners(ifl_a_language.this, localeInfos);
         tileDeviceSwitch.setOnCheckedChangeListener((compoundButton, isChecked) -> LocalizationUtils.setStateOfDevice(ifl_a_language.this, isChecked));
         tileLangDevice.setOnClickListener(v -> LocalizationUtils.setStateOfDevice(ifl_a_language.this, !tileDeviceSwitch.isChecked()));
-    }
-
-    @Override
-    public void onBackPressed() {
-        PreferenceManager preferenceManager = new PreferenceManager(this);
-        preferenceManager.setPreferenceBoolean(PreferenceKeys.ifl_ui_recreate, true);
-        super.onBackPressed();
+        
+        // Handle back press using OnBackPressedDispatcher for Android 16+ compatibility
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                PreferenceManager preferenceManager = new PreferenceManager(ifl_a_language.this);
+                preferenceManager.setPreferenceBoolean(PreferenceKeys.ifl_ui_recreate, true);
+                setEnabled(false);
+                getOnBackPressedDispatcher().onBackPressed();
+            }
+        });
     }
 }
