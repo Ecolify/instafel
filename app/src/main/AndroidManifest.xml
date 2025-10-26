@@ -24,6 +24,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name="instafel.app.activity.ifl_a_ghost_mode" android:exported="false" />
         <activity android:name="instafel.app.activity.ifl_a_ota" android:exported="false" />
         <activity android:name="instafel.app.activity.ifl_a_language" android:exported="false" />
         <activity android:name="instafel.app.activity.ifl_a_misc" android:exported="false" />

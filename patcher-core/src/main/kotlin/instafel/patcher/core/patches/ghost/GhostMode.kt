@@ -18,6 +18,9 @@ class GhostMode : InstafelPatchGroup() {
     override fun initializePatches(): List<KClass<out InstafelPatch>> = mutableListOf(
         GhostSeen::class,
         GhostTyping::class,
-        GhostScreenshot::class
+        GhostScreenshot::class,
+        GhostViewOnce::class,
+        GhostStory::class,
+        GhostLive::class
     )
 }

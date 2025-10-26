@@ -16,82 +16,83 @@ import java.io.File
 @PInfos.PatchInfo(
     name = "Ghost Typing",
     shortname = "ghost_typing",
-    desc = "Prevent typing indicator from being sent",
+    desc = "Hide typing indicator in Direct Messages",
     isSingle = true
 )
-class GhostTyping : InstafelPatch() {
+class GhostTyping: InstafelPatch() {
 
-    lateinit var typingFile: File
+    lateinit var ghostTypingFile: File
 
     override fun initializeTasks() = mutableListOf(
-        @PInfos.TaskInfo("Find typing indicator method")
+        @PInfos.TaskInfo("Find ghost typing source file")
         object: InstafelTask() {
             override fun execute() {
                 when (val result = runBlocking {
-                    SearchUtils.getFileContainsAllCords(
-                        smaliUtils,
+                    SearchUtils.getFileContainsAllCords(smaliUtils,
                         listOf(
-                            listOf("is_typing_indicator_enabled")
-                        )
-                    )
+                            listOf("is_typing_indicator_enabled"),
+                        ))
                 }) {
                     is FileSearchResult.Success -> {
-                        typingFile = result.file
+                        ghostTypingFile = result.file
                         success("Ghost typing source class found successfully")
                     }
                     is FileSearchResult.NotFound -> {
-                        failure("Patch aborted because no matching class found for typing indicator")
+                        failure("Patch aborted because no classes found for ghost typing.")
                     }
                 }
             }
         },
-        @PInfos.TaskInfo("Add ghost typing check")
+        @PInfos.TaskInfo("Apply ghost typing patch")
         object: InstafelTask() {
             override fun execute() {
-                val fContent = smaliUtils.getSmaliFileContent(typingFile.absolutePath).toMutableList()
-                var methodStartLine = -1
+                val fContent = smaliUtils.getSmaliFileContent(ghostTypingFile.absolutePath).toMutableList()
+                var methodLine = -1
+                var localsLine = -1
 
-                // Find the method that handles typing indicator
                 fContent.forEachIndexed { index, line ->
-                    if (line.contains("is_typing_indicator_enabled") && methodStartLine == -1) {
-                        // Find the method start
+                    if (line.contains("is_typing_indicator_enabled")) {
                         for (i in index downTo 0) {
-                            if (fContent[i].contains(".method") && 
-                                (fContent[i].contains("static") || fContent[i].contains("public"))) {
-                                methodStartLine = i
-                                break
+                            if (fContent[i].contains(".method")) {
+                                val methodDeclaration = fContent[i]
+                                if (methodDeclaration.contains("static") && methodDeclaration.contains("final")) {
+                                    methodLine = i
+                                    // Find .locals line
+                                    for (j in methodLine until minOf(methodLine + 10, fContent.size)) {
+                                        if (fContent[j].contains(".locals")) {
+                                            localsLine = j
+                                            break
+                                        }
+                                    }
+                                    break
+                                }
                             }
                         }
+                        if (methodLine != -1) return@forEachIndexed
                     }
                 }
 
-                if (methodStartLine == -1) {
-                    failure("Could not find method containing 'is_typing_indicator_enabled'")
-                    return
+                if (methodLine != -1) {
+                    // Insert after .locals line or after method declaration
+                    val insertLine = if (localsLine != -1) localsLine + 1 else methodLine + 1
+                    
+                    val lines = listOf(
+                        "",
+                        "    # Ghost Typing - Block typing indicator",
+                        "    invoke-static {}, Linstafel/app/utils/ghost/GhostModeManager;->isGhostTypingEnabled()Z",
+                        "    move-result v0",
+                        "    if-eqz v0, :ghost_typing_continue",
+                        "    return-void",
+                        "    :ghost_typing_continue",
+                        ""
+                    )
+
+                    fContent.add(insertLine, lines.joinToString("\n"))
+                    FileUtils.writeLines(ghostTypingFile, fContent)
+                    success("Ghost typing patch successfully applied")
+                } else {
+                    failure("Required method for ghost typing cannot be found.")
                 }
-
-                // Add ghost mode check at the beginning of the method
-                val ghostCheckCode = listOf(
-                    "    # Ghost Mode typing check",
-                    "    sget-boolean v0, Linstafel/app/utils/ghost/GhostModeManager;->isGhostTyping:Z",
-                    "    if-eqz v0, :ghost_typing_off",
-                    "    return-void",
-                    "    :ghost_typing_off"
-                )
-
-                // Find the first line after .locals
-                var insertLine = methodStartLine + 1
-                for (i in methodStartLine until fContent.size) {
-                    if (fContent[i].contains(".locals")) {
-                        insertLine = i + 1
-                        break
-                    }
-                }
-
-                fContent.addAll(insertLine, ghostCheckCode)
-
-                FileUtils.writeLines(typingFile, fContent)
-                success("Ghost typing patch applied successfully")
             }
         }
     )
