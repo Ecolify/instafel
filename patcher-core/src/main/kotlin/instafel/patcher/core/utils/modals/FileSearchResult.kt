@@ -4,5 +4,5 @@ import java.io.File
 
 sealed class FileSearchResult {
     data class Success(val file: File) : FileSearchResult()
-    data class NotFound(val scannedFiles: Int) : FileSearchResult()
+    data class NotFound(val scannedFiles: Int, val candidateFiles: List<File> = emptyList()) : FileSearchResult()
 }

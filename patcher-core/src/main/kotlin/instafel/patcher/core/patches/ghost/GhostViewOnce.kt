@@ -1,5 +1,6 @@
 package instafel.patcher.core.patches.ghost
 
+import instafel.patcher.core.utils.Log
 import instafel.patcher.core.utils.SearchUtils
 import instafel.patcher.core.utils.modals.FileSearchResult
 import instafel.patcher.core.utils.patch.InstafelPatch
@@ -20,8 +21,12 @@ import java.io.File
  *    - Pattern 1: Search for files with "visual_item_seen", "send_visual_item_seen_marker", and "permanent"
  *    - Pattern 2: Search for files with "visual_item_seen", "send_visual_item_seen_marker", and "replayed"
  *    - Pattern 3: Fallback to just "visual_item_seen" and "send_visual_item_seen_marker"
- * 2. Finding the method that contains both marker strings within its body
- * 3. Injecting an early return when ghost viewonce is enabled
+ * 2. When multiple files are found, apply additional filtering based on:
+ *    - Method signature matching (preferring methods with 3 parameters and void return)
+ *    - Presence of both required strings within the same method
+ *    - Method modifier analysis (static/final preference)
+ * 3. Finding the method that contains both marker strings within its body
+ * 4. Injecting an early return when ghost viewonce is enabled
  * 
  * The method signature in InstaEclipse is (?,?,AbstractClassType) -> void,
  * and it checks the third parameter at runtime. For smali patching, we instead
@@ -62,6 +67,8 @@ class GhostViewOnce: InstafelPatch() {
                     )
                 )
                 
+                var candidateFiles = emptyList<File>()
+                
                 for ((index, pattern) in searchPatterns.withIndex()) {
                     when (val result = runBlocking {
                         SearchUtils.getFileContainsAllCords(smaliUtils, pattern)
@@ -74,11 +81,24 @@ class GhostViewOnce: InstafelPatch() {
                                 else -> "basic search"
                             }
                             success("Ghost viewonce source class found successfully ($patternDesc)")
-                            break
+                            return
                         }
                         is FileSearchResult.NotFound -> {
+                            if (result.candidateFiles.isNotEmpty()) {
+                                candidateFiles = result.candidateFiles
+                                Log.info("Pattern ${index + 1} found ${candidateFiles.size} candidates, trying next pattern...")
+                            }
+                            
                             if (index == searchPatterns.size - 1) {
-                                // Last pattern and still not found
+                                // Last pattern - if we have candidates, try to filter them
+                                if (candidateFiles.isNotEmpty()) {
+                                    val filteredFile = filterCandidateFiles(candidateFiles)
+                                    if (filteredFile != null) {
+                                        ghostViewOnceFile = filteredFile
+                                        success("Ghost viewonce source class found after filtering ${candidateFiles.size} candidates")
+                                        return
+                                    }
+                                }
                                 failure("Patch aborted because no classes found for ghost viewonce. Found ${result.scannedFiles} candidate files.")
                             }
                             // Try next pattern
@@ -86,6 +106,130 @@ class GhostViewOnce: InstafelPatch() {
                         }
                     }
                 }
+            }
+            
+            /**
+             * Filter candidate files to find the most likely correct one
+             * Based on InstaEclipse logic: method with signature (?,?,AbstractClassType) -> void
+             */
+            private fun filterCandidateFiles(candidates: List<File>): File? {
+                Log.info("Filtering ${candidates.size} candidate files for ghost viewonce...")
+                
+                val scoredCandidates = candidates.map { file ->
+                    val content = smaliUtils.getSmaliFileContent(file.absolutePath)
+                    var score = 0
+                    var hasTargetMethod = false
+                    
+                    // Look for methods that contain both required strings
+                    var currentMethod = mutableListOf<String>()
+                    var inMethod = false
+                    var methodSignature = ""
+                    
+                    for (line in content) {
+                        if (line.contains(".method")) {
+                            inMethod = true
+                            methodSignature = line
+                            currentMethod.clear()
+                        }
+                        
+                        if (inMethod) {
+                            currentMethod.add(line)
+                        }
+                        
+                        if (line.contains(".end method")) {
+                            inMethod = false
+                            
+                            // Check if this method contains both required strings
+                            val methodText = currentMethod.joinToString("\n")
+                            val hasVisualItemSeen = methodText.contains("visual_item_seen")
+                            val hasSendMarker = methodText.contains("send_visual_item_seen_marker")
+                            
+                            if (hasVisualItemSeen && hasSendMarker) {
+                                hasTargetMethod = true
+                                score += 100 // High score for having both strings
+                                
+                                // Analyze method signature
+                                // Prefer methods with 3 parameters (InstaEclipse pattern)
+                                val paramCount = countMethodParameters(methodSignature)
+                                if (paramCount == 3) {
+                                    score += 50
+                                }
+                                
+                                // Prefer void return type
+                                if (methodSignature.contains(")V")) {
+                                    score += 30
+                                }
+                                
+                                // Prefer static or final methods
+                                if (methodSignature.contains("static") || methodSignature.contains("final")) {
+                                    score += 20
+                                }
+                                
+                                // Prefer methods with AbstractClass in signature (third parameter)
+                                if (methodSignature.contains("L") && paramCount >= 3) {
+                                    score += 25
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Additional scoring for specific keywords
+                    val fullContent = content.joinToString("\n")
+                    if (fullContent.contains("permanent")) score += 10
+                    if (fullContent.contains("replayed")) score += 10
+                    if (fullContent.contains("ephemeral")) score += 15
+                    if (fullContent.contains("view_once")) score += 15
+                    
+                    file to (score to hasTargetMethod)
+                }.filter { it.second.second } // Only keep files with target method
+                 .sortedByDescending { it.second.first } // Sort by score
+                
+                if (scoredCandidates.isNotEmpty()) {
+                    val best = scoredCandidates.first()
+                    Log.info("Selected candidate with score ${best.second.first}: ${best.first.name}")
+                    scoredCandidates.forEach { (file, scoreInfo) ->
+                        Log.info("  - ${file.name}: score ${scoreInfo.first}")
+                    }
+                    return best.first
+                }
+                
+                return null
+            }
+            
+            /**
+             * Count the number of parameters in a method signature
+             * Example: .method public static foo(Ljava/lang/String;ILjava/lang/Object;)V
+             * Would return 3 (String, int, Object)
+             */
+            private fun countMethodParameters(methodSignature: String): Int {
+                val signatureMatch = Regex("""\(([^)]*)\)""").find(methodSignature)
+                if (signatureMatch != null) {
+                    val params = signatureMatch.groupValues[1]
+                    if (params.isEmpty()) return 0
+                    
+                    var count = 0
+                    var i = 0
+                    while (i < params.length) {
+                        when (params[i]) {
+                            'L' -> {
+                                // Object type, find the semicolon
+                                count++
+                                i = params.indexOf(';', i) + 1
+                            }
+                            '[' -> {
+                                // Array, skip to the next character
+                                i++
+                            }
+                            else -> {
+                                // Primitive type
+                                count++
+                                i++
+                            }
+                        }
+                    }
+                    return count
+                }
+                return 0
             }
         },
         @PInfos.TaskInfo("Apply ghost viewonce patch")
