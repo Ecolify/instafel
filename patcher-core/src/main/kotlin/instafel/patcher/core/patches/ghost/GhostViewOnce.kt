@@ -9,6 +9,21 @@ import kotlinx.coroutines.runBlocking
 import org.apache.commons.io.FileUtils
 import java.io.File
 
+/**
+ * Ghost ViewOnce patch - prevents view once media from being marked as seen
+ * 
+ * Based on InstaEclipse implementation (ps.reso.instaeclipse.mods.ghost.ViewOnce)
+ * which hooks methods containing both "visual_item_seen" and "send_visual_item_seen_marker"
+ * strings. This patch adapts that approach for smali patching by:
+ * 
+ * 1. Searching for files containing both marker strings (narrows down from 8 files to 1)
+ * 2. Finding the method that contains both strings within its body
+ * 3. Injecting an early return when ghost viewonce is enabled
+ * 
+ * The method signature in InstaEclipse is (?,?,AbstractClassType) -> void,
+ * and it checks the third parameter at runtime. For smali patching, we instead
+ * inject a static check that prevents the method from executing.
+ */
 @PInfos.PatchInfo(
     name = "Ghost ViewOnce",
     shortname = "ghost_viewonce",
@@ -47,10 +62,12 @@ class GhostViewOnce: InstafelPatch() {
                 val fContent = smaliUtils.getSmaliFileContent(ghostViewOnceFile.absolutePath).toMutableList()
                 var methodLine = -1
                 var localsLine = -1
-                var methodEndLine = -1
 
                 // Find the method that contains both marker strings
+                var foundMethod = false
                 fContent.forEachIndexed { index, line ->
+                    if (foundMethod) return@forEachIndexed
+                    
                     if (line.contains("visual_item_seen") || line.contains("send_visual_item_seen_marker")) {
                         // Search backwards to find the method declaration
                         for (i in index downTo 0) {
@@ -59,23 +76,22 @@ class GhostViewOnce: InstafelPatch() {
                                 // Prefer methods with static or final modifiers
                                 if (methodDeclaration.contains("static") || methodDeclaration.contains("final")) {
                                     // Find method end to verify both strings are in this method
-                                    var tempMethodEnd = -1
+                                    var methodEndLine = -1
                                     for (j in i until fContent.size) {
                                         if (fContent[j].contains(".end method")) {
-                                            tempMethodEnd = j
+                                            methodEndLine = j
                                             break
                                         }
                                     }
                                     
                                     // Check if both strings are in this method
-                                    if (tempMethodEnd != -1) {
-                                        val methodContent = fContent.subList(i, tempMethodEnd + 1)
+                                    if (methodEndLine != -1) {
+                                        val methodContent = fContent.subList(i, methodEndLine + 1)
                                         val hasVisualItemSeen = methodContent.any { it.contains("visual_item_seen") }
                                         val hasSendMarker = methodContent.any { it.contains("send_visual_item_seen_marker") }
                                         
                                         if (hasVisualItemSeen && hasSendMarker) {
                                             methodLine = i
-                                            methodEndLine = tempMethodEnd
                                             // Find .locals line
                                             for (j in methodLine until minOf(methodLine + 10, fContent.size)) {
                                                 if (fContent[j].contains(".locals")) {
@@ -83,13 +99,14 @@ class GhostViewOnce: InstafelPatch() {
                                                     break
                                                 }
                                             }
+                                            foundMethod = true
                                             break
                                         }
                                     }
                                 }
+                                break // Exit method search once we've checked this method
                             }
                         }
-                        if (methodLine != -1) return@forEachIndexed
                     }
                 }
 
