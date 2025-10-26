@@ -31,8 +31,7 @@ class GhostScreenshot : InstafelPatch() {
                     SearchUtils.getFileContainsAllCords(
                         smaliUtils,
                         listOf(
-                            listOf("ScreenshotNotificationManager"),
-                            listOf("(J)V")
+                            listOf("ScreenshotNotificationManager")
                         )
                     )
                 }) {
@@ -51,52 +50,52 @@ class GhostScreenshot : InstafelPatch() {
             override fun execute() {
                 val fContent = smaliUtils.getSmaliFileContent(screenshotFile.absolutePath).toMutableList()
                 var methodStartLine = -1
+                var localsLine = -1
 
-                // Find methods that handle screenshot notifications
+                // Find all methods with signature (J)V (void method with long parameter)
                 fContent.forEachIndexed { index, line ->
-                    if (line.contains("ScreenshotNotificationManager") && methodStartLine == -1) {
-                        // Find the method start
-                        for (i in index downTo 0) {
-                            if (fContent[i].contains(".method") && 
-                                (fContent[i].contains("static") || fContent[i].contains("public"))) {
-                                // Check if method signature matches (void method with long parameter)
-                                if (fContent[i].contains("(J)V") || fContent[i].contains("(Ljava/lang/Long;)V")) {
-                                    methodStartLine = i
-                                    break
+                    if (line.contains(".method") && methodStartLine == -1) {
+                        // Check if method signature matches: void method with long parameter (J)V
+                        if (line.contains("(J)V")) {
+                            // Prefer methods with static or final modifiers
+                            val isStaticOrFinal = line.contains("static") || line.contains("final")
+                            if (isStaticOrFinal) {
+                                methodStartLine = index
+                                // Find .locals line
+                                for (j in methodStartLine until minOf(methodStartLine + 10, fContent.size)) {
+                                    if (fContent[j].contains(".locals")) {
+                                        localsLine = j
+                                        break
+                                    }
                                 }
+                                // Found a suitable method, stop searching
+                                return@forEachIndexed
                             }
                         }
                     }
                 }
 
                 if (methodStartLine == -1) {
-                    failure("Could not find screenshot notification method")
+                    failure("Could not find screenshot notification method with signature (J)V")
                     return
                 }
+
+                // Insert after .locals line or after method declaration
+                val insertLine = if (localsLine != -1) localsLine + 1 else methodStartLine + 1
 
                 // Add ghost mode check at the beginning of the method
                 val ghostCheckCode = listOf(
                     "",
-                    "    # Ghost Mode screenshot check",
+                    "    # Ghost Screenshot - Block screenshot notifications",
                     "    invoke-static {}, Linstafel/app/utils/ghost/GhostModeManager;->isGhostScreenshotEnabled()Z",
                     "    move-result v0",
-                    "    if-eqz v0, :ghost_screenshot_off",
+                    "    if-eqz v0, :ghost_screenshot_continue",
                     "    return-void",
-                    "    :ghost_screenshot_off",
+                    "    :ghost_screenshot_continue",
                     ""
                 )
 
-                // Find the first line after .locals
-                var insertLine = methodStartLine + 1
-                for (i in methodStartLine until fContent.size) {
-                    if (fContent[i].contains(".locals")) {
-                        insertLine = i + 1
-                        break
-                    }
-                }
-
-                fContent.addAll(insertLine, ghostCheckCode)
-
+                fContent.add(insertLine, ghostCheckCode.joinToString("\n"))
                 FileUtils.writeLines(screenshotFile, fContent)
                 success("Ghost screenshot patch applied successfully")
             }
