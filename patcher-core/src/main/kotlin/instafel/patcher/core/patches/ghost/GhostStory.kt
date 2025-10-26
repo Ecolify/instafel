@@ -9,6 +9,13 @@ import kotlinx.coroutines.runBlocking
 import org.apache.commons.io.FileUtils
 import java.io.File
 
+/**
+ * Ghost Story patch - prevents story seen tracking
+ * 
+ * Based on InstaEclipse implementation (ps.reso.instaeclipse.mods.ghost.StorySeen)
+ * which hooks methods containing "media/seen/" string with signature:
+ * final void method() with 0 parameters
+ */
 @PInfos.PatchInfo(
     name = "Ghost Story",
     shortname = "ghost_story",
@@ -19,13 +26,24 @@ class GhostStory: InstafelPatch() {
 
     lateinit var ghostStoryFile: File
 
+    companion object {
+        private const val MIN_IMPLEMENTATION_LINES = 50
+        private const val MAX_IMPLEMENTATION_LINES = 2000
+        private const val MAX_LOCALS_SEARCH_OFFSET = 20
+    }
+
     override fun initializeTasks() = mutableListOf(
         @PInfos.TaskInfo("Find ghost story source file")
         object: InstafelTask() {
             override fun execute() {
+                // Search for files with "media/seen/" that have method invocations
+                val searchPattern = listOf(
+                    listOf("media/seen/"),
+                    listOf("invoke-")  // Must have method calls
+                )
+                
                 when (val result = runBlocking {
-                    SearchUtils.getFileContainsAllCords(smaliUtils,
-                        listOf(listOf("media/seen/")))
+                    SearchUtils.getFileContainsAllCords(smaliUtils, searchPattern)
                 }) {
                     is FileSearchResult.Success -> {
                         ghostStoryFile = result.file
@@ -35,7 +53,20 @@ class GhostStory: InstafelPatch() {
                         failure("Patch aborted because no classes found for ghost story.")
                     }
                     is FileSearchResult.MultipleFound -> {
-                        failure("Patch aborted: Found ${result.files.size} candidate files for ghost story. Need more specific search conditions.")
+                        // Filter by file size to get implementation files
+                        val candidates = result.files.filter { file ->
+                            val lineCount = file.useLines { it.count() }
+                            lineCount in MIN_IMPLEMENTATION_LINES..MAX_IMPLEMENTATION_LINES
+                        }
+                        
+                        if (candidates.size == 1) {
+                            ghostStoryFile = candidates[0]
+                            success("Ghost story source class found after filtering: ${ghostStoryFile.name}")
+                        } else if (candidates.isEmpty()) {
+                            failure("Patch aborted: No suitable implementation files found among ${result.files.size} candidates")
+                        } else {
+                            failure("Patch aborted: Found ${candidates.size} candidate files after filtering: ${candidates.map { it.name }}")
+                        }
                     }
                 }
             }
@@ -47,16 +78,21 @@ class GhostStory: InstafelPatch() {
                 var methodLine = -1
                 var localsLine = -1
 
+                // Find method containing "media/seen/" const-string
+                // InstaEclipse signature: final void () with 0 parameters
                 fContent.forEachIndexed { index, line ->
-                    if (line.contains("media/seen/")) {
+                    if (line.contains("const-string") && line.contains("media/seen/")) {
+                        // Search backwards to find method declaration
                         for (i in index downTo 0) {
                             if (fContent[i].contains(".method")) {
                                 val methodDeclaration = fContent[i]
-                                // Look for methods that are likely the target (prefer static/final)
-                                if (methodDeclaration.contains("static") || methodDeclaration.contains("final")) {
+                                // Match InstaEclipse: final void method with 0 parameters
+                                if (methodDeclaration.contains("final") &&
+                                    methodDeclaration.contains("()V")) {  // void return type with no params
+                                    
                                     methodLine = i
                                     // Find .locals line
-                                    for (j in methodLine until minOf(methodLine + 10, fContent.size)) {
+                                    for (j in methodLine until minOf(methodLine + MAX_LOCALS_SEARCH_OFFSET, fContent.size)) {
                                         if (fContent[j].contains(".locals")) {
                                             localsLine = j
                                             break
@@ -64,6 +100,7 @@ class GhostStory: InstafelPatch() {
                                     }
                                     break
                                 }
+                                break  // Exit method search
                             }
                         }
                         if (methodLine != -1) return@forEachIndexed
@@ -87,9 +124,9 @@ class GhostStory: InstafelPatch() {
 
                     fContent.add(insertLine, lines.joinToString("\n"))
                     FileUtils.writeLines(ghostStoryFile, fContent)
-                    success("Ghost story patch successfully applied")
+                    success("Ghost story patch successfully applied to method at line $methodLine")
                 } else {
-                    failure("Required method for ghost story cannot be found.")
+                    failure("Required method for ghost story cannot be found (need: final void with 0 params).")
                 }
             }
         }

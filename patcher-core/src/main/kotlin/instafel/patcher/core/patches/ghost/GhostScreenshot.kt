@@ -11,7 +11,10 @@ import java.io.File
 
 /**
  * Ghost Screenshot patch - prevents screenshot detection
- * Based on InstaEclipse implementation
+ * 
+ * Based on InstaEclipse implementation (ps.reso.instaeclipse.mods.ghost.ScreenshotDetection)
+ * which finds class containing "ScreenshotNotificationManager" string, then hooks
+ * void method(long) signature
  */
 @PInfos.PatchInfo(
     name = "Ghost Screenshot",
@@ -23,28 +26,36 @@ class GhostScreenshot : InstafelPatch() {
 
     lateinit var screenshotFile: File
 
+    companion object {
+        private const val MAX_LOCALS_SEARCH_OFFSET = 20
+    }
+
     override fun initializeTasks() = mutableListOf(
         @PInfos.TaskInfo("Find screenshot notification method")
         object: InstafelTask() {
             override fun execute() {
+                // Search for files containing "ScreenshotNotificationManager" with method (J)V signature
+                val searchPattern = listOf(
+                    listOf("ScreenshotNotificationManager"),
+                    listOf(".method"),  // Must have methods
+                    listOf("(J)V")  // Must have void method with long parameter
+                )
+                
                 when (val result = runBlocking {
-                    SearchUtils.getFileContainsAllCords(
-                        smaliUtils,
-                        listOf(
-                            listOf("ScreenshotNotificationManager"),
-                            listOf(".method", "(J)V")
-                        )
-                    )
+                    SearchUtils.getFileContainsAllCords(smaliUtils, searchPattern)
                 }) {
                     is FileSearchResult.Success -> {
                         screenshotFile = result.file
-                        success("Ghost screenshot source class found successfully")
+                        success("Ghost screenshot source class found successfully: ${screenshotFile.name}")
                     }
                     is FileSearchResult.NotFound -> {
                         failure("Patch aborted because no matching class found for screenshot detection")
                     }
                     is FileSearchResult.MultipleFound -> {
-                        failure("Patch aborted: Found ${result.files.size} candidate files for ghost screenshot. Need more specific search conditions.")
+                        // If multiple files, take the first one (should be rare)
+                        // InstaEclipse also just takes first match
+                        screenshotFile = result.files.first()
+                        success("Ghost screenshot source class found (picked first of ${result.files.size}): ${screenshotFile.name}")
                     }
                 }
             }
@@ -56,26 +67,22 @@ class GhostScreenshot : InstafelPatch() {
                 var methodStartLine = -1
                 var localsLine = -1
 
-                // Find all methods with signature (J)V (void method with long parameter)
+                // Find void method with long parameter (J)V - matching InstaEclipse signature
                 fContent.forEachIndexed { index, line ->
-                    if (line.contains(".method") && methodStartLine == -1) {
-                        // Check if method signature matches: void method with long parameter (J)V
-                        if (line.contains("(J)V")) {
-                            // Prefer methods with static or final modifiers
-                            val isStaticOrFinal = line.contains("static") || line.contains("final")
-                            if (isStaticOrFinal) {
-                                methodStartLine = index
-                                // Find .locals line
-                                for (j in methodStartLine until minOf(methodStartLine + 10, fContent.size)) {
-                                    if (fContent[j].contains(".locals")) {
-                                        localsLine = j
-                                        break
-                                    }
-                                }
-                                // Found a suitable method, stop searching
-                                return@forEachIndexed
+                    if (methodStartLine == -1 && line.contains(".method") && line.contains("(J)V")) {
+                        // Found a method with signature void(long)
+                        methodStartLine = index
+                        
+                        // Find .locals line
+                        for (j in methodStartLine until minOf(methodStartLine + MAX_LOCALS_SEARCH_OFFSET, fContent.size)) {
+                            if (fContent[j].contains(".locals")) {
+                                localsLine = j
+                                break
                             }
                         }
+                        
+                        // Found the target method, stop searching
+                        return@forEachIndexed
                     }
                 }
 
@@ -101,7 +108,7 @@ class GhostScreenshot : InstafelPatch() {
 
                 fContent.add(insertLine, ghostCheckCode.joinToString("\n"))
                 FileUtils.writeLines(screenshotFile, fContent)
-                success("Ghost screenshot patch applied successfully")
+                success("Ghost screenshot patch applied successfully to method at line $methodStartLine")
             }
         }
     )
