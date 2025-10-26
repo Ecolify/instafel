@@ -13,28 +13,16 @@ import java.io.File
  * Ghost ViewOnce patch - prevents view once media from being marked as seen
  * 
  * Based on InstaEclipse implementation (ps.reso.instaeclipse.mods.ghost.ViewOnce)
- * which hooks methods containing "visual_item_seen" string. This patch adapts that 
- * approach for smali patching by:
+ * which hooks methods containing "visual_item_seen" string with signature:
+ * void method(?, ?, Object) - exactly 3 parameters
  * 
- * 1. Finding the implementation file that:
- *    - Contains "visual_item_seen" string constant
- *    - Has actual method invocations (not just string definitions)
- *    - Is a moderate-sized file (50-2000 lines) indicating an implementation class
- *    - References LX/KHI class (Instagram's internal API for sending markers)
+ * InstaEclipse uses runtime parameter inspection to verify the third argument
+ * contains "visual_item_seen" or "send_visual_item_seen_marker" before blocking.
  * 
- * 2. Finding the specific method that:
- *    - Contains "visual_item_seen" const-string declaration
- *    - Calls LX/KHI;->A00() to send the marker to Instagram's servers
- *    - Example: Fe3 method in X/5nc class
- * 
- * 3. Injecting an early return when ghost viewonce is enabled:
- *    - Checks GhostModeManager.isGhostViewOnceEnabled()
- *    - Returns early if enabled, preventing the marker from being sent
- *    - Otherwise continues with normal execution
- * 
- * The patch effectively blocks the "visual_item_seen" marker from being sent to
- * Instagram servers, allowing users to view "view once" messages without the sender
- * knowing they were viewed.
+ * For smali patching, we:
+ * 1. Find methods with "visual_item_seen" string that have 3 parameters and void return
+ * 2. Inject early return check for GhostModeManager.isGhostViewOnceEnabled()
+ * 3. Block the method execution if enabled, preventing the seen marker from being sent
  */
 @PInfos.PatchInfo(
     name = "Ghost ViewOnce",
@@ -56,11 +44,11 @@ class GhostViewOnce: InstafelPatch() {
         @PInfos.TaskInfo("Find ghost viewonce source file")
         object: InstafelTask() {
             override fun execute() {
-                // Search for files containing "visual_item_seen" string that also have method implementations
-                // Based on InstaEclipse approach: find methods that use visual_item_seen in their logic
+                // Search for files containing "visual_item_seen" string with method invocations
+                // InstaEclipse: hooks methods with signature void(?, ?, Object) containing "visual_item_seen"
                 val searchPattern = listOf(
                     listOf("visual_item_seen"),
-                    listOf("invoke-static")  // Must have method calls, not just string constants
+                    listOf("invoke-")  // Must have method calls
                 )
                 
                 when (val result = runBlocking {
@@ -74,11 +62,9 @@ class GhostViewOnce: InstafelPatch() {
                         failure("Patch aborted because no classes found for ghost viewonce.")
                     }
                     is FileSearchResult.MultipleFound -> {
-                        // Filter candidates by file size - we want implementation files, not utility classes
+                        // Filter by file size to get implementation files (50-2000 lines)
                         val candidates = result.files.filter { file ->
-                            // Use buffered counting for efficiency
                             val lineCount = file.useLines { it.count() }
-                            // Filter files between MIN and MAX lines (implementation classes, not huge utility files)
                             lineCount in MIN_IMPLEMENTATION_LINES..MAX_IMPLEMENTATION_LINES
                         }
                         
@@ -88,18 +74,7 @@ class GhostViewOnce: InstafelPatch() {
                         } else if (candidates.isEmpty()) {
                             failure("Patch aborted: No suitable implementation files found among ${result.files.size} candidates")
                         } else {
-                            // Multiple candidates after filtering - try to find the one with KHI reference
-                            val withKHI = candidates.filter { file ->
-                                // Use line-by-line processing to avoid loading entire file into memory
-                                file.useLines { lines -> lines.any { it.contains("LX/KHI;") } }
-                            }
-                            
-                            if (withKHI.size == 1) {
-                                ghostViewOnceFile = withKHI[0]
-                                success("Ghost viewonce source class found with KHI reference: ${ghostViewOnceFile.name}")
-                            } else {
-                                failure("Patch aborted: Found ${candidates.size} candidate files after filtering: ${candidates.map { it.name }}")
-                            }
+                            failure("Patch aborted: Found ${candidates.size} candidate files after filtering: ${candidates.map { it.name }}")
                         }
                     }
                 }
@@ -112,34 +87,47 @@ class GhostViewOnce: InstafelPatch() {
                 var methodLine = -1
                 var localsLine = -1
 
-                // Find the method that contains "visual_item_seen" and calls KHI
-                // Based on analysis: target method Fe3 in 5nc.smali line 88 that calls LX/KHI;->A00
-                var foundMethod = false
+                // Find method containing "visual_item_seen" with InstaEclipse signature:
+                // void method(?, ?, Object) - exactly 3 parameters, void return type
                 fContent.forEachIndexed { index, line ->
-                    if (foundMethod) return@forEachIndexed
-                    
-                    // Look for methods that contain visual_item_seen const-string
                     if (line.contains("const-string") && line.contains("visual_item_seen")) {
-                        // Search backwards to find the method declaration
+                        // Search backwards to find method declaration
                         for (i in index downTo 0) {
                             if (fContent[i].contains(".method")) {
-                                methodLine = i
+                                val methodDeclaration = fContent[i]
                                 
-                                // Find method end to verify this method also has KHI call
-                                var methodEndLine = -1
-                                for (j in i until fContent.size) {
-                                    if (fContent[j].contains(".end method")) {
-                                        methodEndLine = j
-                                        break
-                                    }
-                                }
-                                
-                                // Verify this method contains KHI reference
-                                if (methodEndLine != -1) {
-                                    val methodContent = fContent.subList(i, methodEndLine + 1)
-                                    val hasKHI = methodContent.any { it.contains("LX/KHI;") }
+                                // Extract signature to match InstaEclipse: void(?, ?, ?)
+                                val signatureMatch = Regex("\\(([^)]*)\\)V").find(methodDeclaration)
+                                if (signatureMatch != null) {
+                                    val params = signatureMatch.groupValues[1]
                                     
-                                    if (hasKHI) {
+                                    // Count parameters: each L starts an object param, primitives are single chars
+                                    var paramCount = 0
+                                    var i = 0
+                                    while (i < params.length) {
+                                        when (params[i]) {
+                                            'L' -> {
+                                                // Object parameter - skip until semicolon
+                                                paramCount++
+                                                i = params.indexOf(';', i) + 1
+                                            }
+                                            'I', 'J', 'Z', 'F', 'D', 'B', 'S', 'C' -> {
+                                                // Primitive parameter
+                                                paramCount++
+                                                i++
+                                            }
+                                            '[' -> {
+                                                // Array - skip bracket and process type
+                                                i++
+                                            }
+                                            else -> i++
+                                        }
+                                    }
+                                    
+                                    // InstaEclipse matches: void method with exactly 3 parameters
+                                    if (paramCount == 3) {
+                                        methodLine = i
+                                        
                                         // Find .locals line
                                         for (j in methodLine until minOf(methodLine + MAX_LOCALS_SEARCH_OFFSET, fContent.size)) {
                                             if (fContent[j].contains(".locals")) {
@@ -147,13 +135,13 @@ class GhostViewOnce: InstafelPatch() {
                                                 break
                                             }
                                         }
-                                        foundMethod = true
                                         break
                                     }
                                 }
-                                break // Exit method search once we've checked this method
+                                break  // Exit method search once we've checked this method
                             }
                         }
+                        if (methodLine != -1) return@forEachIndexed
                     }
                 }
 
@@ -176,7 +164,7 @@ class GhostViewOnce: InstafelPatch() {
                     FileUtils.writeLines(ghostViewOnceFile, fContent)
                     success("Ghost viewonce patch successfully applied to method at line $methodLine")
                 } else {
-                    failure("Required method for ghost viewonce cannot be found.")
+                    failure("Required method for ghost viewonce cannot be found (need: void method with exactly 3 params).")
                 }
             }
         }

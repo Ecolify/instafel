@@ -91,12 +91,33 @@ class GhostSeen: InstafelPatch() {
                                     methodDeclaration.contains("final") &&
                                     methodDeclaration.contains(")V")) {  // void return type
                                     
-                                    // Count parameters in signature
+                                    // Count parameters in signature properly
                                     val signatureMatch = Regex("\\(([^)]*)\\)").find(methodDeclaration)
                                     if (signatureMatch != null) {
                                         val params = signatureMatch.groupValues[1]
-                                        // Count parameters (rough estimate - each L or primitive counts as one)
-                                        val paramCount = params.count { it == 'L' || it == 'I' || it == 'J' || it == 'Z' || it == 'F' || it == 'D' }
+                                        
+                                        // Count parameters: each L starts an object param, primitives are single chars
+                                        var paramCount = 0
+                                        var idx = 0
+                                        while (idx < params.length) {
+                                            when (params[idx]) {
+                                                'L' -> {
+                                                    // Object parameter - skip until semicolon
+                                                    paramCount++
+                                                    idx = params.indexOf(';', idx) + 1
+                                                }
+                                                'I', 'J', 'Z', 'F', 'D', 'B', 'S', 'C' -> {
+                                                    // Primitive parameter
+                                                    paramCount++
+                                                    idx++
+                                                }
+                                                '[' -> {
+                                                    // Array - skip bracket and process type
+                                                    idx++
+                                                }
+                                                else -> idx++
+                                            }
+                                        }
                                         
                                         if (paramCount >= 3) {
                                             methodLine = i

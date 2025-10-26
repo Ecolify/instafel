@@ -91,21 +91,50 @@ class GhostTyping: InstafelPatch() {
                                     methodDeclaration.contains("final") &&
                                     methodDeclaration.contains(")V")) {  // void return type
                                     
-                                    // Extract parameter signature
+                                    // Extract parameter signature and verify it's (object, boolean)
                                     val signatureMatch = Regex("\\(([^)]*)\\)").find(methodDeclaration)
                                     if (signatureMatch != null) {
                                         val params = signatureMatch.groupValues[1]
-                                        // Check for 2 parameters with second being boolean (Z)
-                                        if (params.contains("Z") && params.count { it == 'L' } >= 1) {
-                                            methodLine = i
-                                            // Find .locals line
-                                            for (j in methodLine until minOf(methodLine + MAX_LOCALS_SEARCH_OFFSET, fContent.size)) {
-                                                if (fContent[j].contains(".locals")) {
-                                                    localsLine = j
-                                                    break
+                                        
+                                        // Check for exactly 2 parameters: first is object (L), second is boolean (Z)
+                                        // Pattern should be like: LX/XXX;Z or similar
+                                        if (params.contains("Z") && params.contains("L")) {
+                                            // Count exact parameters
+                                            var paramCount = 0
+                                            var idx = 0
+                                            var hasBoolean = false
+                                            
+                                            while (idx < params.length) {
+                                                when (params[idx]) {
+                                                    'L' -> {
+                                                        paramCount++
+                                                        idx = params.indexOf(';', idx) + 1
+                                                    }
+                                                    'Z' -> {
+                                                        paramCount++
+                                                        hasBoolean = true
+                                                        idx++
+                                                    }
+                                                    'I', 'J', 'F', 'D', 'B', 'S', 'C' -> {
+                                                        paramCount++
+                                                        idx++
+                                                    }
+                                                    '[' -> idx++
+                                                    else -> idx++
                                                 }
                                             }
-                                            break
+                                            
+                                            if (paramCount == 2 && hasBoolean) {
+                                                methodLine = i
+                                                // Find .locals line
+                                                for (j in methodLine until minOf(methodLine + MAX_LOCALS_SEARCH_OFFSET, fContent.size)) {
+                                                    if (fContent[j].contains(".locals")) {
+                                                        localsLine = j
+                                                        break
+                                                    }
+                                                }
+                                                break
+                                            }
                                         }
                                     }
                                 }
