@@ -27,7 +27,12 @@ public class InitializeInstafel {
         // Initialize Ghost Mode Manager with saved preferences
         PreferenceManager prefManager = new PreferenceManager(ctx);
         GhostModeManager.loadFlags(prefManager);
-        Log.v("IFL", "Ghost Mode flags loaded from preferences");
+        Log.v("IFL", "Ghost Mode initialized - Seen: " + GhostModeManager.isGhostSeen + 
+                     ", Typing: " + GhostModeManager.isGhostTyping + 
+                     ", Screenshot: " + GhostModeManager.isGhostScreenshot +
+                     ", ViewOnce: " + GhostModeManager.isGhostViewOnce +
+                     ", Story: " + GhostModeManager.isGhostStory +
+                     ", Live: " + GhostModeManager.isGhostLive);
     }
 
     public static void triggerCheckUpdates(Activity activity) {
