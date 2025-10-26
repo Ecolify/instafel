@@ -38,20 +38,48 @@ class GhostViewOnce: InstafelPatch() {
         @PInfos.TaskInfo("Find ghost viewonce source file")
         object: InstafelTask() {
             override fun execute() {
-                when (val result = runBlocking {
-                    SearchUtils.getFileContainsAllCords(smaliUtils,
-                        listOf(
-                            listOf("visual_item_seen"),
-                            listOf("send_visual_item_seen_marker")
-                        )
+                // Try multiple search patterns in order of specificity
+                val searchPatterns = listOf(
+                    // Pattern 1: Include "permanent" - likely in view once handling
+                    listOf(
+                        listOf("visual_item_seen"),
+                        listOf("send_visual_item_seen_marker"),
+                        listOf("permanent")
+                    ),
+                    // Pattern 2: Include "replayed" - related to view once replay
+                    listOf(
+                        listOf("visual_item_seen"),
+                        listOf("send_visual_item_seen_marker"),
+                        listOf("replayed")
+                    ),
+                    // Pattern 3: Just the two main strings
+                    listOf(
+                        listOf("visual_item_seen"),
+                        listOf("send_visual_item_seen_marker")
                     )
-                }) {
-                    is FileSearchResult.Success -> {
-                        ghostViewOnceFile = result.file
-                        success("Ghost viewonce source class found successfully")
-                    }
-                    is FileSearchResult.NotFound -> {
-                        failure("Patch aborted because no classes found for ghost viewonce.")
+                )
+                
+                for ((index, pattern) in searchPatterns.withIndex()) {
+                    when (val result = runBlocking {
+                        SearchUtils.getFileContainsAllCords(smaliUtils, pattern)
+                    }) {
+                        is FileSearchResult.Success -> {
+                            ghostViewOnceFile = result.file
+                            val patternDesc = when(index) {
+                                0 -> "with permanent marker"
+                                1 -> "with replayed marker"
+                                else -> "basic search"
+                            }
+                            success("Ghost viewonce source class found successfully ($patternDesc)")
+                            return@execute
+                        }
+                        is FileSearchResult.NotFound -> {
+                            if (index == searchPatterns.size - 1) {
+                                // Last pattern and still not found
+                                failure("Patch aborted because no classes found for ghost viewonce. Found ${result.scannedFiles} candidate files.")
+                            }
+                            // Try next pattern
+                        }
                     }
                 }
             }
