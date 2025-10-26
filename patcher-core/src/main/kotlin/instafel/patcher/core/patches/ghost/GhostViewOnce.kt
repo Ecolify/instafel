@@ -40,6 +40,15 @@ import java.io.File
 )
 class GhostViewOnce: InstafelPatch() {
 
+    /**
+     * Data class to hold scored candidate files for filtering
+     */
+    private data class ScoredCandidate(
+        val file: File,
+        val score: Int,
+        val hasTargetMethod: Boolean
+    )
+
     lateinit var ghostViewOnceFile: File
 
     override fun initializeTasks() = mutableListOf(
@@ -180,17 +189,17 @@ class GhostViewOnce: InstafelPatch() {
                     if (fullContent.contains("ephemeral")) score += 15
                     if (fullContent.contains("view_once")) score += 15
                     
-                    file to (score to hasTargetMethod)
-                }.filter { it.second.second } // Only keep files with target method
-                 .sortedByDescending { it.second.first } // Sort by score
+                    ScoredCandidate(file, score, hasTargetMethod)
+                }.filter { it.hasTargetMethod } // Only keep files with target method
+                 .sortedByDescending { it.score } // Sort by score
                 
                 if (scoredCandidates.isNotEmpty()) {
                     val best = scoredCandidates.first()
-                    Log.info("Selected candidate with score ${best.second.first}: ${best.first.name}")
-                    scoredCandidates.forEach { (file, scoreInfo) ->
-                        Log.info("  - ${file.name}: score ${scoreInfo.first}")
+                    Log.info("Selected candidate with score ${best.score}: ${best.file.name}")
+                    scoredCandidates.forEach { candidate ->
+                        Log.info("  - ${candidate.file.name}: score ${candidate.score}")
                     }
-                    return best.first
+                    return best.file
                 }
                 
                 return null
@@ -214,7 +223,12 @@ class GhostViewOnce: InstafelPatch() {
                             'L' -> {
                                 // Object type, find the semicolon
                                 count++
-                                i = params.indexOf(';', i) + 1
+                                val semicolonIndex = params.indexOf(';', i)
+                                if (semicolonIndex == -1) {
+                                    // Malformed signature, bail out
+                                    return count
+                                }
+                                i = semicolonIndex + 1
                             }
                             '[' -> {
                                 // Array, skip to the next character
