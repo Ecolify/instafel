@@ -16,8 +16,11 @@ import java.io.File
  * which hooks methods containing both "visual_item_seen" and "send_visual_item_seen_marker"
  * strings. This patch adapts that approach for smali patching by:
  * 
- * 1. Searching for files containing both marker strings (narrows down from 8 files to 1)
- * 2. Finding the method that contains both strings within its body
+ * 1. Using multiple search patterns to find the correct file:
+ *    - Pattern 1: Search for files with "visual_item_seen", "send_visual_item_seen_marker", and "permanent"
+ *    - Pattern 2: Search for files with "visual_item_seen", "send_visual_item_seen_marker", and "replayed"
+ *    - Pattern 3: Fallback to just "visual_item_seen" and "send_visual_item_seen_marker"
+ * 2. Finding the method that contains both marker strings within its body
  * 3. Injecting an early return when ghost viewonce is enabled
  * 
  * The method signature in InstaEclipse is (?,?,AbstractClassType) -> void,
