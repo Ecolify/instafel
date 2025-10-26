@@ -49,15 +49,19 @@ class GhostViewOnce: InstafelPatch() {
                     if (line.contains("visual_item_seen")) {
                         for (i in index downTo 0) {
                             if (fContent[i].contains(".method")) {
-                                methodLine = i
-                                // Find .locals line
-                                for (j in methodLine until minOf(methodLine + 10, fContent.size)) {
-                                    if (fContent[j].contains(".locals")) {
-                                        localsLine = j
-                                        break
+                                val methodDeclaration = fContent[i]
+                                // Look for methods that are likely the target (prefer static/final)
+                                if (methodDeclaration.contains("static") || methodDeclaration.contains("final")) {
+                                    methodLine = i
+                                    // Find .locals line
+                                    for (j in methodLine until minOf(methodLine + 10, fContent.size)) {
+                                        if (fContent[j].contains(".locals")) {
+                                            localsLine = j
+                                            break
+                                        }
                                     }
+                                    break
                                 }
-                                break
                             }
                         }
                         if (methodLine != -1) return@forEachIndexed

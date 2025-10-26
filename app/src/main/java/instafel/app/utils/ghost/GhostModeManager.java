@@ -85,44 +85,46 @@ public class GhostModeManager {
     
     /**
      * Toggle selected ghost mode options on/off
+     * If all selected options are enabled, disable them all.
+     * Otherwise, enable all selected options.
      */
     public static void toggleSelectedGhostOptions(Context context, PreferenceManager prefManager) {
         boolean anySelected = false;
-        boolean shouldDisable = false;
+        boolean allSelectedEnabled = true;
         
-        // Check which options are selected
+        // Check which options are selected and if they're all enabled
         if (quickToggleSeen) {
             anySelected = true;
-            if (isGhostSeen) shouldDisable = true;
+            if (!isGhostSeen) allSelectedEnabled = false;
         }
         if (quickToggleTyping) {
             anySelected = true;
-            if (isGhostTyping) shouldDisable = true;
+            if (!isGhostTyping) allSelectedEnabled = false;
         }
         if (quickToggleScreenshot) {
             anySelected = true;
-            if (isGhostScreenshot) shouldDisable = true;
+            if (!isGhostScreenshot) allSelectedEnabled = false;
         }
         if (quickToggleViewOnce) {
             anySelected = true;
-            if (isGhostViewOnce) shouldDisable = true;
+            if (!isGhostViewOnce) allSelectedEnabled = false;
         }
         if (quickToggleStory) {
             anySelected = true;
-            if (isGhostStory) shouldDisable = true;
+            if (!isGhostStory) allSelectedEnabled = false;
         }
         if (quickToggleLive) {
             anySelected = true;
-            if (isGhostLive) shouldDisable = true;
+            if (!isGhostLive) allSelectedEnabled = false;
         }
         
         if (!anySelected) {
-            Toast.makeText(context, "❗ No Ghost Mode options selected!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, "❗ No Ghost Mode options selected for quick toggle!", Toast.LENGTH_SHORT).show();
             return;
         }
         
-        // Toggle the state
-        boolean newState = !shouldDisable;
+        // Toggle: if all selected are enabled, disable them; otherwise enable all selected
+        boolean newState = !allSelectedEnabled;
         
         if (quickToggleSeen) isGhostSeen = newState;
         if (quickToggleTyping) isGhostTyping = newState;

@@ -49,7 +49,8 @@ class GhostStory: InstafelPatch() {
                         for (i in index downTo 0) {
                             if (fContent[i].contains(".method")) {
                                 val methodDeclaration = fContent[i]
-                                if (methodDeclaration.contains("final")) {
+                                // Look for methods that are likely the target (prefer static/final)
+                                if (methodDeclaration.contains("static") || methodDeclaration.contains("final")) {
                                     methodLine = i
                                     // Find .locals line
                                     for (j in methodLine until minOf(methodLine + 10, fContent.size)) {

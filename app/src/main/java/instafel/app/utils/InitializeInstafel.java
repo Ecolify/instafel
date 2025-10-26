@@ -10,7 +10,9 @@ import android.widget.Toast;
 import instafel.app.activity.ifl_a_menu;
 import instafel.app.InstafelEnv;
 import instafel.app.managers.OverridesManager;
+import instafel.app.managers.PreferenceManager;
 import instafel.app.ota.CheckUpdates;
+import instafel.app.utils.ghost.GhostModeManager;
 import instafel.app.utils.localization.LocalizationUtils;
 
 public class InitializeInstafel {
@@ -21,6 +23,11 @@ public class InitializeInstafel {
         String iflLocale = LocalizationUtils.getIflLocale(ctx);
         InstafelEnv.IFL_LANG = iflLocale;
         Log.v("IFL", "InstafelEnv.IFL_LANG is set to " + iflLocale);
+        
+        // Initialize Ghost Mode Manager with saved preferences
+        PreferenceManager prefManager = new PreferenceManager(ctx);
+        GhostModeManager.loadFlags(prefManager);
+        Log.v("IFL", "Ghost Mode flags loaded from preferences");
     }
 
     public static void triggerCheckUpdates(Activity activity) {
