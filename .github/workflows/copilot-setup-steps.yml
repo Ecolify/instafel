@@ -23,7 +23,10 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-
+      
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        
       - name: Clone Instaeclipse Repo
         run: git clone https://github.com/ReSo7200/InstaEclipse.git instaeclipse
 
@@ -61,5 +64,5 @@ jobs:
       - name: Decompile APK with apktool
         working-directory: instagram
         run: |
-          java -jar ../apktool.jar d -f --keep-broken-res -c instagram.apk -o instagram_src
+          java -jar ../apktool.jar d -f --keep-broken-res instagram.apk -o instagram_src
           # move smali folders to instagram root for clarity
