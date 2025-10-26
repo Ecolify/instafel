@@ -50,6 +50,9 @@ class ChangeVisibleChannelName: InstafelPatch() {
                     is FileSearchResult.NotFound -> {
                         failure("Patch aborted because no any classes found.")
                     }
+                    is FileSearchResult.MultipleFound -> {
+                        failure("Patch aborted: Found ${result.files.size} candidate files. Need more specific search conditions.")
+                    }
                 }
             }
         },

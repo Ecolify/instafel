@@ -40,6 +40,9 @@ class GhostTyping: InstafelPatch() {
                     is FileSearchResult.NotFound -> {
                         failure("Patch aborted because no classes found for ghost typing.")
                     }
+                    is FileSearchResult.MultipleFound -> {
+                        failure("Patch aborted: Found ${result.files.size} candidate files for ghost typing. Need more specific search conditions.")
+                    }
                 }
             }
         },
