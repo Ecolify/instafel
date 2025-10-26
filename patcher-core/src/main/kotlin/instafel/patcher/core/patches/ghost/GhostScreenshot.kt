@@ -75,11 +75,14 @@ class GhostScreenshot : InstafelPatch() {
 
                 // Add ghost mode check at the beginning of the method
                 val ghostCheckCode = listOf(
+                    "",
                     "    # Ghost Mode screenshot check",
-                    "    sget-boolean v0, Linstafel/app/utils/ghost/GhostModeManager;->isGhostScreenshot:Z",
+                    "    invoke-static {}, Linstafel/app/utils/ghost/GhostModeManager;->isGhostScreenshotEnabled()Z",
+                    "    move-result v0",
                     "    if-eqz v0, :ghost_screenshot_off",
                     "    return-void",
-                    "    :ghost_screenshot_off"
+                    "    :ghost_screenshot_off",
+                    ""
                 )
 
                 // Find the first line after .locals
