@@ -25,7 +25,10 @@ class GhostViewOnce: InstafelPatch() {
             override fun execute() {
                 when (val result = runBlocking {
                     SearchUtils.getFileContainsAllCords(smaliUtils,
-                        listOf(listOf("visual_item_seen"))
+                        listOf(
+                            listOf("visual_item_seen"),
+                            listOf("send_visual_item_seen_marker")
+                        )
                     )
                 }) {
                     is FileSearchResult.Success -> {
@@ -44,23 +47,45 @@ class GhostViewOnce: InstafelPatch() {
                 val fContent = smaliUtils.getSmaliFileContent(ghostViewOnceFile.absolutePath).toMutableList()
                 var methodLine = -1
                 var localsLine = -1
+                var methodEndLine = -1
 
+                // Find the method that contains both marker strings
                 fContent.forEachIndexed { index, line ->
-                    if (line.contains("visual_item_seen")) {
+                    if (line.contains("visual_item_seen") || line.contains("send_visual_item_seen_marker")) {
+                        // Search backwards to find the method declaration
                         for (i in index downTo 0) {
                             if (fContent[i].contains(".method")) {
                                 val methodDeclaration = fContent[i]
-                                // Look for methods that are likely the target (prefer static/final)
+                                // Prefer methods with static or final modifiers
                                 if (methodDeclaration.contains("static") || methodDeclaration.contains("final")) {
-                                    methodLine = i
-                                    // Find .locals line
-                                    for (j in methodLine until minOf(methodLine + 10, fContent.size)) {
-                                        if (fContent[j].contains(".locals")) {
-                                            localsLine = j
+                                    // Find method end to verify both strings are in this method
+                                    var tempMethodEnd = -1
+                                    for (j in i until fContent.size) {
+                                        if (fContent[j].contains(".end method")) {
+                                            tempMethodEnd = j
                                             break
                                         }
                                     }
-                                    break
+                                    
+                                    // Check if both strings are in this method
+                                    if (tempMethodEnd != -1) {
+                                        val methodContent = fContent.subList(i, tempMethodEnd + 1)
+                                        val hasVisualItemSeen = methodContent.any { it.contains("visual_item_seen") }
+                                        val hasSendMarker = methodContent.any { it.contains("send_visual_item_seen_marker") }
+                                        
+                                        if (hasVisualItemSeen && hasSendMarker) {
+                                            methodLine = i
+                                            methodEndLine = tempMethodEnd
+                                            // Find .locals line
+                                            for (j in methodLine until minOf(methodLine + 10, fContent.size)) {
+                                                if (fContent[j].contains(".locals")) {
+                                                    localsLine = j
+                                                    break
+                                                }
+                                            }
+                                            break
+                                        }
+                                    }
                                 }
                             }
                         }
