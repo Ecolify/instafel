@@ -345,7 +345,7 @@ The approach bridges the gap between InstaEclipse's runtime flexibility and Inst
 ---
 
 **Document Version**: 1.0  
-**Last Updated**: 2025-10-26  
+**Last Updated**: October 2025  
 **Author**: GitHub Copilot Agent  
 **Related Files**:
 - `patcher-core/src/main/kotlin/instafel/patcher/core/patches/ghost/GhostViewOnce.kt`

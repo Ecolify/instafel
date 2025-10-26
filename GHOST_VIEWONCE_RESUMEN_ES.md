@@ -269,6 +269,6 @@ El parche Ghost ViewOnce ahora debe funcionar correctamente, bloqueando los marc
 ---
 
 **Versión del Documento**: 1.0  
-**Fecha**: 26 de octubre de 2025  
+**Fecha**: Octubre 2025  
 **Autor**: GitHub Copilot Agent  
 **Issue**: Fux3 - Corrección Ghost ViewOnce
