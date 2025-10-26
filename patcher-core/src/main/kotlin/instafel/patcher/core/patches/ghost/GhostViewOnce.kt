@@ -46,20 +46,21 @@ class GhostViewOnce: InstafelPatch() {
                 // with a method that has 3 parameters and casts the third one
                 val searchPatterns = listOf(
                     // Pattern 1: Handler class implementing interface with visual_item_seen
+                    // Use quotes to match exact string, not as substring of send_visual_item_seen_marker
                     listOf(
                         listOf("# interfaces"),
                         listOf(".implements"),
-                        listOf("visual_item_seen")
+                        listOf("\"visual_item_seen\"")
                     ),
                     // Pattern 2: More relaxed - just interface implementation and visual_item_seen
                     listOf(
                         listOf("implements"),
-                        listOf("visual_item_seen")
+                        listOf("\"visual_item_seen\"")
                     ),
                     // Pattern 3: Fallback - files with visual_item_seen and check-cast
                     // (the handler casts the third parameter)
                     listOf(
-                        listOf("visual_item_seen"),
+                        listOf("\"visual_item_seen\""),
                         listOf("check-cast")
                     )
                 )
