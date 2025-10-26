@@ -82,6 +82,7 @@ class GhostViewOnce: InstafelPatch() {
                                 failure("Patch aborted because no classes found for ghost viewonce. Found ${result.scannedFiles} candidate files.")
                             }
                             // Try next pattern
+                            continue
                         }
                     }
                 }
