@@ -74,18 +74,122 @@ class GhostViewOnce: InstafelPatch() {
                                 else -> "basic search"
                             }
                             success("Ghost viewonce source class found successfully ($patternDesc)")
-                            break
+                            return
+                        }
+                        is FileSearchResult.MultipleFound -> {
+                            // We found multiple candidates, try to select the best one
+                            val bestCandidate = selectBestCandidate(result.files)
+                            if (bestCandidate != null) {
+                                ghostViewOnceFile = bestCandidate
+                                val patternDesc = when (index) {
+                                    0 -> "with permanent marker"
+                                    1 -> "with replayed marker"
+                                    else -> "basic search"
+                                }
+                                success("Ghost viewonce source class found successfully from ${result.files.size} candidates ($patternDesc)")
+                                return
+                            }
+                            // If we can't select best candidate, try next pattern
+                            continue
                         }
                         is FileSearchResult.NotFound -> {
                             if (index == searchPatterns.size - 1) {
                                 // Last pattern and still not found
-                                failure("Patch aborted because no classes found for ghost viewonce. Found ${result.scannedFiles} candidate files.")
+                                failure("Patch aborted because no classes found for ghost viewonce.")
                             }
                             // Try next pattern
                             continue
                         }
                     }
                 }
+            }
+            
+            /**
+             * Select the best candidate file from multiple matches.
+             * Based on InstaEclipse logic: method should have 3 parameters and void return type.
+             * We look for a method with both marker strings in the same method body.
+             */
+            private fun selectBestCandidate(candidates: List<File>): File? {
+                val scoredCandidates = candidates.mapNotNull { file ->
+                    val score = scoreCandidate(file)
+                    if (score > 0) file to score else null
+                }.sortedByDescending { it.second }
+                
+                return scoredCandidates.firstOrNull()?.first
+            }
+            
+            /**
+             * Score a candidate file based on how well it matches our criteria.
+             * Higher score = better match
+             */
+            private fun scoreCandidate(file: File): Int {
+                var score = 0
+                val fContent = smaliUtils.getSmaliFileContent(file.absolutePath)
+                
+                // Look for methods that contain both marker strings
+                fContent.forEachIndexed { index, line ->
+                    if (line.contains("visual_item_seen") || line.contains("send_visual_item_seen_marker")) {
+                        // Search backwards to find the method declaration
+                        for (i in index downTo maxOf(0, index - 100)) {
+                            if (fContent[i].contains(".method")) {
+                                val methodDeclaration = fContent[i]
+                                
+                                // Find method end
+                                var methodEndLine = -1
+                                for (j in i until minOf(i + 500, fContent.size)) {
+                                    if (fContent[j].contains(".end method")) {
+                                        methodEndLine = j
+                                        break
+                                    }
+                                }
+                                
+                                if (methodEndLine != -1) {
+                                    val methodContent = fContent.subList(i, methodEndLine + 1)
+                                    val hasVisualItemSeen = methodContent.any { it.contains("visual_item_seen") }
+                                    val hasSendMarker = methodContent.any { it.contains("send_visual_item_seen_marker") }
+                                    
+                                    // Both strings must be in the same method
+                                    if (hasVisualItemSeen && hasSendMarker) {
+                                        score += 100 // Base score for having both strings in same method
+                                        
+                                        // Check for method signature with 3 parameters (matching InstaEclipse)
+                                        // Look for patterns like: (Lcom/...;Lcom/...;Lcom/...;)V
+                                        if (methodDeclaration.contains(")V")) {
+                                            // Count parameters by counting semicolons before )V
+                                            val paramSection = methodDeclaration.substringAfter("(").substringBefore(")V")
+                                            val paramCount = paramSection.count { it == ';' }
+                                            if (paramCount == 3) {
+                                                score += 50 // Bonus for 3-parameter void method
+                                            }
+                                        }
+                                        
+                                        // Prefer static or final methods
+                                        if (methodDeclaration.contains("static")) {
+                                            score += 10
+                                        }
+                                        if (methodDeclaration.contains("final")) {
+                                            score += 5
+                                        }
+                                        
+                                        // Check for additional marker strings
+                                        if (methodContent.any { it.contains("permanent") }) {
+                                            score += 20
+                                        }
+                                        if (methodContent.any { it.contains("replayed") }) {
+                                            score += 15
+                                        }
+                                        
+                                        // Only score the first matching method in this file
+                                        return score
+                                    }
+                                }
+                                break
+                            }
+                        }
+                    }
+                }
+                
+                return score
             }
         },
         @PInfos.TaskInfo("Apply ghost viewonce patch")

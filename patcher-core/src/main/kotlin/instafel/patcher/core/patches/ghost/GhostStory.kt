@@ -34,6 +34,9 @@ class GhostStory: InstafelPatch() {
                     is FileSearchResult.NotFound -> {
                         failure("Patch aborted because no classes found for ghost story.")
                     }
+                    is FileSearchResult.MultipleFound -> {
+                        failure("Patch aborted because multiple classes found for ghost story. Found ${result.files.size} candidates.")
+                    }
                 }
             }
         },

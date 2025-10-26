@@ -56,4 +56,4 @@ env.properties
 /updater/captures
 /updater/.externalNativeBuild
 /updater/.cxx
-/updater/local.properties
+/updater/local.propertiesinstaeclipse/

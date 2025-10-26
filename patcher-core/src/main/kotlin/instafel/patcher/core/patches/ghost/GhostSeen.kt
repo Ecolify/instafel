@@ -40,6 +40,9 @@ class GhostSeen: InstafelPatch() {
                     is FileSearchResult.NotFound -> {
                         failure("Patch aborted because no classes found for ghost seen.")
                     }
+                    is FileSearchResult.MultipleFound -> {
+                        failure("Patch aborted because multiple classes found for ghost seen. Found ${result.files.size} candidates.")
+                    }
                 }
             }
         },

@@ -97,12 +97,19 @@ object SearchUtils {
         val totalTime = (System.currentTimeMillis() - startTime) / 1000.0
         Log.info("Search process ran with $threadCount threads in ${totalTime}s totally ($totalFiles file processed)")
 
-        if (resultFiles.isEmpty() || resultFiles.size > 1) {
-            Log.severe("Found more files than one (or no any file found) for apply patch, add more condition for find correct file.")
-            return@withContext FileSearchResult.NotFound(resultFiles.size)
-        } else {
-            Log.info("Class ${Utils.makeSmaliPathShort(resultFiles[0])} meets all requirements")
-            return@withContext FileSearchResult.Success(resultFiles[0])
+        when {
+            resultFiles.isEmpty() -> {
+                Log.severe("No files found for apply patch.")
+                return@withContext FileSearchResult.NotFound(0)
+            }
+            resultFiles.size > 1 -> {
+                Log.severe("Found more files than one (or no any file found) for apply patch, add more condition for find correct file.")
+                return@withContext FileSearchResult.MultipleFound(resultFiles)
+            }
+            else -> {
+                Log.info("Class ${Utils.makeSmaliPathShort(resultFiles[0])} meets all requirements")
+                return@withContext FileSearchResult.Success(resultFiles[0])
+            }
         }
     }
 }

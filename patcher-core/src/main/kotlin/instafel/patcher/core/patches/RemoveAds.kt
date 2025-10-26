@@ -37,6 +37,9 @@ class RemoveAds: InstafelPatch() {
                     is FileSearchResult.NotFound -> {
                         failure("Patch aborted because no any classes found.")
                     }
+                    is FileSearchResult.MultipleFound -> {
+                        failure("Patch aborted because multiple classes found. Found ${result.files.size} candidates.")
+                    }
                 }
             }
         },

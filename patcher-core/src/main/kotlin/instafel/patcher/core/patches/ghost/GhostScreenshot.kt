@@ -43,6 +43,9 @@ class GhostScreenshot : InstafelPatch() {
                     is FileSearchResult.NotFound -> {
                         failure("Patch aborted because no matching class found for screenshot detection")
                     }
+                    is FileSearchResult.MultipleFound -> {
+                        failure("Patch aborted because multiple classes found for screenshot detection. Found ${result.files.size} candidates.")
+                    }
                 }
             }
         },

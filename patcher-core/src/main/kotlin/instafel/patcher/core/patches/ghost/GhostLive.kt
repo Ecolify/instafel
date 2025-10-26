@@ -34,6 +34,9 @@ class GhostLive: InstafelPatch() {
                     is FileSearchResult.NotFound -> {
                         failure("Patch aborted because no classes found for ghost live.")
                     }
+                    is FileSearchResult.MultipleFound -> {
+                        failure("Patch aborted because multiple classes found for ghost live. Found ${result.files.size} candidates.")
+                    }
                 }
             }
         },
