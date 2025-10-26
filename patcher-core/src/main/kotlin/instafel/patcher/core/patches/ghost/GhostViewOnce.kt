@@ -68,7 +68,7 @@ class GhostViewOnce: InstafelPatch() {
                     }) {
                         is FileSearchResult.Success -> {
                             ghostViewOnceFile = result.file
-                            val patternDesc = when(index) {
+                            val patternDesc = when (index) {
                                 0 -> "with permanent marker"
                                 1 -> "with replayed marker"
                                 else -> "basic search"
