@@ -6,6 +6,11 @@ build
 
 # Ignore Kotlin build errors
 buildSrc/.kotlin/errors/
+instagram/
+instaeclipse/
+framework/
+1.apk
+framework-res.apk
 
 # Ignore Instafel build output directory
 .output
