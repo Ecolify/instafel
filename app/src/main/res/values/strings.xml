@@ -256,4 +256,15 @@
 
     <!-- CRASH TOAST -->
     <string name="ifl_crash_toast" translatable="false">Instafel crashed, visit Crash Reports for more details.</string>
+
+    <!-- GHOST MODE -->
+    <string name="ifl_a0_17">Ghost Mode</string>
+    <string name="ifl_a0_18">Ghost Mode (Main)</string>
+    <string name="ifl_a0_19">Enable or disable all Ghost Mode features</string>
+    <string name="ifl_a0_20">Ghost Seen</string>
+    <string name="ifl_a0_21">Prevent message seen status from being sent</string>
+    <string name="ifl_a0_22">Ghost Typing</string>
+    <string name="ifl_a0_23">Prevent typing indicator from being sent</string>
+    <string name="ifl_a0_24">Ghost Screenshot</string>
+    <string name="ifl_a0_25">Prevent screenshot detection notifications</string>
 </resources>

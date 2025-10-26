@@ -31,4 +31,8 @@ public class PreferenceKeys {
     public static String ifl_mapping_file_hash = "31";
     public static String ifl_debug_api_url = "32";
     public static String ifl_debug_content_api_url = "33";
+    public static String ifl_ghost_mode_enabled = "34";
+    public static String ifl_ghost_seen = "35";
+    public static String ifl_ghost_typing = "36";
+    public static String ifl_ghost_screenshot = "37";
 }
