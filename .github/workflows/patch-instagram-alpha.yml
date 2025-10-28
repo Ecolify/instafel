@@ -17,6 +17,13 @@ name: Patch Instagram Alpha
 on:
   workflow_dispatch:
   push:
+    branches: '*'
+  pull_request:
+    branches: '*'
+  pull_request_target:
+    branches: '*'
+  pull_request_review:
+  pull_request_review_comment:
 
 jobs:
   patch-instagram:
