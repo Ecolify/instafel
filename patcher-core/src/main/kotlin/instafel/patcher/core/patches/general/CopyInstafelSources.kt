@@ -64,74 +64,82 @@ class CopyInstafelSources: InstafelPatch() {
                 // to avoid ClassNotFoundException during early app initialization.
                 val primaryDexFolder = smaliUtils.smaliFolders?.firstOrNull()
                 if (primaryDexFolder != null && primaryDexFolder != smallDexFolder) {
-                    // Map of classes that must be in the primary DEX: subpath -> filename
+                    // Map of classes that must be in the primary DEX: subpath -> base class names
                     // Subpath is relative to instafel/app/
+                    // All inner classes and synthetic classes (e.g., Class$InnerClass.smali, Class$$Lambda.smali) 
+                    // will be automatically included for each base class
                     val classesToMoveToPrimaryDex = mapOf(
                         "utils" to listOf(
-                            "InstafelFileProvider.smali",      // ContentProvider - loaded before Application
-                            "InitializeInstafel.smali",         // Called from InstagramAppShell.onCreate()
-                            "InstafelCrashHandler.smali"        // Called from InstagramAppShell.onCreate()
+                            "InstafelFileProvider",      // ContentProvider - loaded before Application
+                            "InitializeInstafel",         // Called from InstagramAppShell.onCreate()
+                            "InstafelCrashHandler"        // Called from InstagramAppShell.onCreate()
                         ),
                         "utils/localization" to listOf(
-                            "LocalizationUtils.smali",          // Used by InitializeInstafel.setContext()
-                            "Locales.smali",                    // Used by LocalizationUtils.getDeviceLocale()
-                            "Locales\$LocaleType.smali"         // Inner class of Locales
-                        ),
-                        "utils/ghost" to listOf(
-                            "GhostModeManager.smali"            // Used by InitializeInstafel.setContext()
+                            "LocalizationUtils",          // Used by InitializeInstafel.setContext()
+                            "Locales"                     // Used by LocalizationUtils.getDeviceLocale()
                         ),
                         "utils/types" to listOf(
-                            "PreferenceKeys.smali"              // Used by GhostModeManager and LocalizationUtils
+                            "PreferenceKeys"              // Used by LocalizationUtils.getIflLocale()
                         ),
                         "managers" to listOf(
-                            "PreferenceManager.smali"           // Used by InitializeInstafel.setContext()
+                            "PreferenceManager"           // Used by LocalizationUtils.getIflLocale()
                         ),
                         "" to listOf(
-                            "InstafelEnv.smali"                 // Used by InitializeInstafel.setContext()
+                            "InstafelEnv"                 // Used by InitializeInstafel.setContext()
                         )
                     )
                     
-                    classesToMoveToPrimaryDex.forEach { (subPath, classNames) ->
-                        classNames.forEach { className ->
-                            val classSource = File(
+                    classesToMoveToPrimaryDex.forEach { (subPath, baseClassNames) ->
+                        baseClassNames.forEach { baseClassName ->
+                            // Get the source directory for this subpath
+                            val sourceDir = File(
                                 Utils.mergePaths(
                                     destFolder.absolutePath,
                                     "app",
-                                    subPath,
-                                    className
-                                )
-                            )
-                            val classDest = File(
-                                Utils.mergePaths(
-                                    Env.PROJECT_DIR,
-                                    "sources",
-                                    primaryDexFolder.name,
-                                    "instafel",
-                                    "app",
-                                    subPath,
-                                    className
+                                    subPath
                                 )
                             )
                             
-                            if (classSource.exists()) {
+                            // Find all files matching the base class name (including inner and synthetic classes)
+                            // e.g., for "Locales" find: Locales.smali, Locales$LocaleType.smali, Locales$$Lambda.smali, etc.
+                            val classFiles = sourceDir.listFiles { file ->
+                                file.name == "$baseClassName.smali" || 
+                                file.name.startsWith("$baseClassName$") && file.name.endsWith(".smali")
+                            } ?: emptyArray()
+                            
+                            if (classFiles.isEmpty()) {
+                                Log.warning("No files found for $baseClassName in ${sourceDir.absolutePath}")
+                            }
+                            
+                            classFiles.forEach { classFile ->
+                                val classDest = File(
+                                    Utils.mergePaths(
+                                        Env.PROJECT_DIR,
+                                        "sources",
+                                        primaryDexFolder.name,
+                                        "instafel",
+                                        "app",
+                                        subPath,
+                                        classFile.name
+                                    )
+                                )
+                                
                                 try {
                                     if (!classDest.parentFile.exists() && !classDest.parentFile.mkdirs()) {
-                                        Log.severe("Failed to create directory for $className in primary DEX")
+                                        Log.severe("Failed to create directory for ${classFile.name} in primary DEX")
                                         failure("Could not create directory: ${classDest.parentFile.absolutePath}")
                                         return
                                     }
-                                    FileUtils.copyFile(classSource, classDest)
-                                    if (!classSource.delete()) {
-                                        Log.warning("Failed to delete source $className after copy")
+                                    FileUtils.copyFile(classFile, classDest)
+                                    if (!classFile.delete()) {
+                                        Log.warning("Failed to delete source ${classFile.name} after copy")
                                     }
-                                    Log.info("$className moved to primary DEX (${primaryDexFolder.name})")
+                                    Log.info("${classFile.name} moved to primary DEX (${primaryDexFolder.name})")
                                 } catch (e: Exception) {
-                                    Log.severe("Failed to move $className to primary DEX: ${e.message}")
-                                    failure("$className must be in primary DEX for app to function")
+                                    Log.severe("Failed to move ${classFile.name} to primary DEX: ${e.message}")
+                                    failure("${classFile.name} must be in primary DEX for app to function")
                                     return
                                 }
-                            } else {
-                                Log.warning("$className not found at expected location: ${classSource.absolutePath}")
                             }
                         }
                     }
