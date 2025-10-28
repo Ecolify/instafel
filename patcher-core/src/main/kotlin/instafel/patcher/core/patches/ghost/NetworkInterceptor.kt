@@ -60,7 +60,17 @@ class NetworkInterceptor : InstafelPatch() {
                     }
                     else -> {
                         tigonServiceLayerFile = tigonServiceLayerFiles.first()
-                        success("TigonServiceLayer class found (picked first of ${tigonServiceLayerFiles.size}): ${tigonServiceLayerFile.name}")
+                        
+                        val content = smaliUtils.getSmaliFileContent(tigonServiceLayerFile.absolutePath)
+                        val hasStartRequest = content.any { line -> 
+                            line.contains(".method") && line.contains("startRequest")
+                        }
+                        
+                        if (hasStartRequest) {
+                            success("TigonServiceLayer class found (picked first of ${tigonServiceLayerFiles.size}): ${tigonServiceLayerFile.name}")
+                        } else {
+                            failure("Patch aborted: TigonServiceLayer found but does not contain startRequest method")
+                        }
                     }
                 }
             }
