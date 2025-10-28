@@ -33,13 +33,14 @@ class NetworkInterceptor : InstafelPatch() {
     companion object {
         private const val MAX_LOCALS_SEARCH_OFFSET = 30
         private const val TIGON_CLASS_NAME = "com/instagram/api/tigon/TigonServiceLayer"
+        private val TIGON_FILE_NAME = "${TIGON_CLASS_NAME.substringAfterLast('/')}.smali"
     }
 
     override fun initializeTasks() = mutableListOf(
         @PInfos.TaskInfo("Find TigonServiceLayer class")
         object : InstafelTask() {
             override fun execute() {
-                val candidates = smaliUtils.getSmaliFilesByName("${TIGON_CLASS_NAME.substringAfterLast('/')}.smali")
+                val candidates = smaliUtils.getSmaliFilesByName(TIGON_FILE_NAME)
                 
                 if (candidates.isEmpty()) {
                     failure("Patch aborted: TigonServiceLayer class not found")
