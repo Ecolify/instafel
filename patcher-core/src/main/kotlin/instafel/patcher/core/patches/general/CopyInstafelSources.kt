@@ -78,6 +78,9 @@ class CopyInstafelSources: InstafelPatch() {
                         "utils/ghost" to listOf(
                             "GhostModeManager.smali"            // Used by InitializeInstafel.setContext()
                         ),
+                        "utils/types" to listOf(
+                            "PreferenceKeys.smali"              // Used by GhostModeManager and LocalizationUtils
+                        ),
                         "managers" to listOf(
                             "PreferenceManager.smali"           // Used by InitializeInstafel.setContext()
                         ),
