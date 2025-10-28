@@ -16,21 +16,7 @@ name: Patch Instagram Alpha
 
 on:
   workflow_dispatch:
-    inputs:
-      instagram_apk_url:
-        description: 'Instagram Alpha APK download URL (required if not using gplayapi)'
-        required: false
-        type: string
-      instagram_version:
-        description: 'Instagram version (for naming, optional)'
-        required: false
-        type: string
-        default: 'latest'
-      use_gplayapi:
-        description: 'Use gplayapi to download latest Instagram Alpha (requires secrets)'
-        required: false
-        type: boolean
-        default: true
+  push:
 
 jobs:
   patch-instagram:
@@ -38,6 +24,8 @@ jobs:
     
     permissions:
       contents: read
+      attestations: write
+      id-token: write
     
     steps:
       - name: Checkout repository
@@ -76,15 +64,7 @@ jobs:
           ./gradlew :patcher:build-jar
           ls -lh .output/
       
-      - name: Download Instagram Alpha APK (Direct URL)
-        if: ${{ !inputs.use_gplayapi && github.event.inputs.instagram_apk_url != '' }}
-        run: |
-          echo "Downloading Instagram Alpha APK from provided URL..."
-          wget -O instagram-alpha.apk "${{ github.event.inputs.instagram_apk_url }}"
-          ls -lh instagram-alpha.apk
-      
       - name: Setup gplayapi and download (if enabled)
-        if: ${{ inputs.use_gplayapi }}
         run: |
           echo "Setting up gplayapi to download Instagram Alpha..."
           
@@ -237,34 +217,34 @@ jobs:
       - name: Upload Instafel App APKs
         uses: actions/upload-artifact@v4
         with:
-          name: instafel-app-${{ github.event.inputs.instagram_version }}
+          name: instafel-app-latest
           path: .output/ifl-app-*.apk
           if-no-files-found: warn
       
       - name: Upload Patcher JAR
         uses: actions/upload-artifact@v4
         with:
-          name: instafel-patcher-${{ github.event.inputs.instagram_version }}
+          name: instafel-patcher-latest
           path: .output/ifl-patcher-v*.jar
           if-no-files-found: warn
       
       - name: Upload Patcher Core JAR
         uses: actions/upload-artifact@v4
         with:
-          name: instafel-patcher-core-${{ github.event.inputs.instagram_version }}
+          name: instafel-patcher-core-latest
           path: .output/ifl-patcher-core-*.jar
           if-no-files-found: warn
       
       - name: Upload patched Instagram APKs
         uses: actions/upload-artifact@v4
         with:
-          name: instafel-patched-instagram-${{ github.event.inputs.instagram_version }}
+          name: instafel-patched-instagram-latest
           path: instagram-*/build/*.apk
           if-no-files-found: warn
       
       - name: Upload build info
         uses: actions/upload-artifact@v4
         with:
-          name: instafel-build-info-${{ github.event.inputs.instagram_version }}
+          name: instafel-build-info-latest
           path: instagram-*/build/*.json
           if-no-files-found: warn
