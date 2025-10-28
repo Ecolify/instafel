@@ -256,6 +256,14 @@ object BuildProject: CLIJob {
      * - String placeholders are replaced in const-string instructions
      * - Boolean fields like PRODUCTION_MODE must be set via the <clinit> constructor,
      *   not through field declaration default values
+     * 
+     * File location:
+     * The InstafelEnv.smali file may be located in either the primary DEX folder or the
+     * smallest smali folder (iflSourcesFolder) depending on how the CopyInstafelSources patch executed:
+     * - If primary DEX differs from the smallest smali folder, InstafelEnv.smali is moved
+     *   to the primary DEX (required for early app initialization)
+     * - Otherwise, it remains in the smallest smali folder (iflSourcesFolder)
+     * This function checks both locations to ensure the file is found regardless of the setup.
      */
     fun updateInstafelEnv(coreCommit: String, projectTag: String, patcherVersion: String) {
         var envOkCheck = false;
@@ -274,16 +282,57 @@ object BuildProject: CLIJob {
                 exitProcess(-1)
             }
 
-            val envFile = File(
-                Utils.mergePaths(
-                    Env.PROJECT_DIR,
-                    "sources",
-                    iflSourceFolder,
-                    "instafel",
-                    "app",
-                    "InstafelEnv.smali"
+            // InstafelEnv.smali may be in the primary DEX or in the iflSourceFolder
+            // The CopyInstafelSources patch moves it to primary DEX if they differ
+            // Primary DEX is the first smali folder (usually "smali")
+            val primaryDexFolder = smaliUtils.smaliFolders?.firstOrNull()
+            
+            val envFile = if (primaryDexFolder != null) {
+                // Try primary DEX first
+                val primaryDexEnvFile = File(
+                    Utils.mergePaths(
+                        Env.PROJECT_DIR,
+                        "sources",
+                        primaryDexFolder.name,
+                        "instafel",
+                        "app",
+                        "InstafelEnv.smali"
+                    )
                 )
-            )
+                
+                if (primaryDexEnvFile.exists()) {
+                    primaryDexEnvFile
+                } else {
+                    // Fallback to iflSourceFolder location
+                    File(
+                        Utils.mergePaths(
+                            Env.PROJECT_DIR,
+                            "sources",
+                            iflSourceFolder,
+                            "instafel",
+                            "app",
+                            "InstafelEnv.smali"
+                        )
+                    )
+                }
+            } else {
+                // No primary DEX found, use iflSourceFolder
+                File(
+                    Utils.mergePaths(
+                        Env.PROJECT_DIR,
+                        "sources",
+                        iflSourceFolder,
+                        "instafel",
+                        "app",
+                        "InstafelEnv.smali"
+                    )
+                )
+            }
+            
+            if (!envFile.exists()) {
+                Log.severe("InstafelEnv.smali not found at ${envFile.absolutePath}")
+                exitProcess(-1)
+            }
 
             val origEnvFile = File(Utils.mergePaths(Env.PROJECT_DIR, "sources", "InstafelEnv_orig.smali"))
 
