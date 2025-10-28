@@ -58,6 +58,38 @@ class CopyInstafelSources: InstafelPatch() {
                 Log.info("Copying instafel resources")
                 Utils.unzipFromResources(false, "/ifl_sources/ifl_sources.zip", destFolder.absolutePath)
 
+                // ContentProvider classes must be in the primary DEX because they are loaded before
+                // the Application class and before secondary DEXes are loaded by MultiDexApplication
+                val primaryDexFolder = smaliUtils.smaliFolders?.firstOrNull()
+                if (primaryDexFolder != null && primaryDexFolder != smallDexFolder) {
+                    val fileProviderSource = File(
+                        Utils.mergePaths(
+                            destFolder.absolutePath,
+                            "app",
+                            "utils",
+                            "InstafelFileProvider.smali"
+                        )
+                    )
+                    val fileProviderDest = File(
+                        Utils.mergePaths(
+                            Env.PROJECT_DIR,
+                            "sources",
+                            primaryDexFolder.name,
+                            "instafel",
+                            "app",
+                            "utils",
+                            "InstafelFileProvider.smali"
+                        )
+                    )
+                    
+                    if (fileProviderSource.exists()) {
+                        fileProviderDest.parentFile.mkdirs()
+                        FileUtils.copyFile(fileProviderSource, fileProviderDest)
+                        fileProviderSource.delete()
+                        Log.info("InstafelFileProvider.smali moved to primary DEX (${primaryDexFolder.name})")
+                    }
+                }
+
                 val igResourcesFolder = File(Utils.mergePaths(Env.PROJECT_DIR, "sources", "res"))
                 Utils.unzipFromResources(false, "/ifl_sources/ifl_resources.zip", igResourcesFolder.absolutePath)
                 success("Instafel resources copied")
