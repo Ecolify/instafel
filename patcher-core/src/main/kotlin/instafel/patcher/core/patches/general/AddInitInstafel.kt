@@ -17,7 +17,7 @@ import kotlin.system.exitProcess
 class AddInitInstafel: InstafelPatch() {
 
     override fun initializeTasks() = mutableListOf<InstafelTask> (
-        @PInfos.TaskInfo("Hook Application.attach() for early initialization")
+        @PInfos.TaskInfo("Hook Application.attachBaseContext() for early initialization")
         object: InstafelTask() {
             override fun execute() {
                 val appShellResult = smaliUtils.getSmaliFilesByName("/com/instagram/app/InstagramAppShell.smali")
@@ -30,32 +30,33 @@ class AddInitInstafel: InstafelPatch() {
 
                 val fContent = smaliUtils.getSmaliFileContent(appShellFile.absolutePath).toMutableList()
 
-                // Hook attach() instead of onCreate() to initialize before QPL and StorageInitializer
+                // Hook attachBaseContext() instead of onCreate() to initialize before QPL and StorageInitializer
                 // This prevents "QuickPerformanceLogger instance wasn't installed" errors
+                // Instagram uses attachBaseContext() (from ContextWrapper) instead of attach()
                 var attachMethodLine = 0
                 var lock = false
 
                 for (i in fContent.indices) {
                     val line = fContent[i]
 
-                    // Find the attach(Landroid/content/Context;)V method declaration
-                    if (line.contains("attach(Landroid/content/Context;)V") && line.contains(".method")) {
+                    // Find the attachBaseContext(Landroid/content/Context;)V method declaration
+                    if (line.contains("attachBaseContext(Landroid/content/Context;)V") && line.contains(".method")) {
                         attachMethodLine = i
                     }
 
-                    // Find the super.attach() call within the attach method
-                    if (line.contains("Landroid/app/Application;->attach(Landroid/content/Context;)V")) {
+                    // Find the super.attachBaseContext() call within the attachBaseContext method
+                    if (line.contains("Landroid/content/ContextWrapper;->attachBaseContext(Landroid/content/Context;)V")) {
                         if (attachMethodLine == 0) {
-                            Log.severe("attach(Landroid/content/Context;)V method declaration not found before super.attach() call.")
+                            Log.severe("attachBaseContext(Landroid/content/Context;)V method declaration not found before super.attachBaseContext() call.")
                         }
 
                         val callerInstruction = SmaliParser.parseInstruction(line, i)
                         val attachVariableName = callerInstruction.registers[0]
 
                         val unusedRegister = smaliUtils.getUnusedRegistersOfMethod(fContent, attachMethodLine, i)
-                        Log.info("Unused register is v$unusedRegister before line $i in attach method")
+                        Log.info("Unused register is v$unusedRegister before line $i in attachBaseContext method")
 
-                        // Initialize Instafel AFTER super.attach() but BEFORE any Instagram initialization
+                        // Initialize Instafel AFTER super.attachBaseContext() but BEFORE any Instagram initialization
                         // This ensures context is set before QPL or StorageInitializer access it
                         val content = listOf(
                             "    invoke-static {$attachVariableName}, Linstafel/app/utils/InitializeInstafel;->setContext(Landroid/app/Application;)V",
@@ -75,11 +76,11 @@ class AddInitInstafel: InstafelPatch() {
 
                 if (lock) {
                     FileUtils.writeLines(appShellFile, fContent)
-                    success("Initializer lines added successfully in attach() method.")
+                    success("Initializer lines added successfully in attachBaseContext() method.")
                 } else if (attachMethodLine == 0) {
-                    failure("attach(Landroid/content/Context;)V method declaration not found in InstagramAppShell.")
+                    failure("attachBaseContext(Landroid/content/Context;)V method declaration not found in InstagramAppShell.")
                 } else {
-                    failure("super.attach() call not found within attach() method.")
+                    failure("super.attachBaseContext() call not found within attachBaseContext() method.")
                 }
             }
         }
