@@ -310,11 +310,19 @@ object BuildProject: CLIJob {
             for (i in fContent.indices) {
                 var line = fContent[i]
 
-                if (line.contains("PRODUCTION_MODE")) {
-                    line = if (isProductionMode) {
-                        ".field public static PRODUCTION_MODE:Z = true"
+                // Only modify the PRODUCTION_MODE initialization in <clinit>, not the field declaration
+                if (line.contains("sput-boolean") && line.contains("PRODUCTION_MODE")) {
+                    // Change the boolean value being set (0x0 = false, 0x1 = true)
+                    if (isProductionMode) {
+                        // Ensure the previous line sets v0 to 0x1 (true)
+                        if (i > 0 && fContent[i - 2].trim().startsWith("const/4")) {
+                            fContent[i - 2] = "    const/4 v0, 0x1"
+                        }
                     } else {
-                        ".field public static PRODUCTION_MODE:Z = false"
+                        // Ensure the previous line sets v0 to 0x0 (false)
+                        if (i > 0 && fContent[i - 2].trim().startsWith("const/4")) {
+                            fContent[i - 2] = "    const/4 v0, 0x0"
+                        }
                     }
                 }
 
