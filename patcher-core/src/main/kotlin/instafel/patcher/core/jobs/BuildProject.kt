@@ -248,6 +248,15 @@ object BuildProject: CLIJob {
         }
     }
 
+    /**
+     * Updates the InstafelEnv.smali file with build-time values.
+     * 
+     * This function modifies the InstafelEnv.smali file to replace placeholder values
+     * with actual build information. It's important to maintain valid smali syntax:
+     * - String placeholders are replaced in const-string instructions
+     * - Boolean fields like PRODUCTION_MODE must be set via the <clinit> constructor,
+     *   not through field declaration default values
+     */
     fun updateInstafelEnv(coreCommit: String, projectTag: String, patcherVersion: String) {
         var envOkCheck = false;
         Env.Project.appliedPatches.groupPatches.forEach { group ->
@@ -310,7 +319,14 @@ object BuildProject: CLIJob {
             for (i in fContent.indices) {
                 var line = fContent[i]
 
-                // Only modify the PRODUCTION_MODE initialization in <clinit>, not the field declaration
+                // IMPORTANT: Only modify the PRODUCTION_MODE initialization in <clinit>, not the field declaration.
+                // In smali, boolean fields cannot have default values in their declaration (unlike constant int fields in R classes).
+                // The correct syntax is to modify the const/4 instruction that sets the value in the static constructor.
+                // Example:
+                //   .field public static PRODUCTION_MODE:Z  <- Field declaration (DO NOT MODIFY)
+                //   ...
+                //   const/4 v0, 0x1                         <- Sets boolean value (MODIFY THIS)
+                //   sput-boolean v0, L.../PRODUCTION_MODE:Z <- Stores the value
                 if (line.contains("sput-boolean") && line.contains("PRODUCTION_MODE")) {
                     // Change the boolean value being set (0x0 = false, 0x1 = true)
                     if (isProductionMode) {
