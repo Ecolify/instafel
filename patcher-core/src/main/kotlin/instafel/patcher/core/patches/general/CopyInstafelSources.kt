@@ -83,10 +83,22 @@ class CopyInstafelSources: InstafelPatch() {
                     )
                     
                     if (fileProviderSource.exists()) {
-                        fileProviderDest.parentFile.mkdirs()
-                        FileUtils.copyFile(fileProviderSource, fileProviderDest)
-                        fileProviderSource.delete()
-                        Log.info("InstafelFileProvider.smali moved to primary DEX (${primaryDexFolder.name})")
+                        try {
+                            if (!fileProviderDest.parentFile.exists() && !fileProviderDest.parentFile.mkdirs()) {
+                                Log.severe("Failed to create directory for InstafelFileProvider in primary DEX")
+                                failure("Could not create directory: ${fileProviderDest.parentFile.absolutePath}")
+                                return
+                            }
+                            FileUtils.copyFile(fileProviderSource, fileProviderDest)
+                            if (!fileProviderSource.delete()) {
+                                Log.warning("Failed to delete source InstafelFileProvider after copy")
+                            }
+                            Log.info("InstafelFileProvider.smali moved to primary DEX (${primaryDexFolder.name})")
+                        } catch (e: Exception) {
+                            Log.severe("Failed to move InstafelFileProvider to primary DEX: ${e.message}")
+                            failure("InstafelFileProvider must be in primary DEX for app to function")
+                            return
+                        }
                     }
                 }
 
