@@ -29,6 +29,7 @@ on:
         description: 'Instagram Alpha APK download URL (required if not using gplayapi)'
         required: false
         type: string
+        default: 'https://my.microsoftpersonalcontent.com/personal/f2d8dcd41970e636/_layouts/15/download.aspx?UniqueId=f1de2ff8-4f75-4389-8230-f8e6acb581ef&Translate=false&tempauth=v1e.eyJzaXRlaWQiOiI3M2NlNzYzOS04ZmZhLTQ2MTMtOWZmZC0zODgyNDMyZjc0ZjciLCJhdWQiOiIwMDAwMDAwMy0wMDAwLTBmZjEtY2UwMC0wMDAwMDAwMDAwMDAvbXkubWljcm9zb2Z0cGVyc29uYWxjb250ZW50LmNvbUA5MTg4MDQwZC02YzY3LTRjNWItYjExMi0zNmEzMDRiNjZkYWQiLCJleHAiOiIxNzYxNjQ3NDk5In0.IjF8GuwUn5_6_WjnyWxT_HanI3L34OPkYJhrkCwunVUdcL8ptnaMYmhFf5b0yOXzAuxeXCwuLtHDJYpHysZynn2LLZkIYYSvNhgRvzIWoD9yIiUpmslWQSjhPzmD0-KdbpXuauGdTWDhYAHIeKEduMEYN2xAvmvZMeip7mkSuU_gdn-FyPUiJsw01AN8q1CbLue7qx_gDV89ytcuZWz_rB8ujeTwSniUFnRtWkvySdTWwmABKbqsf54XqtKAygJ6GCZSmmPic-Iv78xVuSDa3gmr0GHT23Eb4CCzErjUEr0tD7x3PhdCkezcoH1yXw1eZtrQMamrEVTwH_fMSriKhXX4vHPDcz7w4D5t_QuH9COZc3yG-pxk479cV2edWiS-5fhWwsR_ErX_ToCOELAhu-nVhXYTjuV7qyKDKxBaHbAGna5dW-hDLL_sUCMXUB6mpPyMXw7BKkg-C292C7TKuEPMu7ya3t7omb5zBQGZTnhZWyszSqGPCHQKveRLmA3234FyxDW4EMFiBoi_5pxDMA.NiZTZaue2YHpkzZcJjZgzj5CKWH74J8kQfNZ03JwkXw&ApiVersion=2.0'
       use_gplayapi:
         description: 'Use gplayapi to download latest Instagram Alpha (requires secrets)'
         required: false
@@ -158,7 +159,7 @@ jobs:
           fi
           
           echo "Applying Instafel patches (unclone variant) to: $PROJECT_DIR"
-          java -jar .output/ifl-patcher-v*.jar run "$PROJECT_DIR" instafel ghost_mode clone remove_snooze_warning unlock_developer_options change_channel_name remove_ads
+          java -jar .output/ifl-patcher-v*.jar run "$PROJECT_DIR" instafel ghost_mode remove_snooze_warning unlock_developer_options change_channel_name remove_ads clone
           
           echo " patches applied successfully"
       
@@ -189,21 +190,14 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: instafel-app-latest
-          path: .output/ifl-app-*.apk
+          path: .output/*.apk
           if-no-files-found: warn
       
       - name: Upload Patcher JAR
         uses: actions/upload-artifact@v4
         with:
-          name: instafel-patcher-latest
-          path: .output/ifl-patcher-v*.jar
-          if-no-files-found: warn
-      
-      - name: Upload Patcher Core JAR
-        uses: actions/upload-artifact@v4
-        with:
-          name: instafel-patcher-core-latest
-          path: .output/ifl-patcher-core-*.jar
+          name: instafel-jar-latest
+          path: .output/*.jar
           if-no-files-found: warn
       
       - name: Upload patched Instagram APKs
