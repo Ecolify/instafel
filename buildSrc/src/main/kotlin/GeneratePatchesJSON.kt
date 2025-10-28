@@ -15,6 +15,11 @@ const val patchesPath = "instafel/patcher/core/patches"
 // Regex to match nested anonymous inner classes (e.g., ClassName$1$2)
 val NESTED_ANONYMOUS_CLASS_PATTERN = Regex(".*\\$\\d+\\$.*\\$\\d+")
 
+// Regex to match Kotlin-generated companion and metadata classes
+val KOTLIN_COMPANION_PATTERN = Regex(".*\\\$Companion$")
+val KOTLIN_DEFAULT_IMPLS_PATTERN = Regex(".*\\\$DefaultImpls$")
+val KOTLIN_WHEN_MAPPINGS_PATTERN = Regex(".*\\\$WhenMappings$")
+
 fun filterPackageName(name: String): String = name.replace("instafel.patcher.core.", "")
 fun filterPackageNameAndUtilsPatchPkg(name: String): String = name.replace("instafel.patcher.core.utils.patch.", "")
 
@@ -172,7 +177,14 @@ fun Project.generatePatchesJSON(jarFile: File): File {
                     // - Classes containing "$execute$": anonymous classes created within InstafelTask.execute() method
                     //   (e.g., sealed class branches in when expressions)
                     // - Nested anonymous classes matching pattern "$N$...$N": multiple levels of anonymous inner classes
-                    if (className.contains("\$execute\$") || className.matches(NESTED_ANONYMOUS_CLASS_PATTERN)) {
+                    // - Companion objects ($Companion): Kotlin-generated companion object classes
+                    // - Default implementations ($DefaultImpls): Kotlin interface default implementations
+                    // - When mappings ($WhenMappings): Kotlin when expression mappings
+                    if (className.contains("\$execute\$") || 
+                        className.matches(NESTED_ANONYMOUS_CLASS_PATTERN) ||
+                        className.matches(KOTLIN_COMPANION_PATTERN) ||
+                        className.matches(KOTLIN_DEFAULT_IMPLS_PATTERN) ||
+                        className.matches(KOTLIN_WHEN_MAPPINGS_PATTERN)) {
                         continue
                     }
 
