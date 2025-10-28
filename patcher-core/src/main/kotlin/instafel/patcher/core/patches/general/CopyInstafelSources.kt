@@ -60,7 +60,7 @@ class CopyInstafelSources: InstafelPatch() {
 
                 // ContentProvider classes must be in the primary DEX because they are loaded before
                 // the Application class and before secondary DEXes are loaded by MultiDexApplication.
-                // Additionally, classes referenced from Application.onCreate() must also be in the primary DEX
+                // Additionally, classes referenced from Application.attach() must also be in the primary DEX
                 // to avoid ClassNotFoundException during early app initialization.
                 val primaryDexFolder = smaliUtils.smaliFolders?.firstOrNull()
                 if (primaryDexFolder != null && primaryDexFolder != smallDexFolder) {
@@ -71,8 +71,8 @@ class CopyInstafelSources: InstafelPatch() {
                     val classesToMoveToPrimaryDex = mapOf(
                         "utils" to listOf(
                             "InstafelFileProvider",      // ContentProvider - loaded before Application
-                            "InitializeInstafel",         // Called from InstagramAppShell.onCreate()
-                            "InstafelCrashHandler"        // Called from InstagramAppShell.onCreate()
+                            "InitializeInstafel",         // Called from InstagramAppShell.attach()
+                            "InstafelCrashHandler"        // Called from InstagramAppShell.attach()
                         ),
                         "utils/localization" to listOf(
                             "LocalizationUtils",          // Used by InitializeInstafel.setContext()
