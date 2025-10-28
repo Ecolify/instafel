@@ -88,12 +88,29 @@ jobs:
           ./gradlew :gplayapi:downloaderJar
           ls -lh .output/
           
-          # Run the downloader
-          echo "Downloading Instagram Alpha APK..."
+          # Run the downloader - it now downloads all splits to instagram-splits/
+          echo "Downloading Instagram Alpha APK splits..."
           java -jar .output/ifl-gplayapi-downloader-*.jar instagram-alpha.apk
           
-          echo "Download completed:"
+          echo "Download completed. Listing downloaded splits:"
+          ls -lh instagram-splits/
+      
+      - name: Merge split APKs into single APK
+        run: |
+          echo "Merging split APKs using AntiSplit-M..."
+          
+          # Make the merge script executable
+          chmod +x .github/scripts/merge-split-apks.sh
+          
+          # Run the merge script
+          .github/scripts/merge-split-apks.sh instagram-splits instagram-alpha.apk
+          
+          echo "Merge completed. Verifying merged APK:"
           ls -lh instagram-alpha.apk
+          
+          # Clean up splits directory to save space
+          rm -rf instagram-splits/
+          echo "Cleaned up splits directory"
       
       - name: Validate APK exists
         run: |

@@ -33,10 +33,17 @@ class InstafelGplayapiInstance(private val packageName: String) {
             Log.println("I", "File found, ${file.name}")
             when {
                 file.name == "com.instagram.android.apk" -> appInfo.addApkInfo("base_apk", file.url, file.size)
-                file.name.contains("config") && file.name.contains("dpi.apk") -> appInfo.addApkInfo("rconf_apk", file.url, file.size)
+                file.name.contains("config") && file.name.contains("dpi.apk") -> appInfo.addApkInfo("config_dpi", file.url, file.size)
+                file.name.contains("config") && file.name.contains("arm64_v8a") -> appInfo.addApkInfo("config_arm64", file.url, file.size)
+                file.name.contains("config") && file.name.endsWith(".apk") -> {
+                    // Add any other config splits
+                    val splitName = file.name.replace(".apk", "").replace(".", "_")
+                    appInfo.addApkInfo(splitName, file.url, file.size)
+                    Log.println("I", "Added split: $splitName")
+                }
             }
         }
 
-        return if (appInfo.ifApkExist("base_apk") && appInfo.ifApkExist("rconf_apk")) appInfo else null
+        return if (appInfo.ifApkExist("base_apk")) appInfo else null
     }
 }
