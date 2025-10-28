@@ -152,9 +152,9 @@ $ grep "\.method.*startRequest" TigonServiceLayer.smali
 ```
 
 The method has 3 parameters as expected:
-- `p1: LX/3ww` - Request object containing the URI
-- `p2: LX/3xq` - Second parameter
-- `p3: LX/3yx` - Third parameter
+- `p1: LX/3ww` - Request object containing the URI (obfuscated class containing request metadata)
+- `p2: LX/3xq` - Callback/response handler object (obfuscated)
+- `p3: LX/3yx` - Request options/configuration object (obfuscated)
 
 ### 4. Build Verification
 
@@ -165,10 +165,7 @@ BUILD SUCCESSFUL in 24s
 
 ### 5. Security Scan
 
-```bash
-$ CodeQL analysis
-No vulnerabilities detected
-```
+CodeQL security analysis was performed on the changes and found no vulnerabilities.
 
 ## Comparison: InstaEclipse Reference
 
@@ -231,12 +228,16 @@ S: Network interceptor patch applied successfully at line 2891
 I: SUCCESS: Patch applied successfully
 ```
 
-## Files Modified
+## Files Modified in This Fix
 
-- `patcher-core/src/main/kotlin/instafel/patcher/core/patches/ghost/NetworkInterceptor.kt`
-  - Changed search strategy from X folder search to direct path lookup
-  - Removed unused imports
-  - Added better error messaging
+1. **Code Changes (Previous Commit)**
+   - `patcher-core/src/main/kotlin/instafel/patcher/core/patches/ghost/NetworkInterceptor.kt`
+     - Changed search strategy from X folder search to direct path lookup
+     - Removed unused imports
+     - Added better error messaging
+
+2. **Documentation (This Commit)**
+   - `docs/NETWORK_INTERCEPTOR_FIX.md` - Comprehensive fix documentation
 
 ## Related Issues
 
