@@ -44,6 +44,41 @@ class GhostViewOnce: InstafelPatch() {
         private const val MIN_IMPLEMENTATION_LINES = 50
         private const val MAX_IMPLEMENTATION_LINES = 2000
         private const val MAX_LOCALS_SEARCH_OFFSET = 20
+        
+        // Regex to match smali method signatures with void return type
+        private val METHOD_SIGNATURE_REGEX = Regex("\\(([^)]*)\\)V")
+        
+        /**
+         * Counts the number of parameters in a smali method signature
+         * @param params The parameter string from a method signature (e.g., "LX/abc;IZ")
+         * @return Number of parameters in the signature
+         */
+        private fun countMethodParameters(params: String): Int {
+            var paramCount = 0
+            var i = 0
+            while (i < params.length) {
+                when (params[i]) {
+                    'L' -> {
+                        // Object parameter - skip until semicolon
+                        paramCount++
+                        val semicolonIdx = params.indexOf(';', i)
+                        if (semicolonIdx == -1) return -1 // Invalid signature
+                        i = semicolonIdx + 1
+                    }
+                    'I', 'J', 'Z', 'F', 'D', 'B', 'S', 'C' -> {
+                        // Primitive parameter
+                        paramCount++
+                        i++
+                    }
+                    '[' -> {
+                        // Array - skip bracket and process type
+                        i++
+                    }
+                    else -> i++
+                }
+            }
+            return paramCount
+        }
     }
 
     override fun initializeTasks() = mutableListOf(
@@ -117,28 +152,11 @@ class GhostViewOnce: InstafelPatch() {
                                             val lineIndex = fContent.indexOf(line)
                                             for (i in lineIndex downTo 0) {
                                                 if (fContent[i].contains(".method")) {
-                                                    // Check if method has signature (?,?,?)V
-                                                    val signatureMatch = Regex("\\(([^)]*)\\)V").find(fContent[i])
+                                                    // Check if method has signature (?,?,?)V using shared regex
+                                                    val signatureMatch = METHOD_SIGNATURE_REGEX.find(fContent[i])
                                                     if (signatureMatch != null) {
                                                         val params = signatureMatch.groupValues[1]
-                                                        var paramCount = 0
-                                                        var idx = 0
-                                                        while (idx < params.length) {
-                                                            when (params[idx]) {
-                                                                'L' -> {
-                                                                    paramCount++
-                                                                    val semicolonIdx = params.indexOf(';', idx)
-                                                                    if (semicolonIdx == -1) break
-                                                                    idx = semicolonIdx + 1
-                                                                }
-                                                                'I', 'J', 'Z', 'F', 'D', 'B', 'S', 'C' -> {
-                                                                    paramCount++
-                                                                    idx++
-                                                                }
-                                                                '[' -> idx++
-                                                                else -> idx++
-                                                            }
-                                                        }
+                                                        val paramCount = countMethodParameters(params)
                                                         return@filter paramCount == 3
                                                     }
                                                     break
@@ -183,34 +201,10 @@ class GhostViewOnce: InstafelPatch() {
                                 val methodDeclaration = fContent[methodIndex]
                                 
                                 // Extract signature to match InstaEclipse: void(?, ?, ?)
-                                val signatureMatch = Regex("\\(([^)]*)\\)V").find(methodDeclaration)
+                                val signatureMatch = METHOD_SIGNATURE_REGEX.find(methodDeclaration)
                                 if (signatureMatch != null) {
                                     val params = signatureMatch.groupValues[1]
-                                    
-                                    // Count parameters: each L starts an object param, primitives are single chars
-                                    var paramCount = 0
-                                    var i = 0
-                                    while (i < params.length) {
-                                        when (params[i]) {
-                                            'L' -> {
-                                                // Object parameter - skip until semicolon
-                                                paramCount++
-                                                val semicolonIdx = params.indexOf(';', i)
-                                                if (semicolonIdx == -1) break // Invalid signature, stop
-                                                i = semicolonIdx + 1
-                                            }
-                                            'I', 'J', 'Z', 'F', 'D', 'B', 'S', 'C' -> {
-                                                // Primitive parameter
-                                                paramCount++
-                                                i++
-                                            }
-                                            '[' -> {
-                                                // Array - skip bracket and process type
-                                                i++
-                                            }
-                                            else -> i++
-                                        }
-                                    }
+                                    val paramCount = countMethodParameters(params)
                                     
                                     // InstaEclipse matches: void method with exactly 3 parameters
                                     if (paramCount == 3) {
