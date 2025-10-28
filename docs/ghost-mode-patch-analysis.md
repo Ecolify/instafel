@@ -26,12 +26,10 @@ This resulted in:
 
 Analyzed `instaeclipse/app/src/main/java/ps/reso/instaeclipse/mods/ghost/StorySeen.java`:
 
-```java
-// InstaEclipse searches for methods containing "media/seen/" with:
-- Modifier: final
-- Return type: void
-- Parameters: 0 (signature: ()V)
-```
+InstaEclipse searches for methods containing "media/seen/" with:
+- Modifier: `final`
+- Return type: `void`
+- Parameters: 0 (signature: `()V`)
 
 ### 2. Instagram Smali Analysis
 
@@ -146,6 +144,5 @@ The patch is now more robust and automatic, properly handling the Instagram smal
 
 ---
 
-**Author:** GitHub Copilot Agent  
 **Date:** 2025-10-28  
-**Issue:** #[Issue Number] - Analizar y corregir parches Ghost Mode en Instafel
+**Issue:** Analizar y corregir parches Ghost Mode en Instafel
