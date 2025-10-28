@@ -41,14 +41,16 @@ class NetworkInterceptor : InstafelPatch() {
         @PInfos.TaskInfo("Find TigonServiceLayer class")
         object : InstafelTask() {
             override fun execute() {
-                // Search for TigonServiceLayer class by its class declaration
+                // Search for TigonServiceLayer class in all smali folders (not just X)
+                // since TigonServiceLayer is not obfuscated and located at:
+                // smali/com/instagram/api/tigon/TigonServiceLayer.smali
                 val searchPattern = listOf(
-                    listOf(".class", "TigonServiceLayer"),
-                    listOf("startRequest")  // Must have startRequest method
+                    listOf(".class", "Lcom/instagram/api/tigon/TigonServiceLayer;"),
+                    listOf(".method", "startRequest")
                 )
 
                 when (val result = runBlocking {
-                    SearchUtils.getFileContainsAllCords(smaliUtils, searchPattern)
+                    SearchUtils.getFileContainsAllCordsInAllFolders(smaliUtils, searchPattern)
                 }) {
                     is FileSearchResult.Success -> {
                         tigonServiceLayerFile = result.file
@@ -58,26 +60,8 @@ class NetworkInterceptor : InstafelPatch() {
                         failure("Patch aborted: TigonServiceLayer class not found")
                     }
                     is FileSearchResult.MultipleFound -> {
-                        // Filter for the exact TigonServiceLayer class
-                        val candidates = result.files.filter { file ->
-                            val content = smaliUtils.getSmaliFileContent(file.absolutePath)
-                            content.any { line ->
-                                line.contains(".class") && 
-                                line.contains("TigonServiceLayer") &&
-                                line.contains("Lcom/instagram/api/tigon/TigonServiceLayer;")
-                            }
-                        }
-
-                        if (candidates.size == 1) {
-                            tigonServiceLayerFile = candidates[0]
-                            success("TigonServiceLayer class found after filtering: ${tigonServiceLayerFile.name}")
-                        } else if (candidates.isEmpty()) {
-                            failure("Patch aborted: No exact TigonServiceLayer class found among ${result.files.size} candidates")
-                        } else {
-                            // Take the first one if multiple exact matches (unlikely)
-                            tigonServiceLayerFile = candidates.first()
-                            success("TigonServiceLayer class selected (first of ${candidates.size}): ${tigonServiceLayerFile.name}")
-                        }
+                        // This should not happen with the exact class path, but handle it anyway
+                        failure("Patch aborted: Found ${result.files.size} TigonServiceLayer candidates (unexpected)")
                     }
                 }
             }

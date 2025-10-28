@@ -25,6 +25,24 @@ object SearchUtils {
         }
     }
 
+    /**
+     * Get all smali files from all smali folders (not just X directory)
+     * Use this for non-obfuscated classes like com/instagram/api/tigon/TigonServiceLayer
+     */
+    fun getAllSmaliFilesIterators(smaliFolders: Array<File>): List<Collection<File>> {
+        return smaliFolders.mapNotNull { smaliFolder ->
+            if (smaliFolder.exists() && smaliFolder.isDirectory) {
+                FileUtils.listFiles(
+                    smaliFolder,
+                    SuffixFileFilter(".smali"),
+                    TrueFileFilter.INSTANCE
+                )
+            } else {
+                null
+            }
+        }
+    }
+
     suspend fun getFileContainsAllCords(
         smaliUtils: SmaliUtils,
         searchConditions: List<List<String>>
@@ -40,6 +58,99 @@ object SearchUtils {
 
         val totalFiles = allFiles.size
         Log.info("Totally $totalFiles file got listed in X folder(s)")
+
+        val chunkSize = (totalFiles / threadCount) + 1
+        val chunks = allFiles.chunked(chunkSize)
+
+        val processedFiles = AtomicInteger(0)
+        val foundCount = AtomicInteger(0)
+
+        val jobs = chunks.mapIndexed { chunkIndex, chunk ->
+            async {
+                var chunkFoundCount = 0
+                var chunkProcessedCount = 0
+
+                chunk.forEach { file ->
+                    try {
+                        val fContent = smaliUtils.getSmaliFileContent(file.absolutePath)
+                        val passStatuses = BooleanArray(searchConditions.size)
+
+                        for (line in fContent) {
+                            searchConditions.forEachIndexed { i, lineConditions ->
+                                if (lineConditions.all { condition ->
+                                        line.contains(condition)
+                                    }) {
+                                    passStatuses[i] = true
+                                }
+                            }
+                            if (passStatuses.all { it }) break
+                        }
+
+                        if (passStatuses.all { it }) {
+                            Log.info("Found a file, ${Utils.makeSmaliPathShort(file)} by T$chunkIndex")
+                            foundFiles.send(file)
+                            chunkFoundCount++
+                            foundCount.incrementAndGet()
+                        }
+
+                    } catch (e: Exception) {
+                        Log.severe("IO/Read Error [Thread $chunkIndex]: ${file.absolutePath} - ${e.message}")
+                    }
+
+                    chunkProcessedCount++
+                    processedFiles.incrementAndGet()
+                }
+                chunkFoundCount
+            }
+        }
+
+        jobs.awaitAll()
+        foundFiles.close()
+
+        val resultFiles = mutableListOf<File>()
+        for (file in foundFiles) {
+            resultFiles.add(file)
+        }
+
+        val totalTime = (System.currentTimeMillis() - startTime) / 1000.0
+        Log.info("Search process ran with $threadCount threads in ${totalTime}s totally ($totalFiles file processed)")
+
+        when {
+            resultFiles.isEmpty() -> {
+                Log.severe("No files found for apply patch.")
+                return@withContext FileSearchResult.NotFound(0)
+            }
+            resultFiles.size == 1 -> {
+                Log.info("Class ${Utils.makeSmaliPathShort(resultFiles[0])} meets all requirements")
+                return@withContext FileSearchResult.Success(resultFiles[0])
+            }
+            else -> {
+                Log.severe("Found more files than one (${resultFiles.size}) for apply patch, add more condition for find correct file.")
+                return@withContext FileSearchResult.MultipleFound(resultFiles)
+            }
+        }
+    }
+
+    /**
+     * Search for files in all smali folders (not just X directory)
+     * Use this for non-obfuscated classes like com/instagram/api/tigon/TigonServiceLayer
+     * that are not in the X (obfuscated) directory
+     */
+    suspend fun getFileContainsAllCordsInAllFolders(
+        smaliUtils: SmaliUtils,
+        searchConditions: List<List<String>>
+    ): FileSearchResult = withContext(Dispatchers.IO) {
+
+        val threadCount = Utils.getSuggestedThreadCount()
+        val startTime = System.currentTimeMillis()
+        val foundFiles = Channel<File>(Channel.UNLIMITED)
+        val allFiles = mutableListOf<File>()
+        getAllSmaliFilesIterators(smaliUtils.smaliFolders).forEach { fileCollection ->
+            allFiles.addAll(fileCollection)
+        }
+
+        val totalFiles = allFiles.size
+        Log.info("Totally $totalFiles file got listed in all smali folder(s)")
 
         val chunkSize = (totalFiles / threadCount) + 1
         val chunks = allFiles.chunked(chunkSize)
