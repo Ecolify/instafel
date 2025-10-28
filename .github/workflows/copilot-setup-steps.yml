@@ -94,3 +94,33 @@ jobs:
           test -f instagram_src/AndroidManifest.xml || echo "Warning: AndroidManifest.xml missing"
           test -d instagram_src/res || echo "Warning: res/ missing"
           echo "Smali folders at: $(ls -d smali* 2>/dev/null || echo 'none')"
+
+      - name: Install CLI tools for MCP process server
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            ripgrep fd-find jq yq zip unzip p7zip-full tree sqlite3 universal-ctags git gh curl wget \
+            sed gawk perl tar file patch diffutils findutils moreutils rename
+          # fd on Ubuntu is fdfind; provide fd alias if absent
+          if command -v fdfind >/dev/null 2>&1 && ! command -v fd >/dev/null 2>&1; then
+            sudo ln -s "$(command -v fdfind)" /usr/local/bin/fd
+          fi
+          # show versions
+          rg --version || true
+          fd --version || true
+          jq --version || true
+          yq --version || true
+          git --version
+          gh --version
+          unzip -v || true
+          zip -v || true
+          7z --help || true
+          sqlite3 --version || true
+          ctags --version || true
+          curl --version
+          wget --version
+          perl --version
+          sed --version || true
+          awk --version || true
+          tar --version
