@@ -47,12 +47,20 @@ class NetworkInterceptor : InstafelPatch() {
 
                 val validCandidates = candidates.filter { file ->
                     val content = smaliUtils.getSmaliFileContent(file.absolutePath)
-                    content.any { line ->
-                        line.contains(".class") && 
-                        line.contains("Lcom/instagram/api/tigon/TigonServiceLayer;")
-                    } && content.any { line ->
-                        line.contains("startRequest")
+                    var hasClassDeclaration = false
+                    var hasStartRequest = false
+                    
+                    for (line in content) {
+                        if (line.contains(".class") && line.contains("Lcom/instagram/api/tigon/TigonServiceLayer;")) {
+                            hasClassDeclaration = true
+                        }
+                        if (line.contains("startRequest")) {
+                            hasStartRequest = true
+                        }
+                        if (hasClassDeclaration && hasStartRequest) break
                     }
+                    
+                    hasClassDeclaration && hasStartRequest
                 }
 
                 when {
@@ -143,7 +151,7 @@ class NetworkInterceptor : InstafelPatch() {
                     ""
                 )
 
-                fContent.add(insertLine, interceptorCode.joinToString("\n"))
+                fContent.addAll(insertLine, interceptorCode)
                 FileUtils.writeLines(tigonServiceLayerFile, fContent)
                 success("Network interceptor patch applied successfully at line $methodLine")
             }
