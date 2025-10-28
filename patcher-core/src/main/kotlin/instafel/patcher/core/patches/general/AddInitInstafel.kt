@@ -46,7 +46,7 @@ class AddInitInstafel: InstafelPatch() {
                     // Find the super.attach() call within the attach method
                     if (line.contains("Landroid/app/Application;->attach(Landroid/content/Context;)V")) {
                         if (attachMethodLine == 0) {
-                            Log.severe("attach method declaration not found before super.attach() call.")
+                            Log.severe("attach(Landroid/content/Context;)V method declaration not found before super.attach() call.")
                         }
 
                         val callerInstruction = SmaliParser.parseInstruction(line, i)
@@ -76,8 +76,10 @@ class AddInitInstafel: InstafelPatch() {
                 if (lock) {
                     FileUtils.writeLines(appShellFile, fContent)
                     success("Initializer lines added successfully in attach() method.")
+                } else if (attachMethodLine == 0) {
+                    failure("attach(Landroid/content/Context;)V method declaration not found in InstagramAppShell.")
                 } else {
-                    failure("attach() method not found or super.attach() call not found.")
+                    failure("super.attach() call not found within attach() method.")
                 }
             }
         }
