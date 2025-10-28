@@ -59,45 +59,58 @@ class CopyInstafelSources: InstafelPatch() {
                 Utils.unzipFromResources(false, "/ifl_sources/ifl_sources.zip", destFolder.absolutePath)
 
                 // ContentProvider classes must be in the primary DEX because they are loaded before
-                // the Application class and before secondary DEXes are loaded by MultiDexApplication
+                // the Application class and before secondary DEXes are loaded by MultiDexApplication.
+                // Additionally, classes referenced from Application.onCreate() must also be in the primary DEX
+                // to avoid ClassNotFoundException during early app initialization.
                 val primaryDexFolder = smaliUtils.smaliFolders?.firstOrNull()
                 if (primaryDexFolder != null && primaryDexFolder != smallDexFolder) {
-                    val fileProviderSource = File(
-                        Utils.mergePaths(
-                            destFolder.absolutePath,
-                            "app",
-                            "utils",
-                            "InstafelFileProvider.smali"
-                        )
-                    )
-                    val fileProviderDest = File(
-                        Utils.mergePaths(
-                            Env.PROJECT_DIR,
-                            "sources",
-                            primaryDexFolder.name,
-                            "instafel",
-                            "app",
-                            "utils",
-                            "InstafelFileProvider.smali"
-                        )
+                    // List of classes that must be in the primary DEX
+                    val classesToMoveToPrimaryDex = listOf(
+                        "InstafelFileProvider.smali",      // ContentProvider - loaded before Application
+                        "InitializeInstafel.smali",         // Called from InstagramAppShell.onCreate()
+                        "InstafelCrashHandler.smali"        // Called from InstagramAppShell.onCreate()
                     )
                     
-                    if (fileProviderSource.exists()) {
-                        try {
-                            if (!fileProviderDest.parentFile.exists() && !fileProviderDest.parentFile.mkdirs()) {
-                                Log.severe("Failed to create directory for InstafelFileProvider in primary DEX")
-                                failure("Could not create directory: ${fileProviderDest.parentFile.absolutePath}")
+                    classesToMoveToPrimaryDex.forEach { className ->
+                        val classSource = File(
+                            Utils.mergePaths(
+                                destFolder.absolutePath,
+                                "app",
+                                "utils",
+                                className
+                            )
+                        )
+                        val classDest = File(
+                            Utils.mergePaths(
+                                Env.PROJECT_DIR,
+                                "sources",
+                                primaryDexFolder.name,
+                                "instafel",
+                                "app",
+                                "utils",
+                                className
+                            )
+                        )
+                        
+                        if (classSource.exists()) {
+                            try {
+                                if (!classDest.parentFile.exists() && !classDest.parentFile.mkdirs()) {
+                                    Log.severe("Failed to create directory for $className in primary DEX")
+                                    failure("Could not create directory: ${classDest.parentFile.absolutePath}")
+                                    return
+                                }
+                                FileUtils.copyFile(classSource, classDest)
+                                if (!classSource.delete()) {
+                                    Log.warning("Failed to delete source $className after copy")
+                                }
+                                Log.info("$className moved to primary DEX (${primaryDexFolder.name})")
+                            } catch (e: Exception) {
+                                Log.severe("Failed to move $className to primary DEX: ${e.message}")
+                                failure("$className must be in primary DEX for app to function")
                                 return
                             }
-                            FileUtils.copyFile(fileProviderSource, fileProviderDest)
-                            if (!fileProviderSource.delete()) {
-                                Log.warning("Failed to delete source InstafelFileProvider after copy")
-                            }
-                            Log.info("InstafelFileProvider.smali moved to primary DEX (${primaryDexFolder.name})")
-                        } catch (e: Exception) {
-                            Log.severe("Failed to move InstafelFileProvider to primary DEX: ${e.message}")
-                            failure("InstafelFileProvider must be in primary DEX for app to function")
-                            return
+                        } else {
+                            Log.warning("$className not found at expected location: ${classSource.absolutePath}")
                         }
                     }
                 }
