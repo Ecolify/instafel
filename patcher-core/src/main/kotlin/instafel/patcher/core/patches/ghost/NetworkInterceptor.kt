@@ -88,8 +88,6 @@ class NetworkInterceptor : InstafelPatch() {
                 val fContent = smaliUtils.getSmaliFileContent(tigonServiceLayerFile.absolutePath).toMutableList()
                 var methodLine = -1
                 var localsLine = -1
-                var uriFieldName: String? = null
-                var requestParamRegister: String? = null
 
                 // Find the startRequest method with 3 parameters
                 // Based on InstaEclipse: startRequest(?, ?, ?) where first param contains URI field
@@ -141,80 +139,25 @@ class NetworkInterceptor : InstafelPatch() {
                     return
                 }
 
-                // Now we need to find the URI field in the first parameter
-                // Look for iget-object operations that access a Ljava/net/URI; field
-                // This should happen early in the method
-                for (i in methodLine until minOf(methodLine + 100, fContent.size)) {
-                    val line = fContent[i]
-                    if (line.contains("iget-object") && line.contains("Ljava/net/URI;")) {
-                        // Extract field name: iget-object vX, pY, LClass;->fieldName:Ljava/net/URI;
-                        val fieldMatch = Regex("->([^:]+):Ljava/net/URI;").find(line)
-                        if (fieldMatch != null) {
-                            uriFieldName = fieldMatch.groupValues[1]
-                            
-                            // Extract which register holds the first parameter
-                            val registerMatch = Regex("iget-object\\s+v\\d+,\\s+(p\\d+)").find(line)
-                            if (registerMatch != null) {
-                                requestParamRegister = registerMatch.groupValues[1]
-                            }
-                            break
-                        }
-                    }
-                }
-
-                // If we couldn't find the URI field dynamically, we'll inject code that works
-                // regardless - we'll assume p1 is the first parameter (request object)
-                if (requestParamRegister == null) {
-                    requestParamRegister = "p1"
-                }
-
                 // Insert after .locals line or after method declaration
                 val insertLine = if (localsLine != -1) localsLine + 1 else methodLine + 1
 
-                // Inject network interceptor check
-                // The logic:
-                // 1. Try to get URI from request object
-                // 2. Call NetworkInterceptor.interceptRequest(uri)
-                // 3. If it returns non-null (fake URI), replace the original URI
-                val interceptorCode = if (uriFieldName != null) {
-                    // We found the URI field name, can inject precise code
-                    listOf(
-                        "",
-                        "    # Network Interceptor - Ghost Mode",
-                        "    # Get URI from request object",
-                        "    iget-object v0, $requestParamRegister, Lcom/instagram/api/tigon/TigonServiceLayer;->$uriFieldName:Ljava/net/URI;",
-                        "    ",
-                        "    # Call NetworkInterceptor.interceptRequest(uri)",
-                        "    invoke-static {v0}, Linstafel/app/utils/ghost/NetworkInterceptor;->interceptRequest(Ljava/net/URI;)Ljava/net/URI;",
-                        "    move-result-object v1",
-                        "    ",
-                        "    # If result is not null, replace the URI",
-                        "    if-eqz v1, :network_interceptor_continue",
-                        "    iput-object v1, $requestParamRegister, Lcom/instagram/api/tigon/TigonServiceLayer;->$uriFieldName:Ljava/net/URI;",
-                        "    :network_interceptor_continue",
-                        ""
-                    )
-                } else {
-                    // Couldn't find exact URI field, inject more generic code
-                    // This attempts to find and call the interceptor but may need adjustment
-                    listOf(
-                        "",
-                        "    # Network Interceptor - Ghost Mode (generic)",
-                        "    # Note: This is a fallback implementation",
-                        "    # The exact URI field could not be determined automatically",
-                        ""
-                    )
-                }
+                // Inject network interceptor check using reflection-based approach
+                // The NetworkInterceptor.interceptRequest() method will use reflection to:
+                // 1. Find the URI field in the request object (p1)
+                // 2. Check if it should be blocked
+                // 3. Replace it with a fake URI if needed
+                val interceptorCode = listOf(
+                    "",
+                    "    # Network Interceptor - Ghost Mode",
+                    "    # Call NetworkInterceptor.interceptRequest(requestObj) using reflection",
+                    "    invoke-static {p1}, Linstafel/app/utils/ghost/NetworkInterceptor;->interceptRequest(Ljava/lang/Object;)V",
+                    ""
+                )
 
                 fContent.add(insertLine, interceptorCode.joinToString("\n"))
                 FileUtils.writeLines(tigonServiceLayerFile, fContent)
-                
-                if (uriFieldName != null) {
-                    success("Network interceptor patch applied successfully at line $methodLine (URI field: $uriFieldName)")
-                } else {
-                    // Note: Using generic implementation - could not determine exact URI field name
-                    success("Network interceptor patch applied with fallback implementation at line $methodLine")
-                }
+                success("Network interceptor patch applied successfully at line $methodLine")
             }
         }
     )
