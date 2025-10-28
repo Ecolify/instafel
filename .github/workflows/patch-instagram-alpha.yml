@@ -16,14 +16,13 @@ name: Patch Instagram Alpha
 
 on:
   push:
-    branches-ignore: []         # No ignorar ninguna rama
     branches: ["**"]            # Todas las ramas, incluidas copilot/*
     tags: ["**"]                # Todos los tags
   pull_request:
     branches: ["**"]            # Todas las ramas
-    types: [opened, reopened, synchronize, closed]
+    types: ["opened", "reopened", "synchronize", "closed"]
   issues:
-    types: [opened, edited, closed, reopened, deleted]
+    types: ["opened", "edited",  "closed", "reopened", "deleted"]
   workflow_dispatch:            # Ejecución manual
   workflow_call:                # Llamado por otros workflows
 
