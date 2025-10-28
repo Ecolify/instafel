@@ -39,7 +39,7 @@ class NetworkInterceptor : InstafelPatch() {
         @PInfos.TaskInfo("Find TigonServiceLayer class")
         object : InstafelTask() {
             override fun execute() {
-                val candidates = smaliUtils.getSmaliFilesByName("TigonServiceLayer.smali")
+                val candidates = smaliUtils.getSmaliFilesByName("${TIGON_CLASS_NAME.substringAfterLast('/')}.smali")
                 
                 if (candidates.isEmpty()) {
                     failure("Patch aborted: TigonServiceLayer class not found")
@@ -48,14 +48,19 @@ class NetworkInterceptor : InstafelPatch() {
                 
                 val validCandidates = candidates.filter { file ->
                     val content = smaliUtils.getSmaliFileContent(file.absolutePath)
-                    val hasCorrectClass = content.any { line ->
-                        line.contains(".class") && 
-                        line.contains("L$TIGON_CLASS_NAME;")
+                    var hasCorrectClass = false
+                    var hasStartRequestMethod = false
+                    
+                    for (line in content) {
+                        if (!hasCorrectClass && line.contains(".class") && line.contains("L$TIGON_CLASS_NAME;")) {
+                            hasCorrectClass = true
+                        }
+                        if (!hasStartRequestMethod && line.contains(".method") && line.contains("startRequest")) {
+                            hasStartRequestMethod = true
+                        }
+                        if (hasCorrectClass && hasStartRequestMethod) break
                     }
-                    val hasStartRequestMethod = content.any { line ->
-                        line.contains(".method") && 
-                        line.contains("startRequest")
-                    }
+                    
                     hasCorrectClass && hasStartRequestMethod
                 }
                 
