@@ -4,6 +4,31 @@ This directory contains technical documentation for the Instafel project.
 
 ## Available Documents
 
+### [NETWORK_INTERCEPTOR_USAGE.md](NETWORK_INTERCEPTOR_USAGE.md)
+**User guide for Network Interceptor ghost mode feature**
+
+Covers:
+- How to enable and use ghost mode
+- What gets blocked and why
+- Verification and testing procedures
+- Troubleshooting common issues
+- Best practices and FAQ
+
+**Audience:** End users, testers
+
+### [NETWORK_INTERCEPTOR.md](NETWORK_INTERCEPTOR.md)
+**Implementation of network-level ghost mode interception**
+
+Covers:
+- InstaEclipse Interceptor.java reference implementation
+- Reflection-based URI interception approach
+- TigonServiceLayer.startRequest hooking
+- Smali patching vs Xposed comparison
+- Architecture and integration details
+- Testing and troubleshooting guide
+
+**Audience:** Developers, maintainers, contributors
+
 ### [GHOST_VIEWONCE_FIX.md](GHOST_VIEWONCE_FIX.md)
 **Technical deep-dive into the Ghost ViewOnce patch fix**
 
@@ -40,18 +65,35 @@ The patch intercepts the method that sends "visual_item_seen" markers to Instagr
 
 ### Key Files
 
-**Patch Implementation:**
+**Network Interceptor:**
+- `app/src/main/java/instafel/app/utils/ghost/NetworkInterceptor.java`
+- `patcher-core/src/main/kotlin/instafel/patcher/core/patches/ghost/NetworkInterceptor.kt`
+
+**Ghost ViewOnce Patch:**
 - `patcher-core/src/main/kotlin/instafel/patcher/core/patches/ghost/GhostViewOnce.kt`
+
+**Other Ghost Patches:**
+- `patcher-core/src/main/kotlin/instafel/patcher/core/patches/ghost/GhostSeen.kt`
+- `patcher-core/src/main/kotlin/instafel/patcher/core/patches/ghost/GhostTyping.kt`
+- `patcher-core/src/main/kotlin/instafel/patcher/core/patches/ghost/GhostScreenshot.kt`
+- `patcher-core/src/main/kotlin/instafel/patcher/core/patches/ghost/GhostStory.kt`
+- `patcher-core/src/main/kotlin/instafel/patcher/core/patches/ghost/GhostLive.kt`
+- `patcher-core/src/main/kotlin/instafel/patcher/core/patches/ghost/GhostMode.kt`
+
+**Ghost Mode Manager:**
+- `app/src/main/java/instafel/app/utils/ghost/GhostModeManager.java`
 
 **Search Utilities:**
 - `patcher-core/src/main/kotlin/instafel/patcher/core/utils/SearchUtils.kt`
 - `patcher-core/src/main/kotlin/instafel/patcher/core/utils/modals/FileSearchResult.kt`
 
-**Target Instagram File:**
-- `instagram/smali/X/5nc.smali` (in decompiled Instagram APK)
+**Target Instagram Files:**
+- Various smali files in `instagram/smali/` (in decompiled Instagram APK)
 
 **Reference Implementation:**
+- `instaeclipse/app/src/main/java/ps/reso/instaeclipse/mods/network/Interceptor.java`
 - `instaeclipse/app/src/main/java/ps/reso/instaeclipse/mods/ghost/ViewOnce.java`
+- Other InstaEclipse ghost mode modules
 
 ## Contributing
 
@@ -66,7 +108,8 @@ When contributing to the Ghost ViewOnce patch or related functionality:
 
 Planned documentation to be added:
 
-- [ ] Other Ghost Mode patches (Ghost Story, Ghost Typing, etc.)
+- [x] Network Interceptor implementation (NETWORK_INTERCEPTOR.md)
+- [ ] Other Ghost Mode patches architecture overview
 - [ ] General patching guidelines
 - [ ] Architecture overview
 - [ ] Contributing guide
