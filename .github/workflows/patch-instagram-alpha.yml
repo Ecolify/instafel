@@ -30,7 +30,7 @@ on:
         description: 'Use gplayapi to download latest Instagram Alpha (requires secrets)'
         required: false
         type: boolean
-        default: false
+        default: true
 
 jobs:
   patch-instagram:
