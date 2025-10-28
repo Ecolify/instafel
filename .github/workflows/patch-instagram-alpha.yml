@@ -87,7 +87,7 @@ jobs:
           java -jar .output/ifl-gplayapi-downloader-*.jar instagram.apk
           
           echo "Download completed:"
-          ls -lh instagram-alpha.apk
+          ls -lh instagram.apk
       
       - name: Validate APK exists
         run: |
