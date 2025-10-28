@@ -259,10 +259,10 @@ object BuildProject: CLIJob {
      * 
      * File location:
      * The InstafelEnv.smali file may be located in either the primary DEX folder or the
-     * iflSourceFolder depending on how the CopyInstafelSources patch executed:
+     * smallest smali folder (iflSourcesFolder) depending on how the CopyInstafelSources patch executed:
      * - If primary DEX differs from the smallest smali folder, InstafelEnv.smali is moved
      *   to the primary DEX (required for early app initialization)
-     * - Otherwise, it remains in the iflSourceFolder (smallest smali folder)
+     * - Otherwise, it remains in the smallest smali folder (iflSourcesFolder)
      * This function checks both locations to ensure the file is found regardless of the setup.
      */
     fun updateInstafelEnv(coreCommit: String, projectTag: String, patcherVersion: String) {
