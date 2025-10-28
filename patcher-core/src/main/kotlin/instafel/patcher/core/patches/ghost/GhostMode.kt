@@ -16,6 +16,7 @@ import kotlin.reflect.KClass
 )
 class GhostMode : InstafelPatchGroup() {
     override fun initializePatches(): List<KClass<out InstafelPatch>> = mutableListOf(
+        NetworkInterceptor::class,  // Network-level interception (InstaEclipse Interceptor.java)
         GhostSeen::class,
         GhostTyping::class,
         GhostScreenshot::class,
