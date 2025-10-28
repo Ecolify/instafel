@@ -1,11 +1,8 @@
 package instafel.patcher.core.patches.ghost
 
-import instafel.patcher.core.utils.SearchUtils
-import instafel.patcher.core.utils.modals.FileSearchResult
 import instafel.patcher.core.utils.patch.InstafelPatch
 import instafel.patcher.core.utils.patch.InstafelTask
 import instafel.patcher.core.utils.patch.PInfos
-import kotlinx.coroutines.runBlocking
 import org.apache.commons.io.FileUtils
 import java.io.File
 
@@ -41,43 +38,42 @@ class NetworkInterceptor : InstafelPatch() {
         @PInfos.TaskInfo("Find TigonServiceLayer class")
         object : InstafelTask() {
             override fun execute() {
-                // Search for TigonServiceLayer class by its class declaration
-                val searchPattern = listOf(
-                    listOf(".class", "TigonServiceLayer"),
-                    listOf("startRequest")  // Must have startRequest method
-                )
+                val candidates = smaliUtils.getSmaliFilesByName("com/instagram/api/tigon/TigonServiceLayer.smali")
+                
+                if (candidates.isEmpty()) {
+                    failure("Patch aborted: TigonServiceLayer class not found")
+                    return
+                }
 
-                when (val result = runBlocking {
-                    SearchUtils.getFileContainsAllCords(smaliUtils, searchPattern)
-                }) {
-                    is FileSearchResult.Success -> {
-                        tigonServiceLayerFile = result.file
-                        success("TigonServiceLayer class found successfully: ${tigonServiceLayerFile.name}")
-                    }
-                    is FileSearchResult.NotFound -> {
-                        failure("Patch aborted: TigonServiceLayer class not found")
-                    }
-                    is FileSearchResult.MultipleFound -> {
-                        // Filter for the exact TigonServiceLayer class
-                        val candidates = result.files.filter { file ->
-                            val content = smaliUtils.getSmaliFileContent(file.absolutePath)
-                            content.any { line ->
-                                line.contains(".class") && 
-                                line.contains("TigonServiceLayer") &&
-                                line.contains("Lcom/instagram/api/tigon/TigonServiceLayer;")
-                            }
+                val validCandidates = candidates.filter { file ->
+                    val content = smaliUtils.getSmaliFileContent(file.absolutePath)
+                    var hasClassDeclaration = false
+                    var hasStartRequest = false
+                    
+                    for (line in content) {
+                        if (line.contains(".class") && line.contains("Lcom/instagram/api/tigon/TigonServiceLayer;")) {
+                            hasClassDeclaration = true
                         }
+                        if (line.contains("startRequest")) {
+                            hasStartRequest = true
+                        }
+                        if (hasClassDeclaration && hasStartRequest) break
+                    }
+                    
+                    hasClassDeclaration && hasStartRequest
+                }
 
-                        if (candidates.size == 1) {
-                            tigonServiceLayerFile = candidates[0]
-                            success("TigonServiceLayer class found after filtering: ${tigonServiceLayerFile.name}")
-                        } else if (candidates.isEmpty()) {
-                            failure("Patch aborted: No exact TigonServiceLayer class found among ${result.files.size} candidates")
-                        } else {
-                            // Take the first one if multiple exact matches (unlikely)
-                            tigonServiceLayerFile = candidates.first()
-                            success("TigonServiceLayer class selected (first of ${candidates.size}): ${tigonServiceLayerFile.name}")
-                        }
+                when {
+                    validCandidates.isEmpty() -> {
+                        failure("Patch aborted: No valid TigonServiceLayer class with startRequest method found")
+                    }
+                    validCandidates.size == 1 -> {
+                        tigonServiceLayerFile = validCandidates[0]
+                        success("TigonServiceLayer class found successfully: ${tigonServiceLayerFile.absolutePath}")
+                    }
+                    else -> {
+                        tigonServiceLayerFile = validCandidates[0]
+                        success("TigonServiceLayer class found (first of ${validCandidates.size}): ${tigonServiceLayerFile.absolutePath}")
                     }
                 }
             }
@@ -155,7 +151,7 @@ class NetworkInterceptor : InstafelPatch() {
                     ""
                 )
 
-                fContent.add(insertLine, interceptorCode.joinToString("\n"))
+                fContent.addAll(insertLine, interceptorCode)
                 FileUtils.writeLines(tigonServiceLayerFile, fContent)
                 success("Network interceptor patch applied successfully at line $methodLine")
             }
