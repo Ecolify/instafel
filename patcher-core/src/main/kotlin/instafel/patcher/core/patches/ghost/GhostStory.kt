@@ -27,8 +27,8 @@ class GhostStory: InstafelPatch() {
     lateinit var ghostStoryFile: File
 
     companion object {
-        private const val MIN_IMPLEMENTATION_LINES = 50
-        private const val MAX_IMPLEMENTATION_LINES = 2000
+        private const val MIN_IMPLEMENTATION_LINES = 100
+        private const val MAX_IMPLEMENTATION_LINES = 1000
         private const val MAX_LOCALS_SEARCH_OFFSET = 20
     }
 
@@ -36,10 +36,11 @@ class GhostStory: InstafelPatch() {
         @PInfos.TaskInfo("Find ghost story source file")
         object: InstafelTask() {
             override fun execute() {
-                // Search for files with "media/seen/" that have method invocations
+                // Search for files with exact "media/seen/" string (not format strings)
+                // and method declarations (to filter out utility/constant classes)
                 val searchPattern = listOf(
-                    listOf("media/seen/"),
-                    listOf("invoke-")  // Must have method calls
+                    listOf("const-string", "\"media/seen/\""),  // Exact match for the endpoint
+                    listOf(".method")  // Must have methods
                 )
                 
                 when (val result = runBlocking {
@@ -53,10 +54,35 @@ class GhostStory: InstafelPatch() {
                         failure("Patch aborted because no classes found for ghost story.")
                     }
                     is FileSearchResult.MultipleFound -> {
-                        // Filter by file size to get implementation files
+                        // Filter by multiple criteria to find the correct implementation
                         val candidates = result.files.filter { file ->
-                            val lineCount = file.useLines { it.count() }
-                            lineCount in MIN_IMPLEMENTATION_LINES..MAX_IMPLEMENTATION_LINES
+                            val content = smaliUtils.getSmaliFileContent(file.absolutePath)
+                            val lineCount = content.size
+                            
+                            // Must be within reasonable size range for implementation files
+                            if (lineCount !in MIN_IMPLEMENTATION_LINES..MAX_IMPLEMENTATION_LINES) {
+                                return@filter false
+                            }
+                            
+                            // Must have exact "media/seen/" without format parameters
+                            val hasExactMediaSeen = content.any { line ->
+                                line.contains("const-string") && 
+                                line.contains("\"media/seen/\"") &&
+                                !line.contains("?")  // Exclude format strings like "media/seen/?reel="
+                            }
+                            
+                            if (!hasExactMediaSeen) {
+                                return@filter false
+                            }
+                            
+                            // Must have a final void method with 0 parameters (matching InstaEclipse)
+                            val hasFinalVoidMethod = content.any { line ->
+                                line.contains(".method") &&
+                                line.contains("final") &&
+                                line.contains("()V")
+                            }
+                            
+                            hasFinalVoidMethod
                         }
                         
                         if (candidates.size == 1) {
