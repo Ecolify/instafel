@@ -10,7 +10,53 @@ import instafel.app.utils.types.PreferenceKeys;
  * Manages Ghost Mode features for Instafel
  * Based on InstaEclipse implementation
  * 
- * Uses static fields for easy access from smali patches
+ * This class provides centralized management for all Ghost Mode features, allowing users
+ * to browse Instagram anonymously by blocking various tracking mechanisms.
+ * 
+ * ARCHITECTURE:
+ * - Uses static fields for easy access from smali patches injected into Instagram
+ * - Each Ghost Mode feature has an enable flag and a quick toggle flag
+ * - Smali patches call isGhostXxxEnabled() methods to check if blocking should occur
+ * - Preferences are persisted using PreferenceManager
+ * 
+ * GHOST MODE FEATURES:
+ * 1. Ghost Seen: Blocks read receipts in Direct Messages
+ *    - Patches: GhostSeen.kt (mark_thread_seen- endpoint)
+ *    - Reference: InstaEclipse SeenState.java
+ * 
+ * 2. Ghost Typing: Hides typing indicator in Direct Messages
+ *    - Patches: GhostTyping.kt (is_typing_indicator_enabled)
+ *    - Reference: InstaEclipse TypingStatus.java
+ * 
+ * 3. Ghost Screenshot: Prevents screenshot detection notifications
+ *    - Patches: GhostScreenshot.kt (ScreenshotNotificationManager)
+ *    - Reference: InstaEclipse ScreenshotDetection.java
+ *    - Network: /screenshot/, /ephemeral_screenshot/
+ * 
+ * 4. Ghost ViewOnce: Allows viewing once messages without marking as seen
+ *    - Patches: GhostViewOnce.kt (visual_item_seen)
+ *    - Reference: InstaEclipse ViewOnce.java
+ *    - Network: /item_replayed/, /direct/.../item_seen/
+ * 
+ * 5. Ghost Story: View stories anonymously without marking as seen
+ *    - Patches: GhostStory.kt (media/seen/)
+ *    - Reference: InstaEclipse StorySeen.java
+ *    - Network: /api/v2/media/seen/
+ * 
+ * 6. Ghost Live: Watch live videos without appearing in viewer list
+ *    - Patches: GhostLive.kt (live_viewer_invite)
+ *    - Network: /heartbeat_and_get_viewer_count/
+ * 
+ * INTEGRATION WITH PATCHES:
+ * - Each patch injects code early in the target method
+ * - Injected code calls the appropriate isGhostXxxEnabled() method
+ * - If enabled, the method returns early (return-void) blocking the action
+ * - If disabled, execution continues normally
+ * 
+ * INTEGRATION WITH UI:
+ * - GhostEmojiManager displays a ghost emoji (👻) when any feature is active
+ * - Quick toggle allows rapid enabling/disabling of selected features
+ * - Interceptor (reference only) shows network-level blocking approach
  */
 public class GhostModeManager {
     
