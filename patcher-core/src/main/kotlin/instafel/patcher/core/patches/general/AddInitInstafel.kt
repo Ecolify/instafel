@@ -17,7 +17,7 @@ import kotlin.system.exitProcess
 class AddInitInstafel: InstafelPatch() {
 
     override fun initializeTasks() = mutableListOf<InstafelTask> (
-        @PInfos.TaskInfo("Find getRootContent() method")
+        @PInfos.TaskInfo("Hook Application.attach() for early initialization")
         object: InstafelTask() {
             override fun execute() {
                 val appShellResult = smaliUtils.getSmaliFilesByName("/com/instagram/app/InstagramAppShell.smali")
@@ -30,31 +30,37 @@ class AddInitInstafel: InstafelPatch() {
 
                 val fContent = smaliUtils.getSmaliFileContent(appShellFile.absolutePath).toMutableList()
 
-                var onCreateMethodLine = 0
+                // Hook attach() instead of onCreate() to initialize before QPL and StorageInitializer
+                // This prevents "QuickPerformanceLogger instance wasn't installed" errors
+                var attachMethodLine = 0
                 var lock = false
 
                 for (i in fContent.indices) {
                     val line = fContent[i]
 
-                    if (line.contains("onCreate()V") && line.contains(".method")) {
-                        onCreateMethodLine = i
+                    // Find the attach(Landroid/content/Context;)V method declaration
+                    if (line.contains("attach(Landroid/content/Context;)V") && line.contains(".method")) {
+                        attachMethodLine = i
                     }
 
-                    if (line.contains("Landroid/app/Application;->onCreate()V")) {
-                        if (onCreateMethodLine == 0) {
-                            Log.severe("onCreateMethod cannot found before caller.")
+                    // Find the super.attach() call within the attach method
+                    if (line.contains("Landroid/app/Application;->attach(Landroid/content/Context;)V")) {
+                        if (attachMethodLine == 0) {
+                            Log.severe("attach method declaration not found before super.attach() call.")
                         }
 
                         val callerInstruction = SmaliParser.parseInstruction(line, i)
-                        val onCreateVariableName = callerInstruction.registers[0]
+                        val attachVariableName = callerInstruction.registers[0]
 
-                        val unusedRegister = smaliUtils.getUnusedRegistersOfMethod(fContent, onCreateMethodLine, i)
-                        Log.info("Unused register is v$unusedRegister before line $i in onCreate method")
+                        val unusedRegister = smaliUtils.getUnusedRegistersOfMethod(fContent, attachMethodLine, i)
+                        Log.info("Unused register is v$unusedRegister before line $i in attach method")
 
+                        // Initialize Instafel AFTER super.attach() but BEFORE any Instagram initialization
+                        // This ensures context is set before QPL or StorageInitializer access it
                         val content = listOf(
-                            "    invoke-static {$onCreateVariableName}, Linstafel/app/utils/InitializeInstafel;->setContext(Landroid/app/Application;)V",
+                            "    invoke-static {$attachVariableName}, Linstafel/app/utils/InitializeInstafel;->setContext(Landroid/app/Application;)V",
                             "    new-instance v$unusedRegister, Linstafel/app/utils/InstafelCrashHandler;",
-                            "    invoke-direct {v$unusedRegister, $onCreateVariableName}, Linstafel/app/utils/InstafelCrashHandler;-><init>(Landroid/content/Context;)V",
+                            "    invoke-direct {v$unusedRegister, $attachVariableName}, Linstafel/app/utils/InstafelCrashHandler;-><init>(Landroid/content/Context;)V",
                             "    invoke-static {v$unusedRegister}, Ljava/lang/Thread;->setDefaultUncaughtExceptionHandler(Ljava/lang/Thread\$UncaughtExceptionHandler;)V"
                         )
 
@@ -69,9 +75,9 @@ class AddInitInstafel: InstafelPatch() {
 
                 if (lock) {
                     FileUtils.writeLines(appShellFile, fContent)
-                    success("Initializer lines added successfully.")
+                    success("Initializer lines added successfully in attach() method.")
                 } else {
-                    failure("onCreate() method not found.")
+                    failure("attach() method not found or super.attach() call not found.")
                 }
             }
         }
