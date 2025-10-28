@@ -151,7 +151,10 @@ class NetworkInterceptor : InstafelPatch() {
                     ""
                 )
 
-                fContent.add(insertLine, interceptorCode.joinToString("\n"))
+                // Add each line individually to maintain proper smali structure
+                interceptorCode.reversed().forEach { line ->
+                    fContent.add(insertLine, line)
+                }
                 FileUtils.writeLines(tigonServiceLayerFile, fContent)
                 success("Network interceptor patch applied successfully at line $methodLine")
             }

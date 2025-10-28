@@ -106,7 +106,10 @@ class GhostScreenshot : InstafelPatch() {
                     ""
                 )
 
-                fContent.add(insertLine, ghostCheckCode.joinToString("\n"))
+                // Add each line individually to maintain proper smali structure
+                ghostCheckCode.reversed().forEach { line ->
+                    fContent.add(insertLine, line)
+                }
                 FileUtils.writeLines(screenshotFile, fContent)
                 success("Ghost screenshot patch applied successfully to method at line $methodStartLine")
             }

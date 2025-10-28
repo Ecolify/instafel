@@ -127,7 +127,10 @@ class GhostLive: InstafelPatch() {
                         ""
                     )
 
-                    fContent.add(insertLine, lines.joinToString("\n"))
+                    // Add each line individually to maintain proper smali structure
+                    lines.reversed().forEach { line ->
+                        fContent.add(insertLine, line)
+                    }
                     FileUtils.writeLines(ghostLiveFile, fContent)
                     success("Ghost live patch successfully applied to method at line $methodLine")
                 } else {
