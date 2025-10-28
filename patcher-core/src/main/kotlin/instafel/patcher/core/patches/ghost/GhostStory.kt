@@ -54,44 +54,65 @@ class GhostStory: InstafelPatch() {
                         failure("Patch aborted because no classes found for ghost story.")
                     }
                     is FileSearchResult.MultipleFound -> {
-                        // Filter by multiple criteria to find the correct implementation
-                        val candidates = result.files.filter { file ->
-                            val content = smaliUtils.getSmaliFileContent(file.absolutePath)
-                            val lineCount = content.size
-                            
-                            // Must be within reasonable size range for implementation files
-                            if (lineCount !in MIN_IMPLEMENTATION_LINES..MAX_IMPLEMENTATION_LINES) {
-                                return@filter false
-                            }
+                        // Apply multi-stage filtering to find the correct implementation
+                        // Stage 1: Filter by file size (implementation files are 100-1000 lines)
+                        val sizeFiltered = result.files.filter { file ->
+                            val lineCount = file.useLines { it.count() }
+                            lineCount in MIN_IMPLEMENTATION_LINES..MAX_IMPLEMENTATION_LINES
+                        }
+                        
+                        // Stage 2: Find files with exact "media/seen/" and target method signature
+                        val candidates = sizeFiltered.filter { file ->
+                            val fContent = smaliUtils.getSmaliFileContent(file.absolutePath)
+                            var hasTargetMethod = false
                             
                             // Must have exact "media/seen/" without format parameters
-                            val hasExactMediaSeen = content.any { line ->
+                            val hasExactMediaSeen = fContent.any { line ->
                                 line.contains("const-string") && 
                                 line.contains("\"media/seen/\"") &&
-                                !line.contains("?")  // Exclude format strings like "media/seen/?reel="
+                                !line.contains("?")  // Exclude format strings
                             }
                             
                             if (!hasExactMediaSeen) {
                                 return@filter false
                             }
                             
-                            // Must have a final void method with 0 parameters (matching InstaEclipse)
-                            val hasFinalVoidMethod = content.any { line ->
-                                line.contains(".method") &&
-                                line.contains("final") &&
-                                line.contains("()V")
+                            // Find the method containing "media/seen/"
+                            var mediaSeenLine = -1
+                            fContent.forEachIndexed { index, line ->
+                                if (line.contains("const-string") && line.contains("\"media/seen/\"") && !line.contains("?")) {
+                                    mediaSeenLine = index
+                                }
                             }
                             
-                            hasFinalVoidMethod
+                            if (mediaSeenLine != -1) {
+                                // Search backwards for method declaration
+                                for (methodIndex in mediaSeenLine downTo 0) {
+                                    if (fContent[methodIndex].contains(".method")) {
+                                        val methodDeclaration = fContent[methodIndex]
+                                        
+                                        // InstaEclipse signature: final void() with 0 parameters
+                                        if (methodDeclaration.contains("final") &&
+                                            methodDeclaration.contains("()V")) {
+                                            hasTargetMethod = true
+                                        }
+                                        break
+                                    }
+                                }
+                            }
+                            
+                            hasTargetMethod
                         }
                         
                         if (candidates.size == 1) {
                             ghostStoryFile = candidates[0]
                             success("Ghost story source class found after filtering: ${ghostStoryFile.name}")
                         } else if (candidates.isEmpty()) {
-                            failure("Patch aborted: No suitable implementation files found among ${result.files.size} candidates")
+                            failure("Patch aborted: No suitable implementation files found among ${result.files.size} candidates (size filtered: ${sizeFiltered.size})")
                         } else {
-                            failure("Patch aborted: Found ${candidates.size} candidate files after filtering: ${candidates.map { it.name }}")
+                            // Take first candidate, matching InstaEclipse behavior
+                            ghostStoryFile = candidates.first()
+                            success("Ghost story source class found (selected first of ${candidates.size}): ${ghostStoryFile.name}")
                         }
                     }
                 }

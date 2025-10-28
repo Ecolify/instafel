@@ -53,19 +53,91 @@ class GhostTyping: InstafelPatch() {
                         failure("Patch aborted because no classes found for ghost typing.")
                     }
                     is FileSearchResult.MultipleFound -> {
-                        // Filter by file size to get implementation files
-                        val candidates = result.files.filter { file ->
+                        // Apply multi-stage filtering to find the correct implementation file
+                        // Stage 1: Filter by file size
+                        val sizeFiltered = result.files.filter { file ->
                             val lineCount = file.useLines { it.count() }
                             lineCount in MIN_IMPLEMENTATION_LINES..MAX_IMPLEMENTATION_LINES
+                        }
+                        
+                        // Stage 2: Find files with the target method signature
+                        // Must have: static final void method(?, boolean) containing "is_typing_indicator_enabled"
+                        val candidates = sizeFiltered.filter { file ->
+                            val fContent = smaliUtils.getSmaliFileContent(file.absolutePath)
+                            var hasTargetMethod = false
+                            var typingIndicatorLine = -1
+                            
+                            // Find line with "is_typing_indicator_enabled"
+                            fContent.forEachIndexed { index, line ->
+                                if (line.contains("const-string") && line.contains("is_typing_indicator_enabled")) {
+                                    typingIndicatorLine = index
+                                }
+                            }
+                            
+                            if (typingIndicatorLine != -1) {
+                                // Search backwards to find the method
+                                for (methodIndex in typingIndicatorLine downTo 0) {
+                                    if (fContent[methodIndex].contains(".method")) {
+                                        val methodDeclaration = fContent[methodIndex]
+                                        
+                                        // Check for InstaEclipse signature: static final void(?, boolean)
+                                        if (methodDeclaration.contains("static") &&
+                                            methodDeclaration.contains("final") &&
+                                            methodDeclaration.contains(")V")) {
+                                            
+                                            val signatureMatch = Regex("\\(([^)]*)\\)").find(methodDeclaration)
+                                            if (signatureMatch != null) {
+                                                val params = signatureMatch.groupValues[1]
+                                                
+                                                // Check for exactly 2 parameters with second being boolean
+                                                var paramCount = 0
+                                                var hasBoolean = false
+                                                var i = 0
+                                                
+                                                while (i < params.length) {
+                                                    when (params[i]) {
+                                                        'L' -> {
+                                                            paramCount++
+                                                            val semicolonIdx = params.indexOf(';', i)
+                                                            if (semicolonIdx == -1) break
+                                                            i = semicolonIdx + 1
+                                                        }
+                                                        'Z' -> {
+                                                            paramCount++
+                                                            hasBoolean = true
+                                                            i++
+                                                        }
+                                                        'I', 'J', 'F', 'D', 'B', 'S', 'C' -> {
+                                                            paramCount++
+                                                            i++
+                                                        }
+                                                        '[' -> i++
+                                                        else -> i++
+                                                    }
+                                                }
+                                                
+                                                if (paramCount == 2 && hasBoolean) {
+                                                    hasTargetMethod = true
+                                                }
+                                            }
+                                        }
+                                        break
+                                    }
+                                }
+                            }
+                            
+                            hasTargetMethod
                         }
                         
                         if (candidates.size == 1) {
                             ghostTypingFile = candidates[0]
                             success("Ghost typing source class found after filtering: ${ghostTypingFile.name}")
                         } else if (candidates.isEmpty()) {
-                            failure("Patch aborted: No suitable implementation files found among ${result.files.size} candidates")
+                            failure("Patch aborted: No suitable implementation files found among ${result.files.size} candidates (size filtered: ${sizeFiltered.size})")
                         } else {
-                            failure("Patch aborted: Found ${candidates.size} candidate files after filtering: ${candidates.map { it.name }}")
+                            // Take first candidate, matching InstaEclipse behavior
+                            ghostTypingFile = candidates.first()
+                            success("Ghost typing source class found (selected first of ${candidates.size}): ${ghostTypingFile.name}")
                         }
                     }
                 }

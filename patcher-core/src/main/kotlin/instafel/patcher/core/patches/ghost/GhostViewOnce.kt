@@ -62,20 +62,21 @@ class GhostViewOnce: InstafelPatch() {
                         failure("Patch aborted because no classes found for ghost viewonce.")
                     }
                     is FileSearchResult.MultipleFound -> {
-                        // Filter by file size to get implementation files (50-2000 lines)
-                        val sizeFilteredCandidates = result.files.filter { file ->
+                        // Apply multi-stage filtering to find the correct implementation
+                        // Stage 1: Filter by file size (50-2000 lines)
+                        val sizeFiltered = result.files.filter { file ->
                             val lineCount = file.useLines { it.count() }
                             lineCount in MIN_IMPLEMENTATION_LINES..MAX_IMPLEMENTATION_LINES
                         }
                         
-                        // Additional filtering: find file with method matching InstaEclipse signature
-                        // We need: void method(?, ?, Object) - exactly 3 parameters
-                        val candidates = sizeFilteredCandidates.filter { file ->
+                        // Stage 2: Find files with the target method signature
+                        // Must have: void method(?, ?, ?) - exactly 3 parameters containing "visual_item_seen"
+                        val candidates = sizeFiltered.filter { file ->
                             val fContent = smaliUtils.getSmaliFileContent(file.absolutePath)
                             var hasTargetMethod = false
                             var visualItemSeenLine = -1
                             
-                            // First, find line with "visual_item_seen"
+                            // Find line with "visual_item_seen"
                             fContent.forEachIndexed { index, line ->
                                 if (line.contains("const-string") && line.contains("visual_item_seen")) {
                                     visualItemSeenLine = index
@@ -93,37 +94,31 @@ class GhostViewOnce: InstafelPatch() {
                                         if (signatureMatch != null) {
                                             val params = signatureMatch.groupValues[1]
                                             
-                                            // Count parameters: each L starts an object param
+                                            // Count parameters
                                             var paramCount = 0
                                             var i = 0
                                             while (i < params.length) {
                                                 when (params[i]) {
                                                     'L' -> {
-                                                        // Object parameter - skip until semicolon
                                                         paramCount++
                                                         val semicolonIdx = params.indexOf(';', i)
                                                         if (semicolonIdx == -1) break
                                                         i = semicolonIdx + 1
                                                     }
                                                     'I', 'J', 'Z', 'F', 'D', 'B', 'S', 'C' -> {
-                                                        // Primitive parameter
                                                         paramCount++
                                                         i++
                                                     }
-                                                    '[' -> {
-                                                        // Array - skip bracket and process type
-                                                        i++
-                                                    }
+                                                    '[' -> i++
                                                     else -> i++
                                                 }
                                             }
                                             
-                                            // InstaEclipse matches: void method with exactly 3 parameters
                                             if (paramCount == 3) {
                                                 hasTargetMethod = true
                                             }
                                         }
-                                        break  // Exit method search once we've checked this method
+                                        break
                                     }
                                 }
                             }
@@ -135,9 +130,11 @@ class GhostViewOnce: InstafelPatch() {
                             ghostViewOnceFile = candidates[0]
                             success("Ghost viewonce source class found after filtering: ${ghostViewOnceFile.name}")
                         } else if (candidates.isEmpty()) {
-                            failure("Patch aborted: No suitable implementation files found among ${result.files.size} candidates (size filtered: ${sizeFilteredCandidates.size})")
+                            failure("Patch aborted: No suitable implementation files found among ${result.files.size} candidates (size filtered: ${sizeFiltered.size})")
                         } else {
-                            failure("Patch aborted: Found ${candidates.size} candidate files after filtering: ${candidates.map { it.name }}")
+                            // Take first candidate, matching InstaEclipse behavior
+                            ghostViewOnceFile = candidates.first()
+                            success("Ghost viewonce source class found (selected first of ${candidates.size}): ${ghostViewOnceFile.name}")
                         }
                     }
                 }
