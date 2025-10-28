@@ -91,7 +91,17 @@ jobs:
           echo "Building gplayapi downloader..."
           ./gradlew :gplayapi:downloaderJar
           ls -lh .output/
+
+      - name: Download Instagram Alpha APK (Direct URL)
+        if: ${{ !inputs.use_gplayapi && github.event.inputs.instagram_apk_url != '' }}
+        run: |
+          echo "Downloading Instagram APK from provided URL..."
+          wget -O instagram.apk "${{ github.event.inputs.instagram_apk_url }}"
+          ls -lh instagram.apk
           
+      - name : Download Instagram with gplayapi 
+        if: ${{ inputs.use_gplayapi }}
+        run: | 
           # Run the downloader
           echo "Downloading Instagram Alpha APK..."
           java -jar .output/ifl-gplayapi-downloader-*.jar instagram.apk
