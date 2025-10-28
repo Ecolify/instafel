@@ -9,11 +9,12 @@ The workflow performs the following steps:
    - Instafel App (debug and release variants)
    - Patcher Core JAR
    - Patcher JAR
-2. Downloads Instagram Alpha APK (either from a provided URL or using gplayapi)
-3. Initializes a patching project with the Instagram APK
-4. Applies Instafel patches and builds the unclone variant APK
-5. Applies clone patches and builds the clone variant APK
-6. Uploads all artifacts (Instafel app, patcher tools, and patched Instagram APKs)
+2. Downloads Instagram Alpha APK splits (either from a provided URL or using gplayapi)
+3. **Merges split APKs into a single installable APK** to prevent `INSTALL_FAILED_MISSING_SPLIT` errors
+4. Initializes a patching project with the Instagram APK
+5. Applies Instafel patches and builds the unclone variant APK
+6. Applies clone patches and builds the clone variant APK
+7. Uploads all artifacts (Instafel app, patcher tools, and patched Instagram APKs)
 
 ## Usage
 
@@ -68,7 +69,29 @@ The workflow produces the following artifacts:
 - All APK files are properly named with their variant suffix (`-unclone.apk` or `-clone.apk`)
 - The patching process can take several minutes depending on the APK size
 - The workflow uses JDK 17 for building the patcher and running the patching process
-- The Instafel App APK is built and included to resolve INSTALL_FAILED_MISSING_SPLIT errors
+- **Split APK Handling**: Instagram Alpha is distributed as an Android App Bundle with multiple split APKs. The workflow automatically:
+  - Downloads all split APKs (base + configuration splits for DPI, architecture, etc.)
+  - Merges them into a single universal APK using a custom Python script
+  - This prevents `INSTALL_FAILED_MISSING_SPLIT` errors during installation
+  - The merged APK is unsigned after merging but gets signed during the patching process
+
+## Split APK Merge Process
+
+Modern Android apps are often distributed as App Bundles with multiple split APKs:
+- **base_apk**: The main application code
+- **config splits**: Architecture-specific (ARM, ARM64) and density-specific (DPI) resources
+
+The workflow handles this by:
+1. Downloading all available splits from Google Play via gplayapi
+2. Using the `merge_split_apks.py` script to combine them into a single APK
+3. The merge process:
+   - Extracts all splits
+   - Combines their contents intelligently
+   - Removes duplicate META-INF signatures
+   - Creates a single unsigned APK
+4. The patcher then processes and signs this merged APK
+
+This ensures the final patched APK contains all necessary components and installs without errors.
 
 ## Troubleshooting
 
@@ -78,6 +101,11 @@ If the workflow fails:
 2. Verify the Instagram APK URL is valid and accessible
 3. If using gplayapi, ensure all required secrets are correctly configured
 4. Make sure the APK is actually an Instagram Alpha build (version should contain `.0.0.0.`)
+5. **Split APK Issues**: If you encounter `INSTALL_FAILED_MISSING_SPLIT` errors:
+   - Ensure all split APKs were downloaded successfully (check the workflow logs)
+   - Verify the merge step completed without errors
+   - The merged APK should be larger than just the base APK alone
+   - If the issue persists, try re-running the workflow as it may be a temporary download issue
 
 ## Related Documentation
 

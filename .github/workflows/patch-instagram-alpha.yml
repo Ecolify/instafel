@@ -97,16 +97,14 @@ jobs:
       
       - name: Merge split APKs into single APK
         run: |
-          echo "Merging split APKs using AntiSplit-M..."
+          echo "Merging split APKs into a single installable APK..."
           
-          # Make the merge script executable
-          chmod +x .github/scripts/merge-split-apks.sh
-          
-          # Run the merge script
-          .github/scripts/merge-split-apks.sh instagram-splits instagram-alpha.apk
+          # Run the Python merge script
+          python3 .github/scripts/merge_split_apks.py instagram-splits instagram-alpha.apk
           
           echo "Merge completed. Verifying merged APK:"
           ls -lh instagram-alpha.apk
+          file instagram-alpha.apk
           
           # Clean up splits directory to save space
           rm -rf instagram-splits/
