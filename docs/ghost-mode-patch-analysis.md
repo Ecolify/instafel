@@ -1,6 +1,100 @@
 # Ghost Mode Patch Analysis and Fix
 
-## Issue Summary
+## Network Interceptor Patch Fix
+
+### Issue Summary
+
+The Network Interceptor patch was failing to find the TigonServiceLayer class with the error:
+
+```
+Network Interceptor
+Intercept network requests for ghost mode features
+I: Loading tasks..
+I: 2 task loaded
+I: Executing tasks...
+I: Execute: Find TigonServiceLayer class
+I: Totally 133529 file got listed in X folder(s)
+S: No files found for apply patch.
+I: Search process ran with 4 threads in 4.879s totally (133529 file processed)
+I: FAILURE: Patch aborted: TigonServiceLayer class not found
+```
+
+### Root Cause Analysis
+
+The `SearchUtils.getFileContainsAllCords()` method only searches in obfuscated `/X` folders within smali directories. However, `TigonServiceLayer.smali` is located at:
+
+```
+smali/com/instagram/api/tigon/TigonServiceLayer.smali
+```
+
+This is a standard package structure (not obfuscated), so it was never found by the X-folder search.
+
+### Solution
+
+Modified `NetworkInterceptor.kt` to use `smaliUtils.getSmaliFilesByName()` instead of `SearchUtils.getFileContainsAllCords()`.
+
+**Key Changes:**
+
+1. **Direct Path Search**: Search for the exact file path `com/instagram/api/tigon/TigonServiceLayer.smali`
+2. **Validation**: Verify that the found file contains the `startRequest` method
+3. **Multiple Match Handling**: Filter candidates by exact class declaration if multiple files are found
+4. **Cleaner Code**: Removed unnecessary imports (SearchUtils, FileSearchResult, runBlocking)
+
+**Implementation:**
+
+```kotlin
+val candidates = smaliUtils.getSmaliFilesByName("com/instagram/api/tigon/TigonServiceLayer.smali")
+
+if (candidates.isEmpty()) {
+    failure("Patch aborted: TigonServiceLayer class not found at com/instagram/api/tigon/TigonServiceLayer.smali")
+    return
+}
+
+// Validate and select the correct file
+if (candidates.size == 1) {
+    tigonServiceLayerFile = candidates[0]
+    val content = smaliUtils.getSmaliFileContent(tigonServiceLayerFile.absolutePath)
+    
+    if (content.any { line -> line.contains("startRequest") }) {
+        success("TigonServiceLayer class found successfully: ${tigonServiceLayerFile.absolutePath}")
+    } else {
+        failure("Patch aborted: TigonServiceLayer found but missing startRequest method")
+        return
+    }
+}
+```
+
+### InstaEclipse Reference
+
+Based on `instaeclipse/app/src/main/java/ps/reso/instaeclipse/mods/network/Interceptor.java`, the patch:
+
+1. Locates the `com.instagram.api.tigon.TigonServiceLayer` class
+2. Finds the `startRequest` method with 3 parameters
+3. Hooks the method to intercept network requests
+4. Checks URI paths for ghost mode endpoints
+5. Redirects blocked requests to a fake URI (`https://127.0.0.1/404`)
+
+### Instagram Smali Analysis
+
+Found the TigonServiceLayer at:
+- **Location**: `smali/com/instagram/api/tigon/TigonServiceLayer.smali`
+- **Class declaration**: `.class public final Lcom/instagram/api/tigon/TigonServiceLayer;`
+- **Method signature**: `.method public startRequest(LX/3ww;LX/3xq;LX/3yx;)LX/4lc;` (3 parameters)
+- **Line count**: 3337 lines
+
+The patch correctly identifies this file and injects the network interceptor call into the `startRequest` method.
+
+### Testing Results
+
+✅ Code compiles successfully with Gradle
+✅ Patch now searches in the correct location
+✅ Removed dependency on X-folder search for non-obfuscated classes
+
+---
+
+## Ghost Story Patch (Previous Fix)
+
+### Issue Summary
 
 The Ghost Story patch was finding multiple candidate files during the search process, causing the patch to fail with the error:
 
