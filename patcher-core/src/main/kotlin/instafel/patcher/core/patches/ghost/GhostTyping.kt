@@ -10,11 +10,10 @@ import org.apache.commons.io.FileUtils
 import java.io.File
 
 /**
- * Ghost Typing patch - prevents typing indicator from being sent
+ * Ghost Typing - Prevents typing indicator from being sent
  * 
- * Based on InstaEclipse implementation (ps.reso.instaeclipse.mods.ghost.TypingStatus)
- * which hooks methods containing "is_typing_indicator_enabled" string with signature:
- * static final void method(ClassType, boolean)
+ * Based on InstaEclipse: hooks static final void methods with exactly 2 parameters 
+ * (object, boolean) containing "is_typing_indicator_enabled" string.
  */
 @PInfos.PatchInfo(
     name = "Ghost Typing",
@@ -36,10 +35,9 @@ class GhostTyping: InstafelPatch() {
         @PInfos.TaskInfo("Find ghost typing source file")
         object: InstafelTask() {
             override fun execute() {
-                // Search for files with "is_typing_indicator_enabled" that have method invocations
                 val searchPattern = listOf(
                     listOf("is_typing_indicator_enabled"),
-                    listOf("invoke-")  // Must have method calls
+                    listOf("invoke-")
                 )
                 
                 when (val result = runBlocking {
@@ -78,28 +76,20 @@ class GhostTyping: InstafelPatch() {
                 var methodLine = -1
                 var localsLine = -1
 
-                // Find method containing "is_typing_indicator_enabled" const-string
-                // InstaEclipse signature: static final void (ClassType, boolean)
                 fContent.forEachIndexed { index, line ->
                     if (line.contains("const-string") && line.contains("is_typing_indicator_enabled")) {
-                        // Search backwards to find method declaration
                         for (i in index downTo 0) {
                             if (fContent[i].contains(".method")) {
                                 val methodDeclaration = fContent[i]
-                                // Match InstaEclipse: static final void method with 2 params (?, boolean)
                                 if (methodDeclaration.contains("static") && 
                                     methodDeclaration.contains("final") &&
-                                    methodDeclaration.contains(")V")) {  // void return type
+                                    methodDeclaration.contains(")V")) {
                                     
-                                    // Extract parameter signature and verify it's (object, boolean)
                                     val signatureMatch = Regex("\\(([^)]*)\\)").find(methodDeclaration)
                                     if (signatureMatch != null) {
                                         val params = signatureMatch.groupValues[1]
                                         
-                                        // Check for exactly 2 parameters: first is object (L), second is boolean (Z)
-                                        // Pattern should be like: LX/XXX;Z or similar
                                         if (params.contains("Z") && params.contains("L")) {
-                                            // Count exact parameters
                                             var paramCount = 0
                                             var idx = 0
                                             var hasBoolean = false
@@ -109,7 +99,7 @@ class GhostTyping: InstafelPatch() {
                                                     'L' -> {
                                                         paramCount++
                                                         val semicolonIdx = params.indexOf(';', idx)
-                                                        if (semicolonIdx == -1) break // Invalid signature, stop
+                                                        if (semicolonIdx == -1) break
                                                         idx = semicolonIdx + 1
                                                     }
                                                     'Z' -> {
@@ -128,7 +118,6 @@ class GhostTyping: InstafelPatch() {
                                             
                                             if (paramCount == 2 && hasBoolean) {
                                                 methodLine = i
-                                                // Find .locals line
                                                 for (j in methodLine until minOf(methodLine + MAX_LOCALS_SEARCH_OFFSET, fContent.size)) {
                                                     if (fContent[j].contains(".locals")) {
                                                         localsLine = j
@@ -140,7 +129,7 @@ class GhostTyping: InstafelPatch() {
                                         }
                                     }
                                 }
-                                break  // Exit method search
+                                break
                             }
                         }
                         if (methodLine != -1) return@forEachIndexed
@@ -148,7 +137,6 @@ class GhostTyping: InstafelPatch() {
                 }
 
                 if (methodLine != -1) {
-                    // Insert after .locals line or after method declaration
                     val insertLine = if (localsLine != -1) localsLine + 1 else methodLine + 1
                     
                     val lines = listOf(

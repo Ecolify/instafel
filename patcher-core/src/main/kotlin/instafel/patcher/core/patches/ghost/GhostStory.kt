@@ -10,11 +10,9 @@ import org.apache.commons.io.FileUtils
 import java.io.File
 
 /**
- * Ghost Story patch - prevents story seen tracking
+ * Ghost Story - Prevents story view tracking
  * 
- * Based on InstaEclipse implementation (ps.reso.instaeclipse.mods.ghost.StorySeen)
- * which hooks methods containing "media/seen/" string with signature:
- * final void method() with 0 parameters
+ * Based on InstaEclipse: hooks final void methods with 0 parameters containing "media/seen/" string.
  */
 @PInfos.PatchInfo(
     name = "Ghost Story",
@@ -36,11 +34,9 @@ class GhostStory: InstafelPatch() {
         @PInfos.TaskInfo("Find ghost story source file")
         object: InstafelTask() {
             override fun execute() {
-                // Search for files with exact "media/seen/" string (not format strings)
-                // and method declarations (to filter out utility/constant classes)
                 val searchPattern = listOf(
-                    listOf("const-string", "\"media/seen/\""),  // Exact match for the endpoint
-                    listOf(".method")  // Must have methods
+                    listOf("const-string", "\"media/seen/\""),
+                    listOf(".method")
                 )
                 
                 when (val result = runBlocking {
@@ -54,35 +50,29 @@ class GhostStory: InstafelPatch() {
                         failure("Patch aborted because no classes found for ghost story.")
                     }
                     is FileSearchResult.MultipleFound -> {
-                        // Filter by multiple criteria to find the correct implementation
                         val candidates = result.files.filter { file ->
                             val content = smaliUtils.getSmaliFileContent(file.absolutePath)
                             val lineCount = content.size
                             
-                            // Must be within reasonable size range for implementation files
                             if (lineCount !in MIN_IMPLEMENTATION_LINES..MAX_IMPLEMENTATION_LINES) {
                                 return@filter false
                             }
                             
-                            // Must have exact "media/seen/" without format parameters
                             val hasExactMediaSeen = content.any { line ->
                                 line.contains("const-string") && 
                                 line.contains("\"media/seen/\"") &&
-                                !line.contains("?")  // Exclude format strings like "media/seen/?reel="
+                                !line.contains("?")
                             }
                             
                             if (!hasExactMediaSeen) {
                                 return@filter false
                             }
                             
-                            // Must have a final void method with 0 parameters (matching InstaEclipse)
-                            val hasFinalVoidMethod = content.any { line ->
+                            content.any { line ->
                                 line.contains(".method") &&
                                 line.contains("final") &&
                                 line.contains("()V")
                             }
-                            
-                            hasFinalVoidMethod
                         }
                         
                         if (candidates.size == 1) {
@@ -104,20 +94,15 @@ class GhostStory: InstafelPatch() {
                 var methodLine = -1
                 var localsLine = -1
 
-                // Find method containing "media/seen/" const-string
-                // InstaEclipse signature: final void () with 0 parameters
                 fContent.forEachIndexed { index, line ->
                     if (line.contains("const-string") && line.contains("media/seen/")) {
-                        // Search backwards to find method declaration
                         for (i in index downTo 0) {
                             if (fContent[i].contains(".method")) {
                                 val methodDeclaration = fContent[i]
-                                // Match InstaEclipse: final void method with 0 parameters
                                 if (methodDeclaration.contains("final") &&
-                                    methodDeclaration.contains("()V")) {  // void return type with no params
+                                    methodDeclaration.contains("()V")) {
                                     
                                     methodLine = i
-                                    // Find .locals line
                                     for (j in methodLine until minOf(methodLine + MAX_LOCALS_SEARCH_OFFSET, fContent.size)) {
                                         if (fContent[j].contains(".locals")) {
                                             localsLine = j
@@ -126,7 +111,7 @@ class GhostStory: InstafelPatch() {
                                     }
                                     break
                                 }
-                                break  // Exit method search
+                                break
                             }
                         }
                         if (methodLine != -1) return@forEachIndexed
@@ -134,7 +119,6 @@ class GhostStory: InstafelPatch() {
                 }
 
                 if (methodLine != -1) {
-                    // Insert after .locals line or after method declaration
                     val insertLine = if (localsLine != -1) localsLine + 1 else methodLine + 1
                     
                     val lines = listOf(

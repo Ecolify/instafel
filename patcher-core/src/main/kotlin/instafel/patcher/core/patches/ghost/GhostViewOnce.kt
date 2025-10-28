@@ -10,19 +10,11 @@ import org.apache.commons.io.FileUtils
 import java.io.File
 
 /**
- * Ghost ViewOnce patch - prevents view once media from being marked as seen
+ * Ghost ViewOnce - Prevents view once messages from being marked as seen
  * 
- * Based on InstaEclipse implementation (ps.reso.instaeclipse.mods.ghost.ViewOnce)
- * which hooks methods containing "visual_item_seen" string with signature:
- * void method(?, ?, Object) - exactly 3 parameters
- * 
- * InstaEclipse uses runtime parameter inspection to verify the third argument
- * contains "visual_item_seen" or "send_visual_item_seen_marker" before blocking.
- * 
- * For smali patching, we:
- * 1. Find methods with "visual_item_seen" string that have 3 parameters and void return
- * 2. Inject early return check for GhostModeManager.isGhostViewOnceEnabled()
- * 3. Block the method execution if enabled, preventing the seen marker from being sent
+ * Based on InstaEclipse: hooks void methods with exactly 3 parameters containing "visual_item_seen" string.
+ * InstaEclipse validates the third parameter contains "visual_item_seen" or "send_visual_item_seen_marker"
+ * at runtime before blocking. This smali patch achieves the same by injecting an early return.
  */
 @PInfos.PatchInfo(
     name = "Ghost ViewOnce",
@@ -44,11 +36,9 @@ class GhostViewOnce: InstafelPatch() {
         @PInfos.TaskInfo("Find ghost viewonce source file")
         object: InstafelTask() {
             override fun execute() {
-                // Search for files containing "visual_item_seen" string with method invocations
-                // InstaEclipse: hooks methods with signature void(?, ?, Object) containing "visual_item_seen"
                 val searchPattern = listOf(
                     listOf("visual_item_seen"),
-                    listOf("invoke-")  // Must have method calls
+                    listOf("invoke-")
                 )
                 
                 when (val result = runBlocking {
@@ -62,20 +52,16 @@ class GhostViewOnce: InstafelPatch() {
                         failure("Patch aborted because no classes found for ghost viewonce.")
                     }
                     is FileSearchResult.MultipleFound -> {
-                        // Filter by file size to get implementation files (50-2000 lines)
                         val sizeFilteredCandidates = result.files.filter { file ->
                             val lineCount = file.useLines { it.count() }
                             lineCount in MIN_IMPLEMENTATION_LINES..MAX_IMPLEMENTATION_LINES
                         }
                         
-                        // Additional filtering: find file with method matching InstaEclipse signature
-                        // We need: void method(?, ?, Object) - exactly 3 parameters
                         val candidates = sizeFilteredCandidates.filter { file ->
                             val fContent = smaliUtils.getSmaliFileContent(file.absolutePath)
                             var hasTargetMethod = false
                             var visualItemSeenLine = -1
                             
-                            // First, find line with "visual_item_seen"
                             fContent.forEachIndexed { index, line ->
                                 if (line.contains("const-string") && line.contains("visual_item_seen")) {
                                     visualItemSeenLine = index
@@ -83,47 +69,35 @@ class GhostViewOnce: InstafelPatch() {
                             }
                             
                             if (visualItemSeenLine != -1) {
-                                // Search backwards from visual_item_seen to find the method
                                 for (methodIndex in visualItemSeenLine downTo 0) {
                                     if (fContent[methodIndex].contains(".method")) {
                                         val methodDeclaration = fContent[methodIndex]
-                                        
-                                        // Extract signature to match InstaEclipse: void(?, ?, ?)
                                         val signatureMatch = Regex("\\(([^)]*)\\)V").find(methodDeclaration)
                                         if (signatureMatch != null) {
                                             val params = signatureMatch.groupValues[1]
-                                            
-                                            // Count parameters: each L starts an object param
                                             var paramCount = 0
                                             var i = 0
                                             while (i < params.length) {
                                                 when (params[i]) {
                                                     'L' -> {
-                                                        // Object parameter - skip until semicolon
                                                         paramCount++
                                                         val semicolonIdx = params.indexOf(';', i)
                                                         if (semicolonIdx == -1) break
                                                         i = semicolonIdx + 1
                                                     }
                                                     'I', 'J', 'Z', 'F', 'D', 'B', 'S', 'C' -> {
-                                                        // Primitive parameter
                                                         paramCount++
                                                         i++
                                                     }
-                                                    '[' -> {
-                                                        // Array - skip bracket and process type
-                                                        i++
-                                                    }
+                                                    '[' -> i++
                                                     else -> i++
                                                 }
                                             }
-                                            
-                                            // InstaEclipse matches: void method with exactly 3 parameters
                                             if (paramCount == 3) {
                                                 hasTargetMethod = true
                                             }
                                         }
-                                        break  // Exit method search once we've checked this method
+                                        break
                                     }
                                 }
                             }
@@ -150,50 +124,35 @@ class GhostViewOnce: InstafelPatch() {
                 var methodLine = -1
                 var localsLine = -1
 
-                // Find method containing "visual_item_seen" with InstaEclipse signature:
-                // void method(?, ?, Object) - exactly 3 parameters, void return type
                 fContent.forEachIndexed { index, line ->
                     if (line.contains("const-string") && line.contains("visual_item_seen")) {
-                        // Search backwards to find method declaration
                         for (methodIndex in index downTo 0) {
                             if (fContent[methodIndex].contains(".method")) {
                                 val methodDeclaration = fContent[methodIndex]
-                                
-                                // Extract signature to match InstaEclipse: void(?, ?, ?)
                                 val signatureMatch = Regex("\\(([^)]*)\\)V").find(methodDeclaration)
                                 if (signatureMatch != null) {
                                     val params = signatureMatch.groupValues[1]
-                                    
-                                    // Count parameters: each L starts an object param, primitives are single chars
                                     var paramCount = 0
                                     var i = 0
                                     while (i < params.length) {
                                         when (params[i]) {
                                             'L' -> {
-                                                // Object parameter - skip until semicolon
                                                 paramCount++
                                                 val semicolonIdx = params.indexOf(';', i)
-                                                if (semicolonIdx == -1) break // Invalid signature, stop
+                                                if (semicolonIdx == -1) break
                                                 i = semicolonIdx + 1
                                             }
                                             'I', 'J', 'Z', 'F', 'D', 'B', 'S', 'C' -> {
-                                                // Primitive parameter
                                                 paramCount++
                                                 i++
                                             }
-                                            '[' -> {
-                                                // Array - skip bracket and process type
-                                                i++
-                                            }
+                                            '[' -> i++
                                             else -> i++
                                         }
                                     }
                                     
-                                    // InstaEclipse matches: void method with exactly 3 parameters
                                     if (paramCount == 3) {
                                         methodLine = methodIndex
-                                        
-                                        // Find .locals line
                                         for (j in methodLine until minOf(methodLine + MAX_LOCALS_SEARCH_OFFSET, fContent.size)) {
                                             if (fContent[j].contains(".locals")) {
                                                 localsLine = j
@@ -203,7 +162,7 @@ class GhostViewOnce: InstafelPatch() {
                                         break
                                     }
                                 }
-                                break  // Exit method search once we've checked this method
+                                break
                             }
                         }
                         if (methodLine != -1) return@forEachIndexed
@@ -211,7 +170,6 @@ class GhostViewOnce: InstafelPatch() {
                 }
 
                 if (methodLine != -1) {
-                    // Insert after .locals line or after method declaration
                     val insertLine = if (localsLine != -1) localsLine + 1 else methodLine + 1
                     
                     val lines = listOf(
