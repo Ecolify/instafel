@@ -25,6 +25,45 @@ object SearchUtils {
         }
     }
 
+    /**
+     * Find a file by its class path (e.g., "com/instagram/api/tigon/TigonServiceLayer")
+     * Searches across all smali folders for non-obfuscated classes
+     * 
+     * @param smaliUtils The SmaliUtils instance with smali folders
+     * @param classPath The class path to search for (e.g., "com/instagram/api/tigon/TigonServiceLayer")
+     * @return FileSearchResult with the found file or error
+     */
+    fun findFileByClassPath(
+        smaliUtils: SmaliUtils,
+        classPath: String
+    ): FileSearchResult {
+        val fileName = "$classPath.smali"
+        val foundFiles = mutableListOf<File>()
+
+        // Search in all smali folders
+        for (smaliFolder in smaliUtils.smaliFolders) {
+            val targetFile = File(smaliFolder, fileName)
+            if (targetFile.exists() && targetFile.isFile) {
+                foundFiles.add(targetFile)
+            }
+        }
+
+        return when {
+            foundFiles.isEmpty() -> {
+                Log.severe("File not found for class path: $classPath")
+                FileSearchResult.NotFound(0)
+            }
+            foundFiles.size == 1 -> {
+                Log.info("Class file found: ${Utils.makeSmaliPathShort(foundFiles[0])}")
+                FileSearchResult.Success(foundFiles[0])
+            }
+            else -> {
+                Log.severe("Multiple files found for class path $classPath: ${foundFiles.size}")
+                FileSearchResult.MultipleFound(foundFiles)
+            }
+        }
+    }
+
     suspend fun getFileContainsAllCords(
         smaliUtils: SmaliUtils,
         searchConditions: List<List<String>>
