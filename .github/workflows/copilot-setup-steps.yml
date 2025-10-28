@@ -97,27 +97,59 @@ jobs:
 
       - name: Install CLI tools for MCP process server
         run: |
-          set -euxo pipefail
+            set -euxo pipefail
 
-          # Actualiza paquetes base
-          sudo apt-get update
+            # Actualiza paquetes base
+            sudo apt-get update
 
-          # Instala herramientas esenciales
-          sudo apt-get install -y --no-install-recommends \
-            ripgrep fd-find jq yq zip unzip p7zip-full tree universal-ctags git gh curl wget \
-            sed gawk perl tar file patch diffutils findutils moreutils rename \
-            python3 python3-pip nodejs npm
+            # Instala herramientas esenciales y runtimes
+            sudo apt-get install -y --no-install-recommends \
+              ripgrep fd-find jq yq zip unzip p7zip-full tree sqlite3 universal-ctags git gh curl wget \
+              sed gawk perl tar file patch diffutils findutils moreutils rename \
+              python3 python3-venv python3-pip nodejs npm
 
-          # Actualiza npm, que incluye npx
-          sudo npm install -g npm@latest
-          
-          # Instala servidores MCP locales vía npm
-          sudo npm install -g \
-            @modelcontextprotocol/server-everything@latest \
-            @modelcontextprotocol/server-filesystem@latest \
-            @modelcontextprotocol/server-memory@latest \
-            @modelcontextprotocol/server-github@latest \
-            @modelcontextprotocol/server-sequential-thinking@latest
+            # Asegura que 'fd' esté disponible como alias de 'fdfind'
+            if command -v fdfind >/dev/null 2>&1 && ! command -v fd >/dev/null 2>&1; then
+              sudo ln -s "$(command -v fdfind)" /usr/local/bin/fd
+            fi
 
-          # Instala servidor MCP vía pip
-          pip3 install --upgrade mcp-server-fetch
+            # Comprueba si npx ya existe; si no, actualiza npm (npx viene con npm)
+            if command -v npx >/dev/null 2>&1; then
+              echo "npx already present: $(npx --version)"
+            else
+              sudo npm install -g npm@latest
+              command -v npx >/dev/null 2>&1 || sudo npm install -g npx --force
+            fi
+
+            # Instala servidores MCP locales vía npm (instalación global)
+            sudo npm install -g --no-progress \
+              @modelcontextprotocol/server-everything@latest \
+              @modelcontextprotocol/server-filesystem@latest \
+              @modelcontextprotocol/server-memory@latest \
+              @modelcontextprotocol/server-github@latest \
+              @modelcontextprotocol/server-sequential-thinking@latest
+
+            # Instala pipx de forma segura y asegurando PATH
+            python3 -m pip install --user --upgrade pipx
+            python3 -m pipx ensurepath
+
+            # Carga el path de pipx para la sesión actual (no falla si ya está)
+            export PATH="$HOME/.local/bin:$PATH"
+
+            # Instala el servidor mcp-server-fetch con pipx
+            if command -v pipx >/dev/null 2>&1; then
+              pipx install --force mcp-server-fetch
+            else
+              python3 -m pipx install --force mcp-server-fetch
+            fi
+
+            # Verificaciones finales
+            command -v node || { echo "node not found"; exit 1; }
+            node --version
+            command -v npm || { echo "npm not found"; exit 1; }
+            npm --version
+            command -v npx || { echo "npx not found"; exit 1; }
+            npx --version
+            command -v pipx || { echo "pipx not found"; exit 1; }
+            pipx --version
+            pipx list || true
