@@ -37,8 +37,8 @@ jobs:
       - name: Download Instagram APKS
         run: |
           mkdir -p instagram
-          curl -L -f -o instagram/instagram.apks "https://eb5e7388c3df147b74dd2379b7cf8323.r2.cloudflarestorage.com/downloadprod/wp-content/uploads/2025/10/78/68ff63a004e56/com.instagram.android_405.0.0.0.43-381102319_2dpi_9feat_5dcb9e2e6b9475fd5080b572bee3c53f_apkmirror.com.apkm?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=72a5ba3a0b8a601e535d5525f12f8177%2F20251028%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20251028T072728Z&X-Amz-SignedHeaders=host&X-Amz-Expires=3600&X-Amz-Signature=6c06943ed6a14a53de02aa195999e0df22d54f3867b11fe8d546395021a408df"
-          ls -l instagram/instagram.apks
+          curl -L -f -o instagram/instagram_selected.apk "https://my.microsoftpersonalcontent.com/personal/f2d8dcd41970e636/_layouts/15/download.aspx?UniqueId=f1de2ff8-4f75-4389-8230-f8e6acb581ef&Translate=false&tempauth=v1e.eyJzaXRlaWQiOiI3M2NlNzYzOS04ZmZhLTQ2MTMtOWZmZC0zODgyNDMyZjc0ZjciLCJhdWQiOiIwMDAwMDAwMy0wMDAwLTBmZjEtY2UwMC0wMDAwMDAwMDAwMDAvbXkubWljcm9zb2Z0cGVyc29uYWxjb250ZW50LmNvbUA5MTg4MDQwZC02YzY3LTRjNWItYjExMi0zNmEzMDRiNjZkYWQiLCJleHAiOiIxNzYxNjQ3NDk5In0.IjF8GuwUn5_6_WjnyWxT_HanI3L34OPkYJhrkCwunVUdcL8ptnaMYmhFf5b0yOXzAuxeXCwuLtHDJYpHysZynn2LLZkIYYSvNhgRvzIWoD9yIiUpmslWQSjhPzmD0-KdbpXuauGdTWDhYAHIeKEduMEYN2xAvmvZMeip7mkSuU_gdn-FyPUiJsw01AN8q1CbLue7qx_gDV89ytcuZWz_rB8ujeTwSniUFnRtWkvySdTWwmABKbqsf54XqtKAygJ6GCZSmmPic-Iv78xVuSDa3gmr0GHT23Eb4CCzErjUEr0tD7x3PhdCkezcoH1yXw1eZtrQMamrEVTwH_fMSriKhXX4vHPDcz7w4D5t_QuH9COZc3yG-pxk479cV2edWiS-5fhWwsR_ErX_ToCOELAhu-nVhXYTjuV7qyKDKxBaHbAGna5dW-hDLL_sUCMXUB6mpPyMXw7BKkg-C292C7TKuEPMu7ya3t7omb5zBQGZTnhZWyszSqGPCHQKveRLmA3234FyxDW4EMFiBoi_5pxDMA.NiZTZaue2YHpkzZcJjZgzj5CKWH74J8kQfNZ03JwkXw&ApiVersion=2.0" 
+          ls -l instagram/instagram_selected.apk
 
       - name: Install apktool jar
         run: |
@@ -51,33 +51,6 @@ jobs:
           curl -L -f -o frameworks/framework-res.apk "https://dumps.tadiphone.dev/dumps/samsung/dm3q/-/raw/dm3qxxx-user-15-AP3A.240905.015.A2-S918BXXU8DYD9-release-keys/system/system/framework/framework-res.apk?ref_type=heads&inline=false"
           test -s frameworks/framework-res.apk
           java -jar apktool.jar if frameworks/framework-res.apk
-
-      - name: Unzip .apks and pick APK to decompile
-        run: |
-          set -e
-          mkdir -p instagram/apks_extracted
-          unzip -q instagram/instagram.apks -d instagram/apks_extracted
-          # list extracted files
-          echo "Extracted files:"
-          ls -la instagram/apks_extracted | sed -n '1,200p'
-          # find candidate APKs
-          mapfile -t apks < <(find instagram/apks_extracted -type f -name '*.apk')
-          if [ ${#apks[@]} -eq 0 ]; then
-            echo "ERROR: no APKs found inside instagram.apks"
-            exit 1
-          fi
-          # prefer base.apk or universal.apk otherwise pick largest
-          preferred=""
-          for f in "${apks[@]}"; do
-            if echo "$f" | grep -qi 'base.apk'; then preferred="$f"; break; fi
-            if echo "$f" | grep -qi 'universal.apk'; then preferred="$f"; fi
-          done
-          if [ -z "$preferred" ]; then
-            preferred=$(printf "%s\n" "${apks[@]}" | xargs -I{} ls -S {} | head -n1)
-          fi
-          echo "Selected APK for decompilation: $preferred"
-          mv "$preferred" instagram/instagram_selected.apk
-          ls -lh instagram/instagram_selected.apk
 
       - name: Decompile selected APK with apktool
         working-directory: instagram
