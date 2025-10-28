@@ -23,7 +23,17 @@ on:
     types: ["opened", "reopened", "synchronize", "closed"]
   issues:
     types: ["opened", "edited",  "closed", "reopened", "deleted"]
-  workflow_dispatch:            # Ejecución manual
+  workflow_dispatch:       
+    inputs: # Ejecución manual
+      instagram_apk_url:
+        description: 'Instagram Alpha APK download URL (required if not using gplayapi)'
+        required: false
+        type: string
+      use_gplayapi:
+        description: 'Use gplayapi to download latest Instagram Alpha (requires secrets)'
+        required: false
+        type: boolean
+        default: true
   workflow_call:                # Llamado por otros workflows
 
 jobs:
