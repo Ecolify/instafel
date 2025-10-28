@@ -47,12 +47,24 @@ class NetworkInterceptor : InstafelPatch() {
                 
                 val exactMatches = candidates.filter { file ->
                     val content = smaliUtils.getSmaliFileContent(file.absolutePath)
-                    content.any { line ->
-                        line.contains(".class") && 
-                        line.contains("Lcom/instagram/api/tigon/TigonServiceLayer;")
-                    } && content.any { line ->
-                        line.contains(".method") && line.contains("startRequest")
+                    var hasClassDeclaration = false
+                    var hasStartRequestMethod = false
+                    
+                    for (line in content) {
+                        if (!hasClassDeclaration && line.contains(".class") && 
+                            line.contains("Lcom/instagram/api/tigon/TigonServiceLayer;")) {
+                            hasClassDeclaration = true
+                        }
+                        if (!hasStartRequestMethod && line.contains(".method") && 
+                            line.contains("startRequest")) {
+                            hasStartRequestMethod = true
+                        }
+                        if (hasClassDeclaration && hasStartRequestMethod) {
+                            break
+                        }
                     }
+                    
+                    hasClassDeclaration && hasStartRequestMethod
                 }
                 
                 when {
