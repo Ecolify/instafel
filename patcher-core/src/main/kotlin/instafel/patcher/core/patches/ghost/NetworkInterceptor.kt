@@ -1,5 +1,6 @@
 package instafel.patcher.core.patches.ghost
 
+import instafel.patcher.core.utils.Log
 import instafel.patcher.core.utils.patch.InstafelPatch
 import instafel.patcher.core.utils.patch.InstafelTask
 import instafel.patcher.core.utils.patch.PInfos
@@ -38,7 +39,7 @@ class NetworkInterceptor : InstafelPatch() {
         @PInfos.TaskInfo("Find TigonServiceLayer class")
         object : InstafelTask() {
             override fun execute() {
-                val candidates = smaliUtils.getSmaliFilesByName("$TIGON_CLASS_NAME.smali")
+                val candidates = smaliUtils.getSmaliFilesByName("TigonServiceLayer.smali")
                 
                 if (candidates.isEmpty()) {
                     failure("Patch aborted: TigonServiceLayer class not found")
@@ -47,13 +48,15 @@ class NetworkInterceptor : InstafelPatch() {
                 
                 val validCandidates = candidates.filter { file ->
                     val content = smaliUtils.getSmaliFileContent(file.absolutePath)
-                    content.any { line ->
+                    val hasCorrectClass = content.any { line ->
                         line.contains(".class") && 
                         line.contains("L$TIGON_CLASS_NAME;")
-                    } && content.any { line ->
+                    }
+                    val hasStartRequestMethod = content.any { line ->
                         line.contains(".method") && 
                         line.contains("startRequest")
                     }
+                    hasCorrectClass && hasStartRequestMethod
                 }
                 
                 when {
@@ -65,8 +68,10 @@ class NetworkInterceptor : InstafelPatch() {
                         success("TigonServiceLayer class found successfully: ${tigonServiceLayerFile.absolutePath}")
                     }
                     else -> {
+                        Log.info("WARNING: Multiple TigonServiceLayer candidates found (${validCandidates.size})")
+                        validCandidates.forEach { Log.info("  - ${it.absolutePath}") }
                         tigonServiceLayerFile = validCandidates[0]
-                        success("TigonServiceLayer class selected (first of ${validCandidates.size}): ${tigonServiceLayerFile.absolutePath}")
+                        success("Using first candidate: ${tigonServiceLayerFile.absolutePath}")
                     }
                 }
             }
