@@ -331,12 +331,12 @@ object BuildProject: CLIJob {
                     // Change the boolean value being set (0x0 = false, 0x1 = true)
                     if (isProductionMode) {
                         // Ensure the previous line sets v0 to 0x1 (true)
-                        if (i > 0 && fContent[i - 2].trim().startsWith("const/4")) {
+                        if (i > 1 && fContent[i - 2].trim().startsWith("const/4")) {
                             fContent[i - 2] = "    const/4 v0, 0x1"
                         }
                     } else {
                         // Ensure the previous line sets v0 to 0x0 (false)
-                        if (i > 0 && fContent[i - 2].trim().startsWith("const/4")) {
+                        if (i > 1 && fContent[i - 2].trim().startsWith("const/4")) {
                             fContent[i - 2] = "    const/4 v0, 0x0"
                         }
                     }
