@@ -225,7 +225,7 @@ class GhostViewOnce: InstafelPatch() {
                         ""
                     )
 
-                    fContent.add(insertLine, lines.joinToString("\n"))
+                    fContent.addAll(insertLine, lines)
                     FileUtils.writeLines(ghostViewOnceFile, fContent)
                     success("Ghost viewonce patch successfully applied to method at line $methodLine")
                 } else {

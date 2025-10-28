@@ -156,7 +156,7 @@ class GhostSeen: InstafelPatch() {
                         ""
                     )
 
-                    fContent.add(insertLine, lines.joinToString("\n"))
+                    fContent.addAll(insertLine, lines)
                     FileUtils.writeLines(ghostSeenFile, fContent)
                     success("Ghost seen patch successfully applied to method at line $methodLine")
                 } else {
