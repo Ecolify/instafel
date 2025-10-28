@@ -69,7 +69,7 @@ class RemoveAds: InstafelPatch() {
                         "    return v0"
                     )
 
-                    fContent.add(methodLine + 2, lines.joinToString("\n"))
+                    fContent.addAll(methodLine + 2, lines)
                     FileUtils.writeLines(removeAdsFile, fContent)
                     success("Method return successfully applied")
                 } else {

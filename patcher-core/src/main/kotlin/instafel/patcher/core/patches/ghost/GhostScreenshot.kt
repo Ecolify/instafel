@@ -94,7 +94,7 @@ class GhostScreenshot : InstafelPatch() {
                     ""
                 )
 
-                fContent.add(insertLine, ghostCheckCode.joinToString("\n"))
+                fContent.addAll(insertLine, ghostCheckCode)
                 FileUtils.writeLines(screenshotFile, fContent)
                 success("Ghost screenshot patch applied successfully to method at line $methodStartLine")
             }

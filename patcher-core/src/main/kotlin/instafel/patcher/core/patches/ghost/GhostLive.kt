@@ -140,7 +140,7 @@ class GhostLive: InstafelPatch() {
                         ""
                     )
 
-                    fContent.add(insertLine, lines.joinToString("\n"))
+                    fContent.addAll(insertLine, lines)
                     FileUtils.writeLines(ghostLiveFile, fContent)
                     success("Ghost live patch successfully applied to method at line $methodLine")
                 } else {

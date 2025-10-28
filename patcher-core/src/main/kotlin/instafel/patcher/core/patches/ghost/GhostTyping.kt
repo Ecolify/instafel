@@ -150,7 +150,7 @@ class GhostTyping: InstafelPatch() {
                         ""
                     )
 
-                    fContent.add(insertLine, lines.joinToString("\n"))
+                    fContent.addAll(insertLine, lines)
                     FileUtils.writeLines(ghostTypingFile, fContent)
                     success("Ghost typing patch successfully applied to method at line $methodLine")
                 } else {
