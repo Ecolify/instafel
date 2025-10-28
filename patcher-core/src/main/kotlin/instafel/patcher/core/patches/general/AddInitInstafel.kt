@@ -58,7 +58,7 @@ class AddInitInstafel: InstafelPatch() {
                             "    invoke-static {v$unusedRegister}, Ljava/lang/Thread;->setDefaultUncaughtExceptionHandler(Ljava/lang/Thread\$UncaughtExceptionHandler;)V"
                         )
 
-                        if (fContent[i + 2].contains("Lapp/instafel")) {
+                        if (fContent[i + 2].contains("Linstafel/app")) {
                             failure("This patch is applied already.")
                         }
 
