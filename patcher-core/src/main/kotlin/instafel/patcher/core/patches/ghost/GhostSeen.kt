@@ -10,11 +10,10 @@ import org.apache.commons.io.FileUtils
 import java.io.File
 
 /**
- * Ghost Seen patch - prevents "seen" status from being sent
+ * Ghost Seen - Prevents read receipts from being sent
  * 
- * Based on InstaEclipse implementation (ps.reso.instaeclipse.mods.ghost.SeenState)
- * which hooks methods containing "mark_thread_seen-" string with signature:
- * static final void method(?, ?, ?, ...) with >= 3 parameters
+ * Based on InstaEclipse: hooks static final void methods with >= 3 parameters 
+ * containing "mark_thread_seen-" string.
  */
 @PInfos.PatchInfo(
     name = "Ghost Seen",
@@ -36,10 +35,9 @@ class GhostSeen: InstafelPatch() {
         @PInfos.TaskInfo("Find ghost seen source file")
         object: InstafelTask() {
             override fun execute() {
-                // Search for files with "mark_thread_seen-" that have method invocations
                 val searchPattern = listOf(
                     listOf("mark_thread_seen-"),
-                    listOf("invoke-")  // Must have method calls
+                    listOf("invoke-")
                 )
                 
                 when (val result = runBlocking {
@@ -78,52 +76,39 @@ class GhostSeen: InstafelPatch() {
                 var methodLine = -1
                 var localsLine = -1
 
-                // Find method containing "mark_thread_seen-" const-string
-                // InstaEclipse signature: static final void (?, ?, ?, ...) with >= 3 params
                 fContent.forEachIndexed { index, line ->
                     if (line.contains("const-string") && line.contains("mark_thread_seen-")) {
-                        // Search backwards to find method declaration
                         for (i in index downTo 0) {
                             if (fContent[i].contains(".method")) {
                                 val methodDeclaration = fContent[i]
-                                // Match InstaEclipse: static final void method with >= 3 parameters
                                 if (methodDeclaration.contains("static") && 
                                     methodDeclaration.contains("final") &&
-                                    methodDeclaration.contains(")V")) {  // void return type
+                                    methodDeclaration.contains(")V")) {
                                     
-                                    // Count parameters in signature properly
                                     val signatureMatch = Regex("\\(([^)]*)\\)").find(methodDeclaration)
                                     if (signatureMatch != null) {
                                         val params = signatureMatch.groupValues[1]
-                                        
-                                        // Count parameters: each L starts an object param, primitives are single chars
                                         var paramCount = 0
                                         var idx = 0
                                         while (idx < params.length) {
                                             when (params[idx]) {
                                                 'L' -> {
-                                                    // Object parameter - skip until semicolon
                                                     paramCount++
                                                     val semicolonIdx = params.indexOf(';', idx)
-                                                    if (semicolonIdx == -1) break // Invalid signature, stop
+                                                    if (semicolonIdx == -1) break
                                                     idx = semicolonIdx + 1
                                                 }
                                                 'I', 'J', 'Z', 'F', 'D', 'B', 'S', 'C' -> {
-                                                    // Primitive parameter
                                                     paramCount++
                                                     idx++
                                                 }
-                                                '[' -> {
-                                                    // Array - skip bracket and process type
-                                                    idx++
-                                                }
+                                                '[' -> idx++
                                                 else -> idx++
                                             }
                                         }
                                         
                                         if (paramCount >= 3) {
                                             methodLine = i
-                                            // Find .locals line
                                             for (j in methodLine until minOf(methodLine + MAX_LOCALS_SEARCH_OFFSET, fContent.size)) {
                                                 if (fContent[j].contains(".locals")) {
                                                     localsLine = j
@@ -134,7 +119,7 @@ class GhostSeen: InstafelPatch() {
                                         }
                                     }
                                 }
-                                break  // Exit method search
+                                break
                             }
                         }
                         if (methodLine != -1) return@forEachIndexed
@@ -142,7 +127,6 @@ class GhostSeen: InstafelPatch() {
                 }
 
                 if (methodLine != -1) {
-                    // Insert after .locals line or after method declaration
                     val insertLine = if (localsLine != -1) localsLine + 1 else methodLine + 1
                     
                     val lines = listOf(
