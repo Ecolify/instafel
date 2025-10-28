@@ -1,11 +1,8 @@
 package instafel.patcher.core.patches.ghost
 
-import instafel.patcher.core.utils.SearchUtils
-import instafel.patcher.core.utils.modals.FileSearchResult
 import instafel.patcher.core.utils.patch.InstafelPatch
 import instafel.patcher.core.utils.patch.InstafelTask
 import instafel.patcher.core.utils.patch.PInfos
-import kotlinx.coroutines.runBlocking
 import org.apache.commons.io.FileUtils
 import java.io.File
 
@@ -41,42 +38,38 @@ class NetworkInterceptor : InstafelPatch() {
         @PInfos.TaskInfo("Find TigonServiceLayer class")
         object : InstafelTask() {
             override fun execute() {
-                // Search for TigonServiceLayer class by its class declaration
-                val searchPattern = listOf(
-                    listOf(".class", "TigonServiceLayer"),
-                    listOf("startRequest")  // Must have startRequest method
-                )
-
-                when (val result = runBlocking {
-                    SearchUtils.getFileContainsAllCords(smaliUtils, searchPattern)
-                }) {
-                    is FileSearchResult.Success -> {
-                        tigonServiceLayerFile = result.file
-                        success("TigonServiceLayer class found successfully: ${tigonServiceLayerFile.name}")
+                val tigonServiceLayerFiles = smaliUtils.getSmaliFilesByName("/com/instagram/api/tigon/TigonServiceLayer.smali")
+                
+                when {
+                    tigonServiceLayerFiles.isEmpty() -> {
+                        failure("Patch aborted: TigonServiceLayer class not found at /com/instagram/api/tigon/TigonServiceLayer.smali")
                     }
-                    is FileSearchResult.NotFound -> {
-                        failure("Patch aborted: TigonServiceLayer class not found")
-                    }
-                    is FileSearchResult.MultipleFound -> {
-                        // Filter for the exact TigonServiceLayer class
-                        val candidates = result.files.filter { file ->
-                            val content = smaliUtils.getSmaliFileContent(file.absolutePath)
-                            content.any { line ->
-                                line.contains(".class") && 
-                                line.contains("TigonServiceLayer") &&
-                                line.contains("Lcom/instagram/api/tigon/TigonServiceLayer;")
-                            }
+                    tigonServiceLayerFiles.size == 1 -> {
+                        tigonServiceLayerFile = tigonServiceLayerFiles.first()
+                        
+                        val content = smaliUtils.getSmaliFileContent(tigonServiceLayerFile.absolutePath)
+                        val hasStartRequest = content.any { line -> 
+                            line.contains(".method") && line.contains("startRequest")
                         }
-
-                        if (candidates.size == 1) {
-                            tigonServiceLayerFile = candidates[0]
-                            success("TigonServiceLayer class found after filtering: ${tigonServiceLayerFile.name}")
-                        } else if (candidates.isEmpty()) {
-                            failure("Patch aborted: No exact TigonServiceLayer class found among ${result.files.size} candidates")
+                        
+                        if (hasStartRequest) {
+                            success("TigonServiceLayer class found successfully: ${tigonServiceLayerFile.name}")
                         } else {
-                            // Take the first one if multiple exact matches (unlikely)
-                            tigonServiceLayerFile = candidates.first()
-                            success("TigonServiceLayer class selected (first of ${candidates.size}): ${tigonServiceLayerFile.name}")
+                            failure("Patch aborted: TigonServiceLayer found but does not contain startRequest method")
+                        }
+                    }
+                    else -> {
+                        tigonServiceLayerFile = tigonServiceLayerFiles.first()
+                        
+                        val content = smaliUtils.getSmaliFileContent(tigonServiceLayerFile.absolutePath)
+                        val hasStartRequest = content.any { line -> 
+                            line.contains(".method") && line.contains("startRequest")
+                        }
+                        
+                        if (hasStartRequest) {
+                            success("TigonServiceLayer class found (picked first of ${tigonServiceLayerFiles.size}): ${tigonServiceLayerFile.name}")
+                        } else {
+                            failure("Patch aborted: TigonServiceLayer found but does not contain startRequest method")
                         }
                     }
                 }
@@ -89,16 +82,12 @@ class NetworkInterceptor : InstafelPatch() {
                 var methodLine = -1
                 var localsLine = -1
 
-                // Find the startRequest method with 3 parameters
-                // Based on InstaEclipse: startRequest(?, ?, ?) where first param contains URI field
                 fContent.forEachIndexed { index, line ->
                     if (methodLine == -1 && line.contains(".method") && line.contains("startRequest")) {
-                        // Check if it has 3 parameters by analyzing the signature
                         val signatureMatch = Regex("\\(([^)]*)\\)").find(line)
                         if (signatureMatch != null) {
                             val params = signatureMatch.groupValues[1]
                             
-                            // Count parameters
                             var paramCount = 0
                             var idx = 0
                             while (idx < params.length) {
@@ -118,11 +107,9 @@ class NetworkInterceptor : InstafelPatch() {
                                 }
                             }
                             
-                            // InstaEclipse hooks startRequest with 3 parameters
                             if (paramCount == 3) {
                                 methodLine = index
                                 
-                                // Find .locals line
                                 for (j in methodLine until minOf(methodLine + MAX_LOCALS_SEARCH_OFFSET, fContent.size)) {
                                     if (fContent[j].contains(".locals")) {
                                         localsLine = j
@@ -139,18 +126,10 @@ class NetworkInterceptor : InstafelPatch() {
                     return
                 }
 
-                // Insert after .locals line or after method declaration
                 val insertLine = if (localsLine != -1) localsLine + 1 else methodLine + 1
 
-                // Inject network interceptor check using reflection-based approach
-                // The NetworkInterceptor.interceptRequest() method will use reflection to:
-                // 1. Find the URI field in the request object (p1)
-                // 2. Check if it should be blocked
-                // 3. Replace it with a fake URI if needed
                 val interceptorCode = listOf(
                     "",
-                    "    # Network Interceptor - Ghost Mode",
-                    "    # Call NetworkInterceptor.interceptRequest(requestObj) using reflection",
                     "    invoke-static {p1}, Linstafel/app/utils/ghost/NetworkInterceptor;->interceptRequest(Ljava/lang/Object;)V",
                     ""
                 )
