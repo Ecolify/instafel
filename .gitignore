@@ -17,7 +17,7 @@ apktool.jar
 # Ignore Instafel build output directory
 .output
 
-# Ingore IntelliJ IDEA 
+# Ignore IntelliJ IDEA 
 .intellij_idea
 .idea
 .vscode
@@ -25,7 +25,7 @@ apktool.jar
 .android_studio
 .android_sdk
 
-# Ingore Config
+# Ignore Config
 local.properties
 env.properties
 
