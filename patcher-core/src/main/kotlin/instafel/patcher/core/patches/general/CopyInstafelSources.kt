@@ -73,7 +73,9 @@ class CopyInstafelSources: InstafelPatch() {
                             "InstafelCrashHandler.smali"        // Called from InstagramAppShell.onCreate()
                         ),
                         "utils/localization" to listOf(
-                            "LocalizationUtils.smali"           // Used by InitializeInstafel.setContext()
+                            "LocalizationUtils.smali",          // Used by InitializeInstafel.setContext()
+                            "Locales.smali",                    // Used by LocalizationUtils.getDeviceLocale()
+                            "Locales\$LocaleType.smali"         // Inner class of Locales
                         ),
                         "utils/ghost" to listOf(
                             "GhostModeManager.smali"            // Used by InitializeInstafel.setContext()
