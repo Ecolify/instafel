@@ -15,15 +15,17 @@
 name: Patch Instagram Alpha
 
 on:
-  workflow_dispatch:
   push:
-    branches: '*'
+    branches-ignore: []         # No ignorar ninguna rama
+    branches: ["**"]            # Todas las ramas, incluidas copilot/*
+    tags: ["**"]                # Todos los tags
   pull_request:
-    branches: '*'
-  pull_request_target:
-    branches: '*'
-  pull_request_review:
-  pull_request_review_comment:
+    branches: ["**"]            # Todas las ramas
+    types: [opened, reopened, synchronize, closed]
+  issues:
+    types: [opened, edited, closed, reopened, deleted]
+  workflow_dispatch:            # Ejecución manual
+  workflow_call:                # Llamado por otros workflows
 
 jobs:
   patch-instagram:
