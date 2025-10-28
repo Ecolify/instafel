@@ -61,7 +61,7 @@ class NetworkInterceptor : InstafelPatch() {
                         val exactMatch = tigonFiles.filter { file ->
                             val content = smaliUtils.getSmaliFileContent(file.absolutePath)
                             content.any { line ->
-                                line.trim() == ".class public final Lcom/instagram/api/tigon/TigonServiceLayer;"
+                                line.trim() == ".class public final L$TIGON_CLASS_NAME;"
                             }
                         }
                         
