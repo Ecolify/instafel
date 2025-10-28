@@ -85,7 +85,8 @@ class CopyInstafelSources: InstafelPatch() {
                             "PreferenceManager"           // Used by LocalizationUtils.getIflLocale()
                         ),
                         "" to listOf(
-                            "InstafelEnv"                 // Used by InitializeInstafel.setContext()
+                            "InstafelEnv",                // Used by InitializeInstafel.setContext()
+                            "R"                           // R classes must be in primary DEX because Locales references R$drawable
                         )
                     )
                     
