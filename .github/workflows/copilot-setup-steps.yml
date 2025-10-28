@@ -37,7 +37,7 @@ jobs:
       - name: Download Instagram APKS
         run: |
           mkdir -p instagram
-          curl -L -f -o instagram/instagram.apks "https://eb5e7388c3df147b74dd2379b7cf8323.r2.cloudflarestorage.com/downloadprod/wp-content/uploads/2025/10/28/68fef049abc9a/com.instagram.android_405.0.0.0.33-381101799_2dpi_1faa8390a1fa4c13702e5552da88e853_apkmirror.com.apkm?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=72a5ba3a0b8a601e535d5525f12f8177%2F20251028%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20251028T025735Z&X-Amz-SignedHeaders=host&X-Amz-Expires=3600&X-Amz-Signature=3062daddf6a393a6b29a73b6fc59bf6b086b993637506bfe4197cf49d18c5a93"
+          curl -L -f -o instagram/instagram.apks "https://eb5e7388c3df147b74dd2379b7cf8323.r2.cloudflarestorage.com/downloadprod/wp-content/uploads/2025/10/28/68fef049abc9a/com.instagram.android_405.0.0.0.33-381101799_2dpi_1faa8390a1fa4c13702e5552da88e853_apkmirror.com.apkm?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=72a5ba3a0b8a601e535d5525f12f8177%2F20251028%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20251028T042241Z&X-Amz-SignedHeaders=host&X-Amz-Expires=3600&X-Amz-Signature=fe3101fb994415362fc75804a5a5438eaf36c18781a0a1c802dd8202817d7f82"
           ls -l instagram/instagram.apks
 
       - name: Install apktool jar
