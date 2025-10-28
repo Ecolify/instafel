@@ -156,7 +156,7 @@ jobs:
           fi
           
           echo "Applying Instafel patches (unclone variant) to: $PROJECT_DIR"
-          java -jar .output/ifl-patcher-v*.jar run "$PROJECT_DIR" instafel ghost_mode
+          java -jar .output/ifl-patcher-v*.jar run "$PROJECT_DIR" instafel ghost_mode remove_snooze_warning unlock_developer_options change_channel_name remove_ads network_interceptor
           
           echo "Unclone patches applied successfully"
       
