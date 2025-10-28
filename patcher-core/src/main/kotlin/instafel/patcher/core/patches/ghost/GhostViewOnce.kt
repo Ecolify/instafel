@@ -63,16 +63,79 @@ class GhostViewOnce: InstafelPatch() {
                     }
                     is FileSearchResult.MultipleFound -> {
                         // Filter by file size to get implementation files (50-2000 lines)
-                        val candidates = result.files.filter { file ->
+                        val sizeFilteredCandidates = result.files.filter { file ->
                             val lineCount = file.useLines { it.count() }
                             lineCount in MIN_IMPLEMENTATION_LINES..MAX_IMPLEMENTATION_LINES
+                        }
+                        
+                        // Additional filtering: find file with method matching InstaEclipse signature
+                        // We need: void method(?, ?, Object) - exactly 3 parameters
+                        val candidates = sizeFilteredCandidates.filter { file ->
+                            val fContent = smaliUtils.getSmaliFileContent(file.absolutePath)
+                            var hasTargetMethod = false
+                            var visualItemSeenLine = -1
+                            
+                            // First, find line with "visual_item_seen"
+                            fContent.forEachIndexed { index, line ->
+                                if (line.contains("const-string") && line.contains("visual_item_seen")) {
+                                    visualItemSeenLine = index
+                                }
+                            }
+                            
+                            if (visualItemSeenLine != -1) {
+                                // Search backwards from visual_item_seen to find the method
+                                for (methodIndex in visualItemSeenLine downTo 0) {
+                                    if (fContent[methodIndex].contains(".method")) {
+                                        val methodDeclaration = fContent[methodIndex]
+                                        
+                                        // Extract signature to match InstaEclipse: void(?, ?, ?)
+                                        val signatureMatch = Regex("\\(([^)]*)\\)V").find(methodDeclaration)
+                                        if (signatureMatch != null) {
+                                            val params = signatureMatch.groupValues[1]
+                                            
+                                            // Count parameters: each L starts an object param
+                                            var paramCount = 0
+                                            var i = 0
+                                            while (i < params.length) {
+                                                when (params[i]) {
+                                                    'L' -> {
+                                                        // Object parameter - skip until semicolon
+                                                        paramCount++
+                                                        val semicolonIdx = params.indexOf(';', i)
+                                                        if (semicolonIdx == -1) break
+                                                        i = semicolonIdx + 1
+                                                    }
+                                                    'I', 'J', 'Z', 'F', 'D', 'B', 'S', 'C' -> {
+                                                        // Primitive parameter
+                                                        paramCount++
+                                                        i++
+                                                    }
+                                                    '[' -> {
+                                                        // Array - skip bracket and process type
+                                                        i++
+                                                    }
+                                                    else -> i++
+                                                }
+                                            }
+                                            
+                                            // InstaEclipse matches: void method with exactly 3 parameters
+                                            if (paramCount == 3) {
+                                                hasTargetMethod = true
+                                            }
+                                        }
+                                        break  // Exit method search once we've checked this method
+                                    }
+                                }
+                            }
+                            
+                            hasTargetMethod
                         }
                         
                         if (candidates.size == 1) {
                             ghostViewOnceFile = candidates[0]
                             success("Ghost viewonce source class found after filtering: ${ghostViewOnceFile.name}")
                         } else if (candidates.isEmpty()) {
-                            failure("Patch aborted: No suitable implementation files found among ${result.files.size} candidates")
+                            failure("Patch aborted: No suitable implementation files found among ${result.files.size} candidates (size filtered: ${sizeFilteredCandidates.size})")
                         } else {
                             failure("Patch aborted: Found ${candidates.size} candidate files after filtering: ${candidates.map { it.name }}")
                         }
