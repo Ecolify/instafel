@@ -58,6 +58,50 @@ class CopyInstafelSources: InstafelPatch() {
                 Log.info("Copying instafel resources")
                 Utils.unzipFromResources(false, "/ifl_sources/ifl_sources.zip", destFolder.absolutePath)
 
+                // ContentProvider classes must be in the primary DEX because they are loaded before
+                // the Application class and before secondary DEXes are loaded by MultiDexApplication
+                val primaryDexFolder = smaliUtils.smaliFolders?.firstOrNull()
+                if (primaryDexFolder != null && primaryDexFolder != smallDexFolder) {
+                    val fileProviderSource = File(
+                        Utils.mergePaths(
+                            destFolder.absolutePath,
+                            "app",
+                            "utils",
+                            "InstafelFileProvider.smali"
+                        )
+                    )
+                    val fileProviderDest = File(
+                        Utils.mergePaths(
+                            Env.PROJECT_DIR,
+                            "sources",
+                            primaryDexFolder.name,
+                            "instafel",
+                            "app",
+                            "utils",
+                            "InstafelFileProvider.smali"
+                        )
+                    )
+                    
+                    if (fileProviderSource.exists()) {
+                        try {
+                            if (!fileProviderDest.parentFile.exists() && !fileProviderDest.parentFile.mkdirs()) {
+                                Log.severe("Failed to create directory for InstafelFileProvider in primary DEX")
+                                failure("Could not create directory: ${fileProviderDest.parentFile.absolutePath}")
+                                return
+                            }
+                            FileUtils.copyFile(fileProviderSource, fileProviderDest)
+                            if (!fileProviderSource.delete()) {
+                                Log.warning("Failed to delete source InstafelFileProvider after copy")
+                            }
+                            Log.info("InstafelFileProvider.smali moved to primary DEX (${primaryDexFolder.name})")
+                        } catch (e: Exception) {
+                            Log.severe("Failed to move InstafelFileProvider to primary DEX: ${e.message}")
+                            failure("InstafelFileProvider must be in primary DEX for app to function")
+                            return
+                        }
+                    }
+                }
+
                 val igResourcesFolder = File(Utils.mergePaths(Env.PROJECT_DIR, "sources", "res"))
                 Utils.unzipFromResources(false, "/ifl_sources/ifl_resources.zip", igResourcesFolder.absolutePath)
                 success("Instafel resources copied")
