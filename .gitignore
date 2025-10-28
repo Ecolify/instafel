@@ -29,6 +29,12 @@ apktool.jar
 local.properties
 env.properties
 
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
 # Instafel APP
 /app/build
 /app/output
