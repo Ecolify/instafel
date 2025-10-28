@@ -20,7 +20,7 @@ Before using the Network Interceptor:
 
 ```bash
 cd /home/runner/work/instafel/instafel
-./gradlew :patcher:assemble
+./gradlew :patcher-core:assemble
 ```
 
 ### 2. Apply Patches to Instagram
@@ -122,9 +122,10 @@ grep "Network interceptor patch applied" patcher.log
 
 2. **Test Ghost Screenshot:**
    - Enable Ghost Screenshot
-   - Take a screenshot of a direct message
+   - Take a screenshot of ephemeral content (disappearing photo/video in DM)
    - Check if sender gets notified
    - ✓ Success: No notification sent
+   - Note: Regular message screenshots may not trigger notifications in all Instagram versions
 
 3. **Test Ghost ViewOnce:**
    - Enable Ghost ViewOnce
@@ -236,7 +237,7 @@ Both network-level and method-level blocking work together for maximum coverage.
 ## FAQ
 
 **Q: Will ghost mode get me banned from Instagram?**
-A: Use at your own risk. While technically possible, bans are rare. Instagram's terms prohibit modifying their app.
+A: Using modified Instagram apps violates Instagram's Terms of Service. While many users report no issues, there is always a risk of account restrictions or bans. Use at your own risk and consider using a secondary account for testing.
 
 **Q: Does ghost mode work on all Instagram versions?**
 A: No. It's tested on Instagram Alpha versions. Compatibility varies by version.
