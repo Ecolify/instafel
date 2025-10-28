@@ -31,7 +31,6 @@ class NetworkInterceptor : InstafelPatch() {
 
     companion object {
         private const val MAX_LOCALS_SEARCH_OFFSET = 30
-        private const val TIGON_CLASS_NAME = "com/instagram/api/tigon/TigonServiceLayer"
     }
 
     override fun initializeTasks() = mutableListOf(
@@ -47,12 +46,20 @@ class NetworkInterceptor : InstafelPatch() {
                 
                 val validCandidates = candidates.filter { file ->
                     val content = smaliUtils.getSmaliFileContent(file.absolutePath)
-                    content.any { line ->
-                        line.contains(".class") && 
-                        line.contains("Lcom/instagram/api/tigon/TigonServiceLayer;")
-                    } && content.any { line ->
-                        line.contains("startRequest")
+                    var hasClassDeclaration = false
+                    var hasStartRequest = false
+                    
+                    for (line in content) {
+                        if (!hasClassDeclaration && line.contains(".class") && line.contains("Lcom/instagram/api/tigon/TigonServiceLayer;")) {
+                            hasClassDeclaration = true
+                        }
+                        if (!hasStartRequest && line.contains("startRequest")) {
+                            hasStartRequest = true
+                        }
+                        if (hasClassDeclaration && hasStartRequest) break
                     }
+                    
+                    hasClassDeclaration && hasStartRequest
                 }
                 
                 when {
