@@ -17,12 +17,6 @@ name: Patch Instagram Alpha
 on:
   push:
     branches: ["**"]            # Todas las ramas, incluidas copilot/*
-    tags: ["**"]                # Todos los tags
-  pull_request:
-    branches: ["**"]            # Todas las ramas
-    types: ["opened", "reopened", "synchronize", "closed"]
-  issues:
-    types: ["opened", "edited",  "closed", "reopened", "deleted"]
   workflow_dispatch:       
     inputs: # Ejecución manual
       instagram_apk_url:
