@@ -33,7 +33,13 @@ public class InitializeInstafel {
     }
 
     public static void triggerCheckUpdates(Activity activity) {
-        CheckUpdates.checkUpdates(activity);
+        try {
+            CheckUpdates.checkUpdates(activity);
+        } catch (Exception e) {
+            // Prevent update check failures from crashing the app during startup
+            Log.v("IFL", "Update check failed: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     public static void triggerUploadMapping(Activity activity) {
