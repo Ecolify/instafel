@@ -107,10 +107,13 @@ class CopyInstafelSources: InstafelPatch() {
                         ),
                         "ota/tasks" to listOf(
                             "VersionTask",                // Instantiated by CheckUpdates.check() - must be in primary DEX
-                            "ChangelogTask"               // Instantiated by CheckUpdates.checkChangelog() - must be in primary DEX
+                            "ChangelogTask",              // Instantiated by CheckUpdates.checkChangelog() - must be in primary DEX
+                            "ChangelogContentTask",       // Instantiated by ChangelogTask.onPostExecute() - must be in primary DEX
+                            "BuildInfoTask"               // Instantiated by VersionTask.onPostExecute() - must be in primary DEX
                         ),
                         "api/tasks" to listOf(
-                            "BackupUpdateTask"            // Instantiated by CheckUpdates.checkBackupUpdate() - must be in primary DEX
+                            "BackupUpdateTask",           // Instantiated by CheckUpdates.checkBackupUpdate() - must be in primary DEX
+                            "BackupUpdateDownloadTask"    // Instantiated by BackupUpdateTask.onPostExecute() - must be in primary DEX
                         ),
                         "api/models" to listOf(
                             "AutoUpdateInfo"              // Used by CheckUpdates.checkBackupUpdate() - must be in primary DEX
