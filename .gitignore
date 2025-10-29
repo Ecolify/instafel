@@ -13,6 +13,8 @@ instaeclipse/
 1.apk
 framework-res.apk
 apktool.jar
+app-debug/
+ifl-patcher-core-*.jar
 
 # Ignore Instafel build output directory
 .output
