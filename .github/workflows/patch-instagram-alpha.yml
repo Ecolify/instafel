@@ -190,7 +190,7 @@ jobs:
           if-no-files-found: warn
       
       - name: Upload Patcher JAR
-        if: success() && steps.build-patcher-core.outcome == 'success' && steps.build-patcher.outcome == 'success'
+        if: success() && (steps.build-patcher-core.outcome == 'success' || steps.build-patcher.outcome == 'success' || steps.build-gplayapi.outcome == 'success')
         uses: actions/upload-artifact@v4
         with:
           name: instafel-jar-latest
