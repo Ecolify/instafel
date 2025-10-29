@@ -24,12 +24,6 @@ public class ifl_a_ghost_mode extends AppCompatActivity {
     private TileLargeSwitch tileGhostViewOnce;
     private TileLargeSwitch tileGhostStory;
     private TileLargeSwitch tileGhostLive;
-    private TileLargeSwitch tileQuickToggleSeen;
-    private TileLargeSwitch tileQuickToggleTyping;
-    private TileLargeSwitch tileQuickToggleScreenshot;
-    private TileLargeSwitch tileQuickToggleViewOnce;
-    private TileLargeSwitch tileQuickToggleStory;
-    private TileLargeSwitch tileQuickToggleLive;
 
     @Override 
     protected void onCreate(Bundle bundle) {
@@ -50,12 +44,6 @@ public class ifl_a_ghost_mode extends AppCompatActivity {
         tileGhostViewOnce = findViewById(R.id.ifl_tile_ghost_viewonce);
         tileGhostStory = findViewById(R.id.ifl_tile_ghost_story);
         tileGhostLive = findViewById(R.id.ifl_tile_ghost_live);
-        tileQuickToggleSeen = findViewById(R.id.ifl_tile_quick_toggle_seen);
-        tileQuickToggleTyping = findViewById(R.id.ifl_tile_quick_toggle_typing);
-        tileQuickToggleScreenshot = findViewById(R.id.ifl_tile_quick_toggle_screenshot);
-        tileQuickToggleViewOnce = findViewById(R.id.ifl_tile_quick_toggle_viewonce);
-        tileQuickToggleStory = findViewById(R.id.ifl_tile_quick_toggle_story);
-        tileQuickToggleLive = findViewById(R.id.ifl_tile_quick_toggle_live);
         
         // Ghost Mode Main Toggle
         TileLargeSwitch tileGhostMode = findViewById(R.id.ifl_tile_ghost_mode_main);
@@ -126,49 +114,6 @@ public class ifl_a_ghost_mode extends AppCompatActivity {
             preferenceManager.setPreferenceBoolean(PreferenceKeys.ifl_ghost_live, isChecked);
         });
 
-        // Quick Toggle Settings Section
-        Switch quickToggleSeenSwitch = tileQuickToggleSeen.getSwitchView();
-        quickToggleSeenSwitch.setChecked(GhostModeManager.quickToggleSeen);
-        quickToggleSeenSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            GhostModeManager.quickToggleSeen = isChecked;
-            preferenceManager.setPreferenceBoolean(PreferenceKeys.ifl_quick_toggle_seen, isChecked);
-        });
-
-        Switch quickToggleTypingSwitch = tileQuickToggleTyping.getSwitchView();
-        quickToggleTypingSwitch.setChecked(GhostModeManager.quickToggleTyping);
-        quickToggleTypingSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            GhostModeManager.quickToggleTyping = isChecked;
-            preferenceManager.setPreferenceBoolean(PreferenceKeys.ifl_quick_toggle_typing, isChecked);
-        });
-
-        Switch quickToggleScreenshotSwitch = tileQuickToggleScreenshot.getSwitchView();
-        quickToggleScreenshotSwitch.setChecked(GhostModeManager.quickToggleScreenshot);
-        quickToggleScreenshotSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            GhostModeManager.quickToggleScreenshot = isChecked;
-            preferenceManager.setPreferenceBoolean(PreferenceKeys.ifl_quick_toggle_screenshot, isChecked);
-        });
-
-        Switch quickToggleViewOnceSwitch = tileQuickToggleViewOnce.getSwitchView();
-        quickToggleViewOnceSwitch.setChecked(GhostModeManager.quickToggleViewOnce);
-        quickToggleViewOnceSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            GhostModeManager.quickToggleViewOnce = isChecked;
-            preferenceManager.setPreferenceBoolean(PreferenceKeys.ifl_quick_toggle_view_once, isChecked);
-        });
-
-        Switch quickToggleStorySwitch = tileQuickToggleStory.getSwitchView();
-        quickToggleStorySwitch.setChecked(GhostModeManager.quickToggleStory);
-        quickToggleStorySwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            GhostModeManager.quickToggleStory = isChecked;
-            preferenceManager.setPreferenceBoolean(PreferenceKeys.ifl_quick_toggle_story, isChecked);
-        });
-
-        Switch quickToggleLiveSwitch = tileQuickToggleLive.getSwitchView();
-        quickToggleLiveSwitch.setChecked(GhostModeManager.quickToggleLive);
-        quickToggleLiveSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            GhostModeManager.quickToggleLive = isChecked;
-            preferenceManager.setPreferenceBoolean(PreferenceKeys.ifl_quick_toggle_live, isChecked);
-        });
-        
         // Set initial visibility based on current ghost mode state
         // This must be called AFTER all switches are initialized
         updateGhostFeaturesVisibility(GhostModeManager.isGhostModeEnabled);
@@ -189,14 +134,6 @@ public class ifl_a_ghost_mode extends AppCompatActivity {
         tileGhostViewOnce.setVisibility(visibility);
         tileGhostStory.setVisibility(visibility);
         tileGhostLive.setVisibility(visibility);
-        
-        // Update visibility for all quick toggle switches
-        tileQuickToggleSeen.setVisibility(visibility);
-        tileQuickToggleTyping.setVisibility(visibility);
-        tileQuickToggleScreenshot.setVisibility(visibility);
-        tileQuickToggleViewOnce.setVisibility(visibility);
-        tileQuickToggleStory.setVisibility(visibility);
-        tileQuickToggleLive.setVisibility(visibility);
     }
     
     /**
@@ -212,14 +149,6 @@ public class ifl_a_ghost_mode extends AppCompatActivity {
         GhostModeManager.isGhostStory = false;
         GhostModeManager.isGhostLive = false;
         
-        // Also disable quick toggles
-        GhostModeManager.quickToggleSeen = false;
-        GhostModeManager.quickToggleTyping = false;
-        GhostModeManager.quickToggleScreenshot = false;
-        GhostModeManager.quickToggleViewOnce = false;
-        GhostModeManager.quickToggleStory = false;
-        GhostModeManager.quickToggleLive = false;
-        
         // Save all disabled states to preferences
         GhostModeManager.saveFlags(preferenceManager);
         
@@ -230,12 +159,5 @@ public class ifl_a_ghost_mode extends AppCompatActivity {
         tileGhostViewOnce.getSwitchView().setChecked(false);
         tileGhostStory.getSwitchView().setChecked(false);
         tileGhostLive.getSwitchView().setChecked(false);
-        
-        tileQuickToggleSeen.getSwitchView().setChecked(false);
-        tileQuickToggleTyping.getSwitchView().setChecked(false);
-        tileQuickToggleScreenshot.getSwitchView().setChecked(false);
-        tileQuickToggleViewOnce.getSwitchView().setChecked(false);
-        tileQuickToggleStory.getSwitchView().setChecked(false);
-        tileQuickToggleLive.getSwitchView().setChecked(false);
     }
 }
