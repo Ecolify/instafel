@@ -122,6 +122,9 @@ class CopyInstafelSources: InstafelPatch() {
                         "api/models" to listOf(
                             "AutoUpdateInfo"              // Used by CheckUpdates.checkBackupUpdate() - must be in primary DEX
                         ),
+                        "activity" to listOf(
+                            "ifl_a_menu"                  // Started by InitializeInstafel.startInstafel() from primary DEX - must be in primary DEX
+                        ),
                         "" to listOf(
                             "InstafelEnv",                // Used by InitializeInstafel.setContext()
                             "R"                           // R classes must be in primary DEX because Locales references R$drawable
