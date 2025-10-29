@@ -62,6 +62,10 @@ class CopyInstafelSources: InstafelPatch() {
                 // the Application class and before secondary DEXes are loaded by MultiDexApplication.
                 // Additionally, classes referenced from Application.attach() must also be in the primary DEX
                 // to avoid ClassNotFoundException during early app initialization.
+                //
+                // This mapping includes ALL classes extracted from ifl_sources.zip to ensure complete
+                // functionality across all features. Each class and its inner/synthetic classes will be
+                // automatically moved to the primary DEX.
                 val primaryDexFolder = smaliUtils.smaliFolders?.firstOrNull()
                 if (primaryDexFolder != null && primaryDexFolder != smallDexFolder) {
                     // Map of classes that must be in the primary DEX: subpath -> base class names
@@ -69,65 +73,148 @@ class CopyInstafelSources: InstafelPatch() {
                     // All inner classes and synthetic classes (e.g., Class$InnerClass.smali, Class$$Lambda.smali) 
                     // will be automatically included for each base class
                     val classesToMoveToPrimaryDex = mapOf(
-                        "utils" to listOf(
-                            "InstafelFileProvider",      // ContentProvider - loaded before Application
-                            "InitializeInstafel",         // Called from InstagramAppShell.attach()
-                            "InstafelCrashHandler",       // Called from InstagramAppShell.attach()
-                            "InstafelAdminUser",          // Used by InitializeInstafel.triggerUploadMapping()
-                            "UploadMapping",              // Used by InitializeInstafel.triggerUploadMapping()
-                            "GeneralFn",                  // Used by CheckUpdates and LocalizedStringGetter - must be in primary DEX
-                            "OpenIflMenu"                 // Referenced from UserDetailFragment (AddLongClickEvent patch) - must be in primary DEX
-                        ),
-                        "utils/localization" to listOf(
-                            "LocalizationUtils",          // Used by InitializeInstafel.setContext()
-                            "Locales",                    // Used by LocalizationUtils.getDeviceLocale()
-                            "LocalizedStringGetter"       // Used by CheckUpdates.showWelcomeDialog()
-                        ),
-                        "utils/types" to listOf(
-                            "PreferenceKeys",             // Used by LocalizationUtils.getIflLocale()
-                            "Types"                       // Used by CheckUpdates (Types$FreqLabels) - must be in primary DEX
-                        ),
-                        "utils/ghost" to listOf(
-                            "GhostModeManager",           // Used by InitializeInstafel.setContext() - must be in primary DEX
-                            "NetworkInterceptor"          // Called from TigonServiceLayer.startRequest (primary DEX) - must be in primary DEX
-                        ),
-                        "utils/dialog" to listOf(
-                            // Dialog classes must be in primary DEX because CheckUpdates.showWelcomeDialog()
-                            // is called during early app initialization from InitializeInstafel.triggerCheckUpdates()
-                            "InstafelDialog",             // Used by CheckUpdates.showWelcomeDialog() - must be in primary DEX
-                            "InstafelDialogItem",         // Used by InstafelDialog
-                            "InstafelDialogMargins",      // Used by InstafelDialog
-                            "InstafelDialogTextType",     // Used by InstafelDialog
-                            "StringInputViews"            // Used by InstafelDialog
-                        ),
-                        "managers" to listOf(
-                            "PreferenceManager",          // Used by LocalizationUtils.getIflLocale()
-                            "OverridesManager"            // Used by InitializeInstafel.triggerUploadMapping()
-                        ),
-                        "ota" to listOf(
-                            "CheckUpdates",               // Called from InitializeInstafel.triggerCheckUpdates() - must be in primary DEX
-                            "IflEnvironment",             // Used by CheckUpdates - must be in primary DEX
-                            "LastCheck"                   // Used by CheckUpdates - must be in primary DEX
-                        ),
-                        "ota/tasks" to listOf(
-                            "VersionTask",                // Instantiated by CheckUpdates.check() - must be in primary DEX
-                            "ChangelogTask",              // Instantiated by CheckUpdates.checkChangelog() - must be in primary DEX
-                            "ChangelogContentTask",       // Instantiated by ChangelogTask.onPostExecute() - must be in primary DEX
-                            "BuildInfoTask"               // Instantiated by VersionTask.onPostExecute() - must be in primary DEX
-                        ),
-                        "api/tasks" to listOf(
-                            "BackupUpdateTask",           // Instantiated by CheckUpdates.checkBackupUpdate() - must be in primary DEX
-                            "BackupUpdateDownloadTask"    // Instantiated by BackupUpdateTask.onPostExecute() - must be in primary DEX
-                        ),
-                        "api/models" to listOf(
-                            "AutoUpdateInfo"              // Used by CheckUpdates.checkBackupUpdate() - must be in primary DEX
-                        ),
-                        "activity" to listOf(
-                            "ifl_a_menu"                  // Started by InitializeInstafel.startInstafel() from primary DEX - must be in primary DEX
-                        ),
                         "" to listOf(
+                            "ExampleAppClass",            // Example/template class
                             "InstafelEnv",                // Used by InitializeInstafel.setContext()
                             "R"                           // R classes must be in primary DEX because Locales references R$drawable
+                        ),
+                        "activity" to listOf(
+                            "ifl_a_ghost_mode",           // Ghost mode activity
+                            "ifl_a_language",             // Language selection activity
+                            "ifl_a_menu",                 // Main menu activity - Started by InitializeInstafel.startInstafel()
+                            "ifl_a_misc",                 // Miscellaneous settings activity
+                            "ifl_a_ota"                   // OTA update activity
+                        ),
+                        "activity/about" to listOf(
+                            "ifl_a_about",                // About screen activity
+                            "ifl_a_build_info",           // Build information activity
+                            "ifl_a_patches_info"          // Patches information activity
+                        ),
+                        "activity/admin" to listOf(
+                            "ifl_a_admin_action_approvepreview",  // Admin approve preview action
+                            "ifl_a_admin_action_updatebackup",    // Admin update backup action
+                            "ifl_a_admin_dashboard",              // Admin dashboard activity
+                            "ifl_a_admin_login",                  // Admin login activity
+                            "ifl_a_admin_pref_manager"            // Admin preference manager activity
+                        ),
+                        "activity/crash_manager" to listOf(
+                            "ifl_a_crash_reports",        // Crash reports list activity
+                            "ifl_a_crash_viewer"          // Crash details viewer activity
+                        ),
+                        "activity/devmode" to listOf(
+                            "ifl_a_devmode",              // Developer mode main activity
+                            "ifl_a_devmode_import"        // Developer mode import activity
+                        ),
+                        "activity/devmode/analyzer" to listOf(
+                            "ifl_a_devmode_backup_analyzer",      // Backup analyzer activity
+                            "ifl_a_devmode_backup_analyzer_menu"  // Backup analyzer menu
+                        ),
+                        "activity/devmode/backup" to listOf(
+                            "ifl_a_export_backup"         // Export backup activity
+                        ),
+                        "activity/devmode/comparator" to listOf(
+                            "ifl_a_devmode_backup_comparator",      // Backup comparator activity
+                            "ifl_a_devmode_backup_comparator_menu"  // Backup comparator menu
+                        ),
+                        "activity/library" to listOf(
+                            "ifl_a_library_menu"          // Library menu activity
+                        ),
+                        "activity/library/backup" to listOf(
+                            "ifl_a_library_backup",                // Library backup activity
+                            "ifl_a_library_backup_info",           // Library backup info activity
+                            "ifl_a_library_backup_info_author"     // Library backup author info
+                        ),
+                        "api/models" to listOf(
+                            "AutoUpdateInfo",             // Auto update information model - Used by CheckUpdates
+                            "Backup",                     // Backup model
+                            "BackupListItem",             // Backup list item model
+                            "InstafelResponse"            // Generic API response model
+                        ),
+                        "api/requests" to listOf(
+                            "ApiCallbackInterface",       // API callback interface
+                            "ApiGet",                     // Generic GET request handler
+                            "ApiGetAdmin",                // Admin GET request handler
+                            "ApiGetString",               // String GET request handler
+                            "ApiPostAdmin"                // Admin POST request handler
+                        ),
+                        "api/requests/admin" to listOf(
+                            "AdminLogin",                 // Admin login request handler
+                            "AdminUploadMapping"          // Admin upload mapping handler
+                        ),
+                        "api/tasks" to listOf(
+                            "BackupUpdateDownloadTask",   // Backup update download task - Instantiated by BackupUpdateTask
+                            "BackupUpdateTask"            // Backup update task - Instantiated by CheckUpdates
+                        ),
+                        "managers" to listOf(
+                            "AttributeManager",           // Attribute management
+                            "CrashManager",               // Crash management
+                            "FrequencyManager",           // Frequency management
+                            "NotificationOtaManager",     // OTA notification management
+                            "OverridesManager",           // Overrides management - Used by InitializeInstafel
+                            "PermissionManager",          // Permission management
+                            "PreferenceManager"           // Preference management - Used by LocalizationUtils
+                        ),
+                        "managers/modals" to listOf(
+                            "FlagItem",                   // Flag item model
+                            "ParseResult"                 // Parse result model
+                        ),
+                        "ota" to listOf(
+                            "CheckUpdates",               // Update checker - Called from InitializeInstafel.triggerCheckUpdates()
+                            "IflEnvironment",             // Environment configuration - Used by CheckUpdates
+                            "LastCheck"                   // Last check tracker - Used by CheckUpdates
+                        ),
+                        "ota/tasks" to listOf(
+                            "BuildInfoTask",              // Build info task - Instantiated by VersionTask
+                            "ChangelogContentTask",       // Changelog content task - Instantiated by ChangelogTask
+                            "ChangelogTask",              // Changelog task - Instantiated by CheckUpdates
+                            "DownloadUpdateTask",         // Download update task
+                            "VersionTask"                 // Version task - Instantiated by CheckUpdates
+                        ),
+                        "ui" to listOf(
+                            "LoadingBar",                 // Loading bar UI component
+                            "Page",                       // Page UI component
+                            "PageContentArea",            // Page content area UI component
+                            "PageTitle",                  // Page title UI component
+                            "TileCompact",                // Compact tile UI component
+                            "TileLarge",                  // Large tile UI component
+                            "TileLargeEditText",          // Large tile with edit text UI component
+                            "TileLargeSwitch",            // Large tile with switch UI component
+                            "TileSocials",                // Social media tile UI component
+                            "TileTitle"                   // Tile title UI component
+                        ),
+                        "utils" to listOf(
+                            "GeneralFn",                  // General utility functions - Used by CheckUpdates and LocalizedStringGetter
+                            "InitializeInstafel",         // Initialization handler - Called from InstagramAppShell.attach()
+                            "InstafelAdminUser",          // Admin user handler - Used by InitializeInstafel
+                            "InstafelCrashHandler",       // Crash handler - Called from InstagramAppShell.attach()
+                            "InstafelFileProvider",       // File provider - ContentProvider loaded before Application
+                            "OpenIflMenu",                // Menu opener - Referenced from UserDetailFragment
+                            "UploadMapping"               // Upload mapping handler - Used by InitializeInstafel
+                        ),
+                        "utils/crashlog" to listOf(
+                            "CLogDataTypes",              // Crash log data types
+                            "Crashlog"                    // Crash logging utility
+                        ),
+                        "utils/dialog" to listOf(
+                            "InstafelDialog",             // Dialog utility - Used by CheckUpdates.showWelcomeDialog()
+                            "InstafelDialogItem",         // Dialog item model - Used by InstafelDialog
+                            "InstafelDialogMargins",      // Dialog margins model - Used by InstafelDialog
+                            "InstafelDialogTextType",     // Dialog text type model - Used by InstafelDialog
+                            "StringInputViews"            // String input views - Used by InstafelDialog
+                        ),
+                        "utils/ghost" to listOf(
+                            "GhostModeManager",           // Ghost mode manager - Used by InitializeInstafel.setContext()
+                            "NetworkInterceptor"          // Network interceptor - Called from TigonServiceLayer.startRequest
+                        ),
+                        "utils/localization" to listOf(
+                            "Locales",                    // Locale definitions - Used by LocalizationUtils.getDeviceLocale()
+                            "LocalizationInfo",           // Localization metadata and configuration data
+                            "LocalizationUtils",          // Localization utilities - Used by InitializeInstafel.setContext()
+                            "LocalizedStringGetter"       // Localized string getter - Used by CheckUpdates.showWelcomeDialog()
+                        ),
+                        "utils/types" to listOf(
+                            "PreferenceKeys",             // Preference key constants - Used by LocalizationUtils
+                            "Types"                       // Type definitions - Used by CheckUpdates
                         )
                     )
                     
