@@ -179,7 +179,9 @@ jobs:
           echo "Build completed successfully (unclone variant)"
           echo "Build output:"
           ls -lh "$PROJECT_DIR/build/"
-          find .output -type f \( -iname "*.apk" -o -iname "*.jar" -o -iname "*.json" \) -exec ls -la {} \;
+          mkdir out
+          cp .output/*.apk out/
+          cp .output/*.jar out/
           echo "CURRENT_PATH=$(pwd)" >> $GITHUB_ENV
           echo "Ruta actual guardada: $CURRENT_PATH"
 
@@ -189,7 +191,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: instafel-app-latest
-          path: ${{ env.CURRENT_PATH }}/.output/*.apk
+          path: ${{ env.CURRENT_PATH }}/out/*.apk
           include-hidden-files: true
           if-no-files-found: warn
       
@@ -198,7 +200,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: instafel-jar-latest
-          path: ${{ env.CURRENT_PATH }}/.output/*.jar
+          path: ${{ env.CURRENT_PATH }}/out/*.jar
           include-hidden-files: true
           if-no-files-found: warn
       
