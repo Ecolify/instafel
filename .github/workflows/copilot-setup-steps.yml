@@ -37,7 +37,7 @@ jobs:
       - name: Download Instagram APKS
         run: |
           mkdir -p instagram
-          curl -L -f -o instagram/instagram_selected.apk "https://my.microsoftpersonalcontent.com/personal/f2d8dcd41970e636/_layouts/15/download.aspx?UniqueId=f1de2ff8-4f75-4389-8230-f8e6acb581ef&Translate=false&tempauth=v1e.eyJzaXRlaWQiOiI3M2NlNzYzOS04ZmZhLTQ2MTMtOWZmZC0zODgyNDMyZjc0ZjciLCJhdWQiOiIwMDAwMDAwMy0wMDAwLTBmZjEtY2UwMC0wMDAwMDAwMDAwMDAvbXkubWljcm9zb2Z0cGVyc29uYWxjb250ZW50LmNvbUA5MTg4MDQwZC02YzY3LTRjNWItYjExMi0zNmEzMDRiNjZkYWQiLCJleHAiOiIxNzYxNjk3MTMyIn0.JZNFl36YZaNohdmHLdgm3xKaPcAeIlbWL74SrauhLj-GoBvuQqM0oL-NTrQawoq7ct4MfqiTMsRzyZUa_4tFVz-SxEbciFFPDlzUF8v_v3XujbS9uj7MjWONWYmjuO4i2tcOiL4aAUsod28qkgrLZFzmQMXwKJ4vYxIqsEdhAq0Ko0fZPdX_jTuofkaqWOejNSw7-4F2kfNxzhY2GRMwIyibbSLg_a5_fOMyixhldBAIP_ViA4SehKTTqMD1pvf2ryeWXSd09iDm8SdLxlDIxfKxPD4cx4Vk6A5k2VO0_QSFnvS0Bdvpab19x-rSK62SVdU4c0hzlMJvFlEB8hYuEm7XYdlRwHFFSbFqG0pGuprYGQ57FW-wPkS6PZjloBXOlZJvvuyc0s60KKBR_l3URl-9Fw6qbhM9SEW19BvRkdb4c8fwvt7ppEswuLxBi9M88G5IpAY0NDTyqtvi6ptazMX0ypbzu6KSM9Tpy-zPwhDWGwZ02NLDny4lIyZNqUAUK6uEwkYSC8MC312DSFkedg.d6p0VJWTxhyD03LrhCC17z7V6B2IEbZd6XwF2lnrMZ4&ApiVersion=2.0"
+          curl -L -f -o instagram/instagram_selected.apk "https://www.dropbox.com/scl/fi/z0h72z7nex5kzfvwc1s2d/insap.apk?rlkey=moj92yjt99pjzbzqur9fv1meb&st=hfilmv2i&dl=1"
           ls -l instagram/instagram_selected.apk
 
       - name: Install apktool jar
