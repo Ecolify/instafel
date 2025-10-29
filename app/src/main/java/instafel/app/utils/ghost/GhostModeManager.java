@@ -192,4 +192,27 @@ public class GhostModeManager {
     public static boolean isGhostLiveEnabled() {
         return isGhostLive;
     }
+    
+    /**
+     * Check if ghost mode is enabled
+     * This is the master switch that must be ON for any ghost features to work
+     * When this returns false, all ghost features should be inactive regardless of their individual states
+     * 
+     * @return true if ghost mode is enabled, false otherwise
+     */
+    public static boolean isEnabled() {
+        return isGhostModeEnabled;
+    }
+    
+    /**
+     * Check if a specific ghost feature should be active
+     * This considers both the master ghost mode toggle AND the individual feature toggle
+     * NetworkInterceptor should use these methods to determine if requests should be blocked
+     * 
+     * @param featureFlag the individual feature flag (e.g., isGhostSeen)
+     * @return true if both ghost mode AND the specific feature are enabled
+     */
+    public static boolean isFeatureActive(boolean featureFlag) {
+        return isGhostModeEnabled && featureFlag;
+    }
 }
