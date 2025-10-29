@@ -80,8 +80,7 @@ class CopyInstafelSources: InstafelPatch() {
                         "utils/localization" to listOf(
                             "LocalizationUtils",          // Used by InitializeInstafel.setContext()
                             "Locales",                    // Used by LocalizationUtils.getDeviceLocale()
-                            "LocalizedStringGetter",      // Used by CheckUpdates.showWelcomeDialog()
-                            "LocalizationInfo"            // May be used by localization utilities
+                            "LocalizedStringGetter"       // Used by CheckUpdates.showWelcomeDialog()
                         ),
                         "utils/types" to listOf(
                             "PreferenceKeys"              // Used by LocalizationUtils.getIflLocale()
@@ -108,20 +107,13 @@ class CopyInstafelSources: InstafelPatch() {
                         ),
                         "ota/tasks" to listOf(
                             "VersionTask",                // Instantiated by CheckUpdates.check() - must be in primary DEX
-                            "ChangelogTask",              // Instantiated by CheckUpdates.checkChangelog() - must be in primary DEX
-                            "ChangelogContentTask",       // May be used by ChangelogTask
-                            "BuildInfoTask",              // May be used by version checking
-                            "DownloadUpdateTask"          // May be used by update process
+                            "ChangelogTask"               // Instantiated by CheckUpdates.checkChangelog() - must be in primary DEX
                         ),
                         "api/tasks" to listOf(
-                            "BackupUpdateTask",           // Instantiated by CheckUpdates.checkBackupUpdate() - must be in primary DEX
-                            "BackupUpdateDownloadTask"    // May be used by BackupUpdateTask
+                            "BackupUpdateTask"            // Instantiated by CheckUpdates.checkBackupUpdate() - must be in primary DEX
                         ),
                         "api/models" to listOf(
-                            "AutoUpdateInfo",             // Used by CheckUpdates.checkBackupUpdate() - must be in primary DEX
-                            "Backup",                     // May be used by backup tasks
-                            "BackupListItem",             // May be used by backup tasks
-                            "InstafelResponse"            // May be used by API requests
+                            "AutoUpdateInfo"              // Used by CheckUpdates.checkBackupUpdate() - must be in primary DEX
                         ),
                         "" to listOf(
                             "InstafelEnv",                // Used by InitializeInstafel.setContext()
