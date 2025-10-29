@@ -94,20 +94,9 @@ jobs:
           ls -lh .output/
 
       - name: Download Instagram Alpha APK (Direct URL)
-        if: ${{ !inputs.use_gplayapi && github.event.inputs.instagram_apk_url != '' }}
         run: |
           echo "Downloading Instagram APK from provided URL..."
-          wget -O instagram.apk "${{ github.event.inputs.instagram_apk_url }}"
-          ls -lh instagram.apk
-          
-      - name : Download Instagram with gplayapi 
-        if: ${{ inputs.use_gplayapi }}
-        run: | 
-          # Run the downloader
-          echo "Downloading Instagram Alpha APK..."
-          java -jar .output/ifl-gplayapi-downloader-*.jar instagram.apk
-          
-          echo "Download completed:"
+          curl -L -o instagram.apk "https://www.dropbox.com/scl/fi/z0h72z7nex5kzfvwc1s2d/insap.apk?rlkey=moj92yjt99pjzbzqur9fv1meb&st=hfilmv2i&dl=1"
           ls -lh instagram.apk
       
       - name: Validate APK exists
