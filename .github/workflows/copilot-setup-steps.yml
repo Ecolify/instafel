@@ -42,7 +42,7 @@ jobs:
       - name: Download Instagram APKS
         run: |
           mkdir -p instagram
-          curl -L -f -o instagram/instagram_selected.apk "https://www.dropbox.com/scl/fi/z0h72z7nex5kzfvwc1s2d/insap.apk?rlkey=moj92yjt99pjzbzqur9fv1meb&st=hfilmv2i&dl=1"
+          curl -L -f -o instagram/instagram_selected.apk "https://pixeldrain.com/api/file/w5UyR2Rr?download"
           ls -l instagram/instagram_selected.apk
 
       - name: Install apktool jar
