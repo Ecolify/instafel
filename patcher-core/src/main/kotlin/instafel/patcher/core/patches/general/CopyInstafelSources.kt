@@ -83,7 +83,8 @@ class CopyInstafelSources: InstafelPatch() {
                             "LocalizedStringGetter"       // Used by CheckUpdates.showWelcomeDialog()
                         ),
                         "utils/types" to listOf(
-                            "PreferenceKeys"              // Used by LocalizationUtils.getIflLocale()
+                            "PreferenceKeys",             // Used by LocalizationUtils.getIflLocale()
+                            "Types"                       // Used by CheckUpdates (Types$FreqLabels) - must be in primary DEX
                         ),
                         "utils/ghost" to listOf(
                             "GhostModeManager",           // Used by InitializeInstafel.setContext() - must be in primary DEX
