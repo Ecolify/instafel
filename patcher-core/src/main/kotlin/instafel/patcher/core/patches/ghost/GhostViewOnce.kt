@@ -12,9 +12,24 @@ import java.io.File
 /**
  * Ghost ViewOnce - Prevents view once messages from being marked as seen
  * 
- * Based on InstaEclipse: hooks void methods with exactly 3 parameters containing "visual_item_seen" string.
- * InstaEclipse validates the third parameter contains "visual_item_seen" or "send_visual_item_seen_marker"
- * at runtime before blocking. This smali patch achieves the same by injecting an early return.
+ * REFERENCE: InstaEclipse ViewOnce.java
+ * - Hooks void methods with exactly 3 parameters containing "visual_item_seen" string
+ * - Validates third parameter contains "visual_item_seen" or "send_visual_item_seen_marker"
+ *   at runtime before blocking
+ * 
+ * IMPLEMENTATION:
+ * This smali patch targets the same method signature (3 params, void return) and injects
+ * an early return when Ghost ViewOnce is enabled. The method is identified by the presence
+ * of "visual_item_seen" const-string, which matches InstaEclipse's approach of searching
+ * for methods using that string.
+ * 
+ * VALIDATION:
+ * InstaEclipse performs runtime validation of the third parameter. In smali patching, we
+ * achieve equivalent safety by:
+ * 1. Confirming method has exactly 3 parameters (same as InstaEclipse)
+ * 2. Verifying method is void return (same as InstaEclipse)
+ * 3. Ensuring "visual_item_seen" string exists in method body
+ * 4. Blocking only when GhostModeManager.isGhostViewOnceEnabled() returns true
  */
 @PInfos.PatchInfo(
     name = "Ghost ViewOnce",
@@ -27,9 +42,40 @@ class GhostViewOnce: InstafelPatch() {
     lateinit var ghostViewOnceFile: File
     
     companion object {
+        // Size filtering to exclude test/stub classes and overly complex classes
         private const val MIN_IMPLEMENTATION_LINES = 50
         private const val MAX_IMPLEMENTATION_LINES = 2000
         private const val MAX_LOCALS_SEARCH_OFFSET = 20
+        
+        /**
+         * Counts parameters in a smali method signature
+         * Example: (LX/2zq;LX/FC0;LX/5st;)V has 3 parameters
+         */
+        private fun countMethodParameters(signature: String): Int {
+            val signatureMatch = Regex("\\(([^)]*)\\)").find(signature) ?: return 0
+            val params = signatureMatch.groupValues[1]
+            var paramCount = 0
+            var i = 0
+            
+            while (i < params.length) {
+                when (params[i]) {
+                    'L' -> {
+                        paramCount++
+                        val semicolonIdx = params.indexOf(';', i)
+                        if (semicolonIdx == -1) break
+                        i = semicolonIdx + 1
+                    }
+                    'I', 'J', 'Z', 'F', 'D', 'B', 'S', 'C' -> {
+                        paramCount++
+                        i++
+                    }
+                    '[' -> i++  // Array prefix, doesn't count as separate param
+                    else -> i++
+                }
+            }
+            
+            return paramCount
+        }
     }
 
     override fun initializeTasks() = mutableListOf(
@@ -46,10 +92,10 @@ class GhostViewOnce: InstafelPatch() {
                 }) {
                     is FileSearchResult.Success -> {
                         ghostViewOnceFile = result.file
-                        success("Ghost viewonce source class found successfully: ${ghostViewOnceFile.name}")
+                        success("Ghost ViewOnce source class found successfully: ${ghostViewOnceFile.name}")
                     }
                     is FileSearchResult.NotFound -> {
-                        failure("Patch aborted because no classes found for ghost viewonce.")
+                        failure("Patch aborted because no classes found for Ghost ViewOnce.")
                     }
                     is FileSearchResult.MultipleFound -> {
                         val sizeFilteredCandidates = result.files.filter { file ->
@@ -62,40 +108,22 @@ class GhostViewOnce: InstafelPatch() {
                             var hasTargetMethod = false
                             var visualItemSeenLine = -1
                             
+                            // Find the line containing "visual_item_seen" const-string
                             fContent.forEachIndexed { index, line ->
                                 if (line.contains("const-string") && line.contains("visual_item_seen")) {
                                     visualItemSeenLine = index
                                 }
                             }
                             
+                            // If found, search backwards for the enclosing method
                             if (visualItemSeenLine != -1) {
                                 for (methodIndex in visualItemSeenLine downTo 0) {
                                     if (fContent[methodIndex].contains(".method")) {
                                         val methodDeclaration = fContent[methodIndex]
-                                        val signatureMatch = Regex("\\(([^)]*)\\)V").find(methodDeclaration)
-                                        if (signatureMatch != null) {
-                                            val params = signatureMatch.groupValues[1]
-                                            var paramCount = 0
-                                            var i = 0
-                                            while (i < params.length) {
-                                                when (params[i]) {
-                                                    'L' -> {
-                                                        paramCount++
-                                                        val semicolonIdx = params.indexOf(';', i)
-                                                        if (semicolonIdx == -1) break
-                                                        i = semicolonIdx + 1
-                                                    }
-                                                    'I', 'J', 'Z', 'F', 'D', 'B', 'S', 'C' -> {
-                                                        paramCount++
-                                                        i++
-                                                    }
-                                                    '[' -> i++
-                                                    else -> i++
-                                                }
-                                            }
-                                            if (paramCount == 3) {
-                                                hasTargetMethod = true
-                                            }
+                                        // Check if method has exactly 3 parameters and is void
+                                        if (methodDeclaration.contains(")V") && 
+                                            countMethodParameters(methodDeclaration) == 3) {
+                                            hasTargetMethod = true
                                         }
                                         break
                                     }
@@ -107,7 +135,7 @@ class GhostViewOnce: InstafelPatch() {
                         
                         if (candidates.size == 1) {
                             ghostViewOnceFile = candidates[0]
-                            success("Ghost viewonce source class found after filtering: ${ghostViewOnceFile.name}")
+                            success("Ghost ViewOnce source class found after filtering: ${ghostViewOnceFile.name}")
                         } else if (candidates.isEmpty()) {
                             failure("Patch aborted: No suitable implementation files found among ${result.files.size} candidates (size filtered: ${sizeFilteredCandidates.size})")
                         } else {
@@ -124,43 +152,26 @@ class GhostViewOnce: InstafelPatch() {
                 var methodLine = -1
                 var localsLine = -1
 
+                // Find the method containing "visual_item_seen" with exactly 3 parameters
                 fContent.forEachIndexed { index, line ->
                     if (line.contains("const-string") && line.contains("visual_item_seen")) {
+                        // Search backwards for the method declaration
                         for (methodIndex in index downTo 0) {
                             if (fContent[methodIndex].contains(".method")) {
                                 val methodDeclaration = fContent[methodIndex]
-                                val signatureMatch = Regex("\\(([^)]*)\\)V").find(methodDeclaration)
-                                if (signatureMatch != null) {
-                                    val params = signatureMatch.groupValues[1]
-                                    var paramCount = 0
-                                    var i = 0
-                                    while (i < params.length) {
-                                        when (params[i]) {
-                                            'L' -> {
-                                                paramCount++
-                                                val semicolonIdx = params.indexOf(';', i)
-                                                if (semicolonIdx == -1) break
-                                                i = semicolonIdx + 1
-                                            }
-                                            'I', 'J', 'Z', 'F', 'D', 'B', 'S', 'C' -> {
-                                                paramCount++
-                                                i++
-                                            }
-                                            '[' -> i++
-                                            else -> i++
-                                        }
-                                    }
+                                // Verify: void return type and exactly 3 parameters
+                                if (methodDeclaration.contains(")V") && 
+                                    countMethodParameters(methodDeclaration) == 3) {
+                                    methodLine = methodIndex
                                     
-                                    if (paramCount == 3) {
-                                        methodLine = methodIndex
-                                        for (j in methodLine until minOf(methodLine + MAX_LOCALS_SEARCH_OFFSET, fContent.size)) {
-                                            if (fContent[j].contains(".locals")) {
-                                                localsLine = j
-                                                break
-                                            }
+                                    // Find .locals directive for proper insertion point
+                                    for (j in methodLine until minOf(methodLine + MAX_LOCALS_SEARCH_OFFSET, fContent.size)) {
+                                        if (fContent[j].contains(".locals")) {
+                                            localsLine = j
+                                            break
                                         }
-                                        break
                                     }
+                                    break
                                 }
                                 break
                             }
@@ -172,9 +183,12 @@ class GhostViewOnce: InstafelPatch() {
                 if (methodLine != -1) {
                     val insertLine = if (localsLine != -1) localsLine + 1 else methodLine + 1
                     
+                    // Inject early return when Ghost ViewOnce is enabled
+                    // This matches InstaEclipse's approach of blocking the entire method call
                     val lines = listOf(
                         "",
-                        "    # Ghost ViewOnce - Block view once seen markers",
+                        "    # Ghost ViewOnce - Block visual item seen markers",
+                        "    # Reference: InstaEclipse ViewOnce.java - hooks method with 3 params containing visual_item_seen",
                         "    invoke-static {}, Linstafel/app/utils/ghost/GhostModeManager;->isGhostViewOnceEnabled()Z",
                         "    move-result v0",
                         "    if-eqz v0, :ghost_viewonce_continue",
@@ -185,9 +199,9 @@ class GhostViewOnce: InstafelPatch() {
 
                     fContent.add(insertLine, lines.joinToString("\n"))
                     FileUtils.writeLines(ghostViewOnceFile, fContent)
-                    success("Ghost viewonce patch successfully applied to method at line $methodLine")
+                    success("Ghost ViewOnce patch successfully applied to method at line $methodLine")
                 } else {
-                    failure("Required method for ghost viewonce cannot be found (need: void method with exactly 3 params).")
+                    failure("Required method for Ghost ViewOnce cannot be found (need: void method with exactly 3 params containing visual_item_seen).")
                 }
             }
         }
