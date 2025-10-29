@@ -71,6 +71,13 @@ object CreateIflZip: CLIJob {
         val sourcesDir = File(Utils.mergePaths(Env.PROJECT_DIR, "sources"))
         val destFolder = File(Utils.mergePaths(Env.PROJECT_DIR, "smali_sources"))
         
+        // IMPORTANT: The directory structure in smali_sources/ must match the package structure
+        // declared in each .smali file. For example:
+        // - If a .smali file declares: .class public Linstafel/app/utils/OpenIflMenu;
+        // - Then it must be at: app/utils/OpenIflMenu.smali
+        // - NOT at: app/OpenIflMenu.smali
+        // Mismatches will cause NoClassDefFoundError at runtime.
+        
         // Try smali directory first (single dex)
         val singleSmaliFolder = File(Utils.mergePaths(sourcesDir.absolutePath, "smali", "instafel", "app"))
         if (singleSmaliFolder.exists() && singleSmaliFolder.isDirectory) {

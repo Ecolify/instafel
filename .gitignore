@@ -67,3 +67,4 @@ env.properties
 
 # Build artifacts
 .output/
+*.bak
