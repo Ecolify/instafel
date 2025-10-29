@@ -82,7 +82,8 @@ class CopyInstafelSources: InstafelPatch() {
                             "PreferenceKeys"              // Used by LocalizationUtils.getIflLocale()
                         ),
                         "utils/ghost" to listOf(
-                            "GhostModeManager"            // Used by InitializeInstafel.setContext() - must be in primary DEX
+                            "GhostModeManager",           // Used by InitializeInstafel.setContext() - must be in primary DEX
+                            "NetworkInterceptor"          // Called from TigonServiceLayer.startRequest (primary DEX) - must be in primary DEX
                         ),
                         "managers" to listOf(
                             "PreferenceManager"           // Used by LocalizationUtils.getIflLocale()
