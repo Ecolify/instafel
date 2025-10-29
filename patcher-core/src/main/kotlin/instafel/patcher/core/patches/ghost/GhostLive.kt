@@ -12,10 +12,19 @@ import java.io.File
 /**
  * Ghost Live - Prevents live viewer tracking
  * 
- * WARNING: No InstaEclipse reference implementation exists for this feature.
- * This patch was developed through reverse engineering Instagram's live tracking mechanism.
- * It targets methods containing "live_viewer_invite" string which is used to notify the
- * broadcaster of viewers joining their live stream.
+ * REFERENCE: No InstaEclipse equivalent exists
+ * This feature was developed through reverse engineering Instagram's live tracking mechanism.
+ * 
+ * IMPLEMENTATION:
+ * Targets methods containing "live_viewer_invite" string which is used to notify the
+ * broadcaster of viewers joining their live stream. The method is typically static or final,
+ * indicating it's an API endpoint for live viewer notifications.
+ * 
+ * APPROACH:
+ * 1. Search for methods containing "live_viewer_invite" or "send_live_viewer_invite_message"
+ * 2. Prefer static/final methods as they're typically API endpoints
+ * 3. Inject early return when GhostModeManager.isGhostLiveEnabled() returns true
+ * 4. This prevents the live viewer notification from being sent to the broadcaster
  */
 @PInfos.PatchInfo(
     name = "Ghost Live",
@@ -28,6 +37,7 @@ class GhostLive: InstafelPatch() {
     lateinit var ghostLiveFile: File
 
     companion object {
+        // Size filtering to exclude test/stub classes and overly complex classes
         private const val MIN_IMPLEMENTATION_LINES = 50
         private const val MAX_IMPLEMENTATION_LINES = 2000
         private const val MAX_LOCALS_SEARCH_OFFSET = 20
@@ -105,13 +115,19 @@ class GhostLive: InstafelPatch() {
                 var methodLine = -1
                 var localsLine = -1
 
+                // Find the method containing "live_viewer_invite"
+                // Prefer static/final methods as they're typically API endpoints
                 fContent.forEachIndexed { index, line ->
                     if (line.contains("const-string") && line.contains("live_viewer_invite")) {
+                        // Search backwards for the enclosing method declaration
                         for (i in index downTo 0) {
                             if (fContent[i].contains(".method")) {
                                 val methodDeclaration = fContent[i]
+                                // Prefer static/final methods (API endpoints)
                                 if (methodDeclaration.contains("static") || methodDeclaration.contains("final")) {
                                     methodLine = i
+                                    
+                                    // Find .locals directive for proper insertion point
                                     for (j in methodLine until minOf(methodLine + MAX_LOCALS_SEARCH_OFFSET, fContent.size)) {
                                         if (fContent[j].contains(".locals")) {
                                             localsLine = j
@@ -129,9 +145,12 @@ class GhostLive: InstafelPatch() {
                 if (methodLine != -1) {
                     val insertLine = if (localsLine != -1) localsLine + 1 else methodLine + 1
                     
+                    // Inject early return when Ghost Live is enabled
+                    // This prevents live viewer notifications from being sent
                     val lines = listOf(
                         "",
                         "    # Ghost Live - Block live viewer tracking",
+                        "    # Prevents sending notifications when user joins a live stream",
                         "    invoke-static {}, Linstafel/app/utils/ghost/GhostModeManager;->isGhostLiveEnabled()Z",
                         "    move-result v0",
                         "    if-eqz v0, :ghost_live_continue",
@@ -144,7 +163,7 @@ class GhostLive: InstafelPatch() {
                     FileUtils.writeLines(ghostLiveFile, fContent)
                     success("Ghost live patch successfully applied to method at line $methodLine")
                 } else {
-                    failure("Required method for ghost live cannot be found (need method with 'live_viewer_invite' string).")
+                    failure("Required method for ghost live cannot be found (need: static/final method with live_viewer_invite string).")
                 }
             }
         }
