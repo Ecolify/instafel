@@ -74,27 +74,41 @@ jobs:
           # Copy core JAR so patcher can find it locally
           cp .output/ifl-patcher-core-*.jar .
           
-          # Run patcher init on the built Instafel app to generate updated zips
-          echo "Running patcher init to extract smali and resources..."
-          java -jar .output/ifl-patcher-v*.jar init .output/app-debug.apk || {
-            echo "Patcher init failed, but continuing with existing zips..."
-            echo "This is expected if network access is required for core download."
-          }
-          
-          # Check if new zips were generated
-          APK_DIR=$(ls -d app-debug* 2>/dev/null | head -n 1)
-          if [ -n "$APK_DIR" ] && [ -f "$APK_DIR/ifl_sources.zip" ]; then
-            echo "New zips generated successfully!"
-            echo "Copying to patcher-core resources..."
-            cp "$APK_DIR/ifl_sources.zip" patcher-core/src/main/resources/ifl_sources/
-            cp "$APK_DIR/ifl_resources.zip" patcher-core/src/main/resources/ifl_sources/
-            cp "$APK_DIR/ifl_data.xml" patcher-core/src/main/resources/ifl_sources/
-            echo "Updated zip files:"
-            ls -lh patcher-core/src/main/resources/ifl_sources/
-          else
+          # Find the actual APK file (it has commit hash in name)
+          INSTAFEL_APK=$(ls .output/ifl-app-*-debug.apk 2>/dev/null | head -n 1)
+          if [ -z "$INSTAFEL_APK" ]; then
+            echo "Error: Instafel APK not found in .output/"
+            ls -lh .output/
             echo "Using existing zip files from repository"
-            ls -lh patcher-core/src/main/resources/ifl_sources/
+          else
+            echo "Found Instafel APK: $INSTAFEL_APK"
+            
+            # Run patcher init on the built Instafel app to generate updated zips
+            echo "Running patcher init to extract smali and resources..."
+            java -jar .output/ifl-patcher-v*.jar init "$INSTAFEL_APK" || {
+              echo "Patcher init failed, but continuing with existing zips..."
+              echo "This is expected if network access is required for core download."
+            }
+            
+            # Check if new zips were generated
+            APK_BASENAME=$(basename "$INSTAFEL_APK" .apk)
+            APK_DIR=$(ls -d ${APK_BASENAME}* 2>/dev/null | head -n 1)
+            if [ -n "$APK_DIR" ] && [ -f "$APK_DIR/ifl_sources.zip" ]; then
+              echo "New zips generated successfully!"
+              echo "Copying to patcher-core resources..."
+              cp "$APK_DIR/ifl_sources.zip" patcher-core/src/main/resources/ifl_sources/
+              cp "$APK_DIR/ifl_resources.zip" patcher-core/src/main/resources/ifl_sources/
+              cp "$APK_DIR/ifl_data.xml" patcher-core/src/main/resources/ifl_sources/
+              echo "Updated zip files:"
+              ls -lh patcher-core/src/main/resources/ifl_sources/
+            else
+              echo "Zips not generated, using existing files from repository"
+            fi
           fi
+          
+          # Always show current zip files
+          echo "Current patcher-core resource files:"
+          ls -lh patcher-core/src/main/resources/ifl_sources/
       
       - name: Build Patcher Core (with updated zips)
         id: build-patcher-core
