@@ -1,0 +1,89 @@
+.class Linstafel/app/activity/admin/ifl_a_admin_action_approvepreview$1;
+.super Ljava/lang/Object;
+.source "ifl_a_admin_action_approvepreview.java"
+
+# interfaces
+.implements Landroid/widget/TextView$OnEditorActionListener;
+
+
+# annotations
+.annotation system Ldalvik/annotation/EnclosingMethod;
+    value = Linstafel/app/activity/admin/ifl_a_admin_action_approvepreview;->onCreate(Landroid/os/Bundle;)V
+.end annotation
+
+.annotation system Ldalvik/annotation/InnerClass;
+    accessFlags = 0x0
+    name = null
+.end annotation
+
+
+# instance fields
+.field final synthetic this$0:Linstafel/app/activity/admin/ifl_a_admin_action_approvepreview;
+
+.field final synthetic val$editText:Landroid/widget/EditText;
+
+
+# direct methods
+.method constructor <init>(Linstafel/app/activity/admin/ifl_a_admin_action_approvepreview;Landroid/widget/EditText;)V
+    .locals 0
+    .annotation system Ldalvik/annotation/Signature;
+        value = {
+            "()V"
+        }
+    .end annotation
+
+    .line 60
+    iput-object p1, p0, Linstafel/app/activity/admin/ifl_a_admin_action_approvepreview$1;->this$0:Linstafel/app/activity/admin/ifl_a_admin_action_approvepreview;
+
+    iput-object p2, p0, Linstafel/app/activity/admin/ifl_a_admin_action_approvepreview$1;->val$editText:Landroid/widget/EditText;
+
+    invoke-direct {p0}, Ljava/lang/Object;-><init>()V
+
+    return-void
+.end method
+
+
+# virtual methods
+.method public onEditorAction(Landroid/widget/TextView;ILandroid/view/KeyEvent;)Z
+    .locals 0
+
+    const/4 p1, 0x6
+
+    if-eq p2, p1, :cond_1
+
+    .line 64
+    invoke-virtual {p3}, Landroid/view/KeyEvent;->getAction()I
+
+    move-result p1
+
+    if-nez p1, :cond_0
+
+    .line 65
+    invoke-virtual {p3}, Landroid/view/KeyEvent;->getKeyCode()I
+
+    move-result p1
+
+    const/16 p2, 0x42
+
+    if-ne p1, p2, :cond_0
+
+    goto :goto_0
+
+    :cond_0
+    const/4 p1, 0x0
+
+    return p1
+
+    .line 66
+    :cond_1
+    :goto_0
+    iget-object p1, p0, Linstafel/app/activity/admin/ifl_a_admin_action_approvepreview$1;->val$editText:Landroid/widget/EditText;
+
+    const-string p2, "\n"
+
+    invoke-virtual {p1, p2}, Landroid/widget/EditText;->append(Ljava/lang/CharSequence;)V
+
+    const/4 p1, 0x1
+
+    return p1
+.end method
