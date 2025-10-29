@@ -180,6 +180,8 @@ jobs:
           echo "Build output:"
           ls -lh "$PROJECT_DIR/build/"
           find .output -type f \( -iname "*.apk" -o -iname "*.jar" -o -iname "*.json" \) -exec ls -la {} \;
+          echo "CURRENT_PATH=$(pwd)" >> $GITHUB_ENV
+          echo "Ruta actual guardada: $CURRENT_PATH"
 
       
       - name: Upload Instafel App APKs
@@ -187,7 +189,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: instafel-app-latest
-          path: .output/*.apk
+          path: ${{ env.CURRENT_PATH }}/.output/*.apk
+          include-hidden-files: true
           if-no-files-found: warn
       
       - name: Upload Instafel JAR artifacts
@@ -195,7 +198,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: instafel-jar-latest
-          path: .output/*.jar
+          path: ${{ env.CURRENT_PATH }}/.output/*.jar
+          include-hidden-files: true
           if-no-files-found: warn
       
       - name: Upload patched Instagram APKs
