@@ -22,6 +22,27 @@ import instafel.app.utils.GeneralFn;
 import instafel.app.utils.types.PreferenceKeys;
 import instafel.app.utils.types.Types;
 
+/**
+ * Admin Preference Manager Activity
+ * 
+ * Provides administrative interface for viewing and editing all Instafel SharedPreferences.
+ * Allows direct manipulation of app configuration values for debugging and testing.
+ * 
+ * Key Features:
+ * - List all Instafel preference keys with their types
+ * - Display current preference values
+ * - Edit preferences with type validation (string, int, bool, long)
+ * - Real-time preference updates
+ * - Type-safe conversion with error handling
+ * 
+ * Supported Preference Types:
+ * - STRING (type 2): Text values
+ * - INT (type 1): Integer values
+ * - BOOLEAN (type 3): true/false values
+ * - LONG (type 4): Long integer values
+ * 
+ * Must be in primary DEX as it's launched from ifl_a_admin_dashboard (primary DEX).
+ */
 public class ifl_a_admin_pref_manager extends AppCompatActivity {
 
     PreferenceManager preferenceManager;
@@ -65,6 +86,11 @@ public class ifl_a_admin_pref_manager extends AppCompatActivity {
         buildLayout();
     }
 
+    /**
+     * Convert preference type constant to human-readable string
+     * @param preferenceType Type constant from Types.PreferenceTypes
+     * @return String representation of the type
+     */
     public String parsePreferenceType(int preferenceType) {
         switch (preferenceType){
             case 1:
@@ -79,6 +105,13 @@ public class ifl_a_admin_pref_manager extends AppCompatActivity {
         return "unknown";
     }
 
+    /**
+     * Create an editable tile for a preference
+     * Displays current value and allows inline editing
+     * @param preferenceId SharedPreference key
+     * @param preferenceName Display name for the preference
+     * @param preferenceType Type constant for value validation
+     */
     public void createPreferenceTitle(String preferenceId, String preferenceName, int preferenceType) {
         TileLargeEditText tileLargeSwitch = new TileLargeEditText(this);
         tileLargeSwitch.setTitleText(preferenceName + " (" +parsePreferenceType(preferenceType) + ")");
@@ -123,6 +156,13 @@ public class ifl_a_admin_pref_manager extends AppCompatActivity {
         prefTiles.add(tileLargeSwitch);
     }
 
+    /**
+     * Set up editor action for preference updates
+     * Validates and saves preference when Done action is triggered
+     * @param editText The EditText to attach the listener to
+     * @param preferenceTypeParsed String representation of preference type
+     * @param preferenceId SharedPreference key to update
+     */
     private void setEditorAction(EditText editText, String preferenceTypeParsed, String preferenceId) {
         editText.setOnEditorActionListener((textView, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE) {

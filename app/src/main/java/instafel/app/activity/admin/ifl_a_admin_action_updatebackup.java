@@ -37,6 +37,21 @@ import instafel.app.utils.GeneralFn;
 import instafel.app.utils.types.PreferenceKeys;
 import instafel.app.utils.dialog.InstafelDialog;
 
+/**
+ * Admin Backup Update Activity
+ * 
+ * Allows administrators to manage and update Instafel backup configurations.
+ * Provides interface for selecting, editing, and uploading backup files to the API.
+ * 
+ * Key Features:
+ * - List all available user backups from API
+ * - Select and edit backup configurations
+ * - Upload updated backup files
+ * - View backup metadata (version, changelog)
+ * - Permission checking for UPDATE_BACKUP authority
+ * 
+ * Must be in primary DEX as it's launched from ifl_a_admin_dashboard (primary DEX).
+ */
 public class ifl_a_admin_action_updatebackup extends AppCompatActivity implements ApiCallbackInterface {
 
     PageContentArea areaLoading, areaContent, areaEdit;
@@ -75,9 +90,14 @@ public class ifl_a_admin_action_updatebackup extends AppCompatActivity implement
                 this.preferenceManager.getPreferenceString(PreferenceKeys.ifl_admin_password, "null")).execute(GeneralFn.getApiUrl(this) + "/admin/user/list_user_backups");
     }
 
+    /**
+     * Handle API responses
+     * Task 19: List user backups response
+     * Task 17: Update backup response
+     */
     @Override
     public void getResponse(InstafelResponse instafelResponse, int taskId) {
-        if (taskId == 19) {
+        if (taskId == 19) { // List backups response
             if (instafelResponse != null) {
                 try {
                     if (instafelResponse.getStatus().equals("SUCCESS")) {
@@ -112,7 +132,7 @@ public class ifl_a_admin_action_updatebackup extends AppCompatActivity implement
                 Toast.makeText(this, "Error while getting backups from API", Toast.LENGTH_SHORT).show();
                 finish();
             }
-        } else if (taskId == 17) {
+        } else if (taskId == 17) { // Update backup response
             if (instafelResponse != null) {
                 if (instafelResponse.getStatus().equals("SUCCESS")) {
                     InstafelDialog instafelDialog = InstafelDialog.createSimpleDialog(ifl_a_admin_action_updatebackup.this,

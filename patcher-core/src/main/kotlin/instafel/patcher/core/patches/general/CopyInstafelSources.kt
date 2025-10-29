@@ -120,10 +120,40 @@ class CopyInstafelSources: InstafelPatch() {
                             "BackupUpdateDownloadTask"    // Instantiated by BackupUpdateTask.onPostExecute() - must be in primary DEX
                         ),
                         "api/models" to listOf(
-                            "AutoUpdateInfo"              // Used by CheckUpdates.checkBackupUpdate() - must be in primary DEX
+                            "AutoUpdateInfo",             // Used by CheckUpdates.checkBackupUpdate() - must be in primary DEX
+                            "InstafelResponse",           // Used by AdminLogin.onPostExecute() - must be in primary DEX
+                            "BackupListItem"              // Used by ifl_a_admin_action_updatebackup - must be in primary DEX
+                        ),
+                        "api/requests" to listOf(
+                            // Admin API request handlers used by admin activities (primary DEX)
+                            "ApiGetAdmin",                // Used by ifl_a_admin_action_updatebackup - must be in primary DEX
+                            "ApiPostAdmin",               // Used by admin activities - must be in primary DEX
+                            "ApiCallbackInterface"        // Interface implemented by admin activities - must be in primary DEX
+                        ),
+                        "api/requests/admin" to listOf(
+                            // Admin API classes are used by admin activities (primary DEX) and must be available immediately
+                            "AdminLogin",                 // Used by ifl_a_admin_login - must be in primary DEX
+                            "AdminUploadMapping"          // Used by admin functionality - must be in primary DEX
                         ),
                         "activity" to listOf(
                             "ifl_a_menu"                  // Started by InitializeInstafel.startInstafel() from primary DEX - must be in primary DEX
+                        ),
+                        "activity/admin" to listOf(
+                            // Admin activities are launched from ifl_a_menu (primary DEX) and must be available immediately
+                            "ifl_a_admin_login",          // Launched from ifl_a_menu - must be in primary DEX
+                            "ifl_a_admin_dashboard",      // Launched from ifl_a_admin_login and ifl_a_menu - must be in primary DEX
+                            "ifl_a_admin_action_updatebackup",    // Launched from ifl_a_admin_dashboard - must be in primary DEX
+                            "ifl_a_admin_action_approvepreview",  // Launched from ifl_a_admin_dashboard - must be in primary DEX
+                            "ifl_a_admin_pref_manager"    // Launched from ifl_a_admin_dashboard - must be in primary DEX
+                        ),
+                        "ui" to listOf(
+                            // UI components used by admin activities (primary DEX) and other core activities
+                            "LoadingBar",                 // Used by admin activities - must be in primary DEX
+                            "TileCompact",                // Used by admin activities - must be in primary DEX
+                            "TileLarge",                  // Used by admin activities - must be in primary DEX
+                            "TileLargeEditText",          // Used by admin activities - must be in primary DEX
+                            "PageContentArea",            // Used by ifl_a_admin_action_updatebackup - must be in primary DEX
+                            "PageTitle"                   // Used by ifl_a_admin_action_updatebackup - must be in primary DEX
                         ),
                         "" to listOf(
                             "InstafelEnv",                // Used by InitializeInstafel.setContext()

@@ -19,6 +19,25 @@ import instafel.app.utils.InstafelAdminUser;
 import instafel.app.utils.types.PreferenceKeys;
 import instafel.app.utils.dialog.InstafelDialog;
 
+/**
+ * Admin Login API Request
+ * 
+ * Handles asynchronous authentication of Instafel administrators.
+ * Sends credentials to the Instafel API with Base64 encoding for security.
+ * 
+ * Authentication Flow:
+ * 1. Encode username and password with Base64
+ * 2. Send GET request with encoded credentials in headers
+ * 3. Parse response and handle authentication result
+ * 4. Store admin credentials on successful login
+ * 5. Offer dashboard shortcut creation
+ * 
+ * Response Handling:
+ * - SUCCESS: User authenticated, credentials stored
+ * - AUTHENTICATION_REJECTED: Invalid credentials
+ * 
+ * Must be in primary DEX as it's used by ifl_a_admin_login (primary DEX).
+ */
 public class AdminLogin extends AsyncTask<String, Void, InstafelResponse> {
 
     private String uname, pass;
@@ -32,6 +51,11 @@ public class AdminLogin extends AsyncTask<String, Void, InstafelResponse> {
         this.instafelDialog = iflDialog;
     }
 
+    /**
+     * Execute authentication request in background
+     * @param f_url API endpoint URL for admin login
+     * @return InstafelResponse containing authentication result
+     */
     @Override
     protected InstafelResponse doInBackground(String... f_url) {
         InstafelResponse instafelResponse = null;
@@ -61,12 +85,18 @@ public class AdminLogin extends AsyncTask<String, Void, InstafelResponse> {
         return instafelResponse;
     }
 
+    /**
+     * Handle authentication response on UI thread
+     * Shows welcome dialog and offers dashboard shortcut creation
+     * @param instafelResponse Parsed API response
+     */
     @Override
     protected void onPostExecute(InstafelResponse instafelResponse) {
         if (instafelResponse != null) {
             Log.v("Instafel", instafelResponse.getStatus());
             
             if (instafelResponse.getStatus().equals("SUCCESS")) {
+                // Store admin credentials for future authenticated requests
                 InstafelAdminUser.login(activity, uname, pass);
                 InstafelDialog instafelDialog2 = InstafelDialog.createSimpleDialog(activity,
                         "Welcome",
