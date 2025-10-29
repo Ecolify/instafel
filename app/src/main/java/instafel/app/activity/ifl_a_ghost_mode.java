@@ -77,9 +77,6 @@ public class ifl_a_ghost_mode extends AppCompatActivity {
                 isChecked ? "Ghost Mode Enabled - Network Interceptor Active" : "Ghost Mode Disabled", 
                 Toast.LENGTH_SHORT).show();
         });
-        
-        // Set initial visibility based on current ghost mode state
-        updateGhostFeaturesVisibility(GhostModeManager.isGhostModeEnabled);
 
         // Ghost Seen (DM Read Receipts)
         Switch ghostSeenSwitch = tileGhostSeen.getSwitchView();
@@ -171,6 +168,10 @@ public class ifl_a_ghost_mode extends AppCompatActivity {
             GhostModeManager.quickToggleLive = isChecked;
             preferenceManager.setPreferenceBoolean(PreferenceKeys.ifl_quick_toggle_live, isChecked);
         });
+        
+        // Set initial visibility based on current ghost mode state
+        // This must be called AFTER all switches are initialized
+        updateGhostFeaturesVisibility(GhostModeManager.isGhostModeEnabled);
     }
     
     /**
