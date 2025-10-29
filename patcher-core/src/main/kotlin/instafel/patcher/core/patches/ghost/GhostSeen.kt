@@ -10,10 +10,27 @@ import org.apache.commons.io.FileUtils
 import java.io.File
 
 /**
- * Ghost Seen - Prevents read receipts from being sent
+ * Ghost Seen - Prevents read receipts from being sent in Direct Messages
  * 
- * Based on InstaEclipse: hooks static final void methods with >= 3 parameters 
- * containing "mark_thread_seen-" string.
+ * REFERENCE: InstaEclipse SeenState.java
+ * - Finds methods containing "mark_thread_seen-" string
+ * - Hooks static final void methods with >= 3 parameters
+ * - Blocks execution when Ghost Seen is enabled
+ * 
+ * IMPLEMENTATION:
+ * This patch locates the method responsible for marking threads as seen by searching
+ * for the "mark_thread_seen-" const-string. It then validates the method signature
+ * (static final void with at least 3 parameters) and injects an early return check.
+ * When GhostModeManager.isGhostSeenEnabled() returns true, read receipts are blocked.
+ * 
+ * FILTERING STRATEGY:
+ * - Searches for files containing both "mark_thread_seen-" and "invoke-" patterns
+ * - Filters files by size (50-2000 lines) to exclude test/stub classes
+ * - Validates method signature matches expected pattern
+ * 
+ * BEHAVIOR:
+ * - Active: Read receipts are not sent, messages appear unread to sender
+ * - Inactive: Normal Instagram read receipt functionality works
  */
 @PInfos.PatchInfo(
     name = "Ghost Seen",

@@ -10,10 +10,33 @@ import org.apache.commons.io.FileUtils
 import java.io.File
 
 /**
- * Ghost Typing - Prevents typing indicator from being sent
+ * Ghost Typing - Prevents typing indicator from being sent in Direct Messages
  * 
- * Based on InstaEclipse: hooks static final void methods with exactly 2 parameters 
- * (object, boolean) containing "is_typing_indicator_enabled" string.
+ * REFERENCE: InstaEclipse TypingStatus.java
+ * - Finds methods containing "is_typing_indicator_enabled" string
+ * - Hooks static final void methods with exactly 2 parameters (Object, boolean)
+ * - Blocks execution when Ghost Typing is enabled
+ * 
+ * IMPLEMENTATION:
+ * This patch locates the method responsible for sending typing indicators by searching
+ * for the "is_typing_indicator_enabled" const-string. It validates the method has
+ * exactly 2 parameters (one object and one boolean) and injects an early return check.
+ * When GhostModeManager.isGhostTypingEnabled() returns true, typing indicators are blocked.
+ * 
+ * METHOD SIGNATURE REQUIREMENTS:
+ * - Must be static final void
+ * - Must have exactly 2 parameters
+ * - Second parameter must be boolean (Z type)
+ * - First parameter must be an object (L type)
+ * 
+ * FILTERING STRATEGY:
+ * - Searches for files containing both "is_typing_indicator_enabled" and "invoke-"
+ * - Filters by size (50-2000 lines) to exclude test/stub classes
+ * - Validates method signature matches expected pattern exactly
+ * 
+ * BEHAVIOR:
+ * - Active: Typing indicators are not sent, recipient doesn't see "typing..." status
+ * - Inactive: Normal Instagram typing indicator functionality works
  */
 @PInfos.PatchInfo(
     name = "Ghost Typing",
