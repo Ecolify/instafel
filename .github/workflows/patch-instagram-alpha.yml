@@ -23,7 +23,7 @@ on:
         description: 'Instagram Alpha APK download URL (required if not using gplayapi)'
         required: false
         type: string
-        default: 'https://uc1bf5c9bc61443ad004dc2be11f.dl.dropboxusercontent.com/cd/0/get/C0Gohgk4MiC8YHV1Gp-ZIFRX4kJF-vj5BGfj9YUVYGtIoIsDI48FghXABUsRCazvNVVOrA4UbahETswcSUL-sOptyeimm9VAPhs4tpVMa5_jGX89mFTrgcMtH3bwSy1rSEssGmcqhHwESZFCg1a_zj7qkqtlI7kP4lh-PtRWvc6otw/file?_download_id=81244128381597223913131302195982480214588648235857970628018818814&_log_download_success=1&_notify_domain=www.dropbox.com&dl=1'
+        default: 'https://www.dropbox.com/scl/fi/z0h72z7nex5kzfvwc1s2d/insap.apk?rlkey=moj92yjt99pjzbzqur9fv1meb&st=ozle68lo&dl=1'
       use_gplayapi:
         description: 'Use gplayapi to download latest Instagram Alpha (requires secrets)'
         required: false
