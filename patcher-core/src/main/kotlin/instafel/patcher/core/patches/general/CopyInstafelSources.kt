@@ -90,6 +90,8 @@ class CopyInstafelSources: InstafelPatch() {
                             "NetworkInterceptor"          // Called from TigonServiceLayer.startRequest (primary DEX) - must be in primary DEX
                         ),
                         "utils/dialog" to listOf(
+                            // Dialog classes must be in primary DEX because CheckUpdates.showWelcomeDialog()
+                            // is called during early app initialization from InitializeInstafel.triggerCheckUpdates()
                             "InstafelDialog",             // Used by CheckUpdates.showWelcomeDialog() - must be in primary DEX
                             "InstafelDialogItem",         // Used by InstafelDialog
                             "InstafelDialogMargins",      // Used by InstafelDialog
