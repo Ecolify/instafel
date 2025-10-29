@@ -62,7 +62,7 @@ class CopyInstafelSources: InstafelPatch() {
                 // the Application class and before secondary DEXes are loaded by MultiDexApplication.
                 // Additionally, classes referenced from Application.attach() must also be in the primary DEX
                 // to avoid ClassNotFoundException during early app initialization.
-                // 
+                //
                 // This mapping includes ALL classes extracted from ifl_sources.zip to ensure complete
                 // functionality across all features. Each class and its inner/synthetic classes will be
                 // automatically moved to the primary DEX.
@@ -208,7 +208,7 @@ class CopyInstafelSources: InstafelPatch() {
                         ),
                         "utils/localization" to listOf(
                             "Locales",                    // Locale definitions - Used by LocalizationUtils.getDeviceLocale()
-                            "LocalizationInfo",           // Localization information
+                            "LocalizationInfo",           // Localization metadata and configuration data
                             "LocalizationUtils",          // Localization utilities - Used by InitializeInstafel.setContext()
                             "LocalizedStringGetter"       // Localized string getter - Used by CheckUpdates.showWelcomeDialog()
                         ),
