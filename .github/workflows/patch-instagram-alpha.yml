@@ -29,12 +29,12 @@ on:
         description: 'Instagram Alpha APK download URL (required if not using gplayapi)'
         required: false
         type: string
-        default: 'https://my.microsoftpersonalcontent.com/personal/f2d8dcd41970e636/_layouts/15/download.aspx?UniqueId=f1de2ff8-4f75-4389-8230-f8e6acb581ef&Translate=false&tempauth=v1e.eyJzaXRlaWQiOiI3M2NlNzYzOS04ZmZhLTQ2MTMtOWZmZC0zODgyNDMyZjc0ZjciLCJhdWQiOiIwMDAwMDAwMy0wMDAwLTBmZjEtY2UwMC0wMDAwMDAwMDAwMDAvbXkubWljcm9zb2Z0cGVyc29uYWxjb250ZW50LmNvbUA5MTg4MDQwZC02YzY3LTRjNWItYjExMi0zNmEzMDRiNjZkYWQiLCJleHAiOiIxNzYxNjQ3NDk5In0.IjF8GuwUn5_6_WjnyWxT_HanI3L34OPkYJhrkCwunVUdcL8ptnaMYmhFf5b0yOXzAuxeXCwuLtHDJYpHysZynn2LLZkIYYSvNhgRvzIWoD9yIiUpmslWQSjhPzmD0-KdbpXuauGdTWDhYAHIeKEduMEYN2xAvmvZMeip7mkSuU_gdn-FyPUiJsw01AN8q1CbLue7qx_gDV89ytcuZWz_rB8ujeTwSniUFnRtWkvySdTWwmABKbqsf54XqtKAygJ6GCZSmmPic-Iv78xVuSDa3gmr0GHT23Eb4CCzErjUEr0tD7x3PhdCkezcoH1yXw1eZtrQMamrEVTwH_fMSriKhXX4vHPDcz7w4D5t_QuH9COZc3yG-pxk479cV2edWiS-5fhWwsR_ErX_ToCOELAhu-nVhXYTjuV7qyKDKxBaHbAGna5dW-hDLL_sUCMXUB6mpPyMXw7BKkg-C292C7TKuEPMu7ya3t7omb5zBQGZTnhZWyszSqGPCHQKveRLmA3234FyxDW4EMFiBoi_5pxDMA.NiZTZaue2YHpkzZcJjZgzj5CKWH74J8kQfNZ03JwkXw&ApiVersion=2.0'
+        default: 'https://uc1bf5c9bc61443ad004dc2be11f.dl.dropboxusercontent.com/cd/0/get/C0Gohgk4MiC8YHV1Gp-ZIFRX4kJF-vj5BGfj9YUVYGtIoIsDI48FghXABUsRCazvNVVOrA4UbahETswcSUL-sOptyeimm9VAPhs4tpVMa5_jGX89mFTrgcMtH3bwSy1rSEssGmcqhHwESZFCg1a_zj7qkqtlI7kP4lh-PtRWvc6otw/file?_download_id=81244128381597223913131302195982480214588648235857970628018818814&_log_download_success=1&_notify_domain=www.dropbox.com&dl=1'
       use_gplayapi:
         description: 'Use gplayapi to download latest Instagram Alpha (requires secrets)'
         required: false
         type: boolean
-        default: true
+        default: false
   workflow_call:                # Llamado por otros workflows
 
 jobs:
