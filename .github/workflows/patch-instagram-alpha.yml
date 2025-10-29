@@ -23,7 +23,7 @@ on:
         description: 'Instagram Alpha APK download URL (required if not using gplayapi)'
         required: false
         type: string
-        default: 'https://pixeldrain.com/api/file/w5UyR2Rr?download'
+        default: 'https://1drv.ms/u/c/f2d8dcd41970e636/Efgv3vF1T4lDgjD45qy1ge8BKEsZE-i-ayNJTWUIzAPplA&download=1'
       use_gplayapi:
         description: 'Use gplayapi to download latest Instagram Alpha (requires secrets)'
         required: false
@@ -144,7 +144,7 @@ jobs:
       - name: Download Instagram Alpha APK (Direct URL)
         run: |
           echo "Downloading Instagram APK from provided URL..."
-          curl -L -o instagram.apk "https://pixeldrain.com/api/file/w5UyR2Rr?download"
+          curl -L -o instagram.apk "https://1drv.ms/u/c/f2d8dcd41970e636/Efgv3vF1T4lDgjD45qy1ge8BKEsZE-i-ayNJTWUIzAPplA&download=1"
           ls -lh instagram.apk
       
       - name: Validate APK exists
