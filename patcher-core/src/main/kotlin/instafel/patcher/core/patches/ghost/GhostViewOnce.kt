@@ -92,10 +92,10 @@ class GhostViewOnce: InstafelPatch() {
                 }) {
                     is FileSearchResult.Success -> {
                         ghostViewOnceFile = result.file
-                        success("Ghost viewonce source class found successfully: ${ghostViewOnceFile.name}")
+                        success("Ghost ViewOnce source class found successfully: ${ghostViewOnceFile.name}")
                     }
                     is FileSearchResult.NotFound -> {
-                        failure("Patch aborted because no classes found for ghost viewonce.")
+                        failure("Patch aborted because no classes found for Ghost ViewOnce.")
                     }
                     is FileSearchResult.MultipleFound -> {
                         val sizeFilteredCandidates = result.files.filter { file ->
@@ -135,7 +135,7 @@ class GhostViewOnce: InstafelPatch() {
                         
                         if (candidates.size == 1) {
                             ghostViewOnceFile = candidates[0]
-                            success("Ghost viewonce source class found after filtering: ${ghostViewOnceFile.name}")
+                            success("Ghost ViewOnce source class found after filtering: ${ghostViewOnceFile.name}")
                         } else if (candidates.isEmpty()) {
                             failure("Patch aborted: No suitable implementation files found among ${result.files.size} candidates (size filtered: ${sizeFilteredCandidates.size})")
                         } else {
@@ -199,9 +199,9 @@ class GhostViewOnce: InstafelPatch() {
 
                     fContent.add(insertLine, lines.joinToString("\n"))
                     FileUtils.writeLines(ghostViewOnceFile, fContent)
-                    success("Ghost viewonce patch successfully applied to method at line $methodLine")
+                    success("Ghost ViewOnce patch successfully applied to method at line $methodLine")
                 } else {
-                    failure("Required method for ghost viewonce cannot be found (need: void method with exactly 3 params containing visual_item_seen).")
+                    failure("Required method for Ghost ViewOnce cannot be found (need: void method with exactly 3 params containing visual_item_seen).")
                 }
             }
         }

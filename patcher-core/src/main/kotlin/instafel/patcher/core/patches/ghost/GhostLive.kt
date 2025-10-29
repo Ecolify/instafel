@@ -57,10 +57,10 @@ class GhostLive: InstafelPatch() {
                 }) {
                     is FileSearchResult.Success -> {
                         ghostLiveFile = result.file
-                        success("Ghost live source class found successfully: ${ghostLiveFile.name}")
+                        success("Ghost Live source class found successfully: ${ghostLiveFile.name}")
                     }
                     is FileSearchResult.NotFound -> {
-                        failure("Patch aborted because no classes found for ghost live.")
+                        failure("Patch aborted because no classes found for Ghost Live.")
                     }
                     is FileSearchResult.MultipleFound -> {
                         val candidates = result.files.filter { file ->
@@ -70,7 +70,7 @@ class GhostLive: InstafelPatch() {
                         
                         if (candidates.size == 1) {
                             ghostLiveFile = candidates[0]
-                            success("Ghost live source class found after filtering: ${ghostLiveFile.name}")
+                            success("Ghost Live source class found after filtering: ${ghostLiveFile.name}")
                         } else if (candidates.isEmpty()) {
                             failure("Patch aborted: No suitable implementation files found among ${result.files.size} candidates")
                         } else {
@@ -93,15 +93,15 @@ class GhostLive: InstafelPatch() {
                             
                             if (refinedCandidates.size == 1) {
                                 ghostLiveFile = refinedCandidates[0]
-                                success("Ghost live source class selected after refinement: ${ghostLiveFile.name}")
+                                success("Ghost Live source class selected after refinement: ${ghostLiveFile.name}")
                             } else if (refinedCandidates.isEmpty()) {
                                 // Fall back to first candidate if refinement fails
                                 ghostLiveFile = candidates.first()
-                                success("Ghost live source class selected (best match from ${candidates.size}): ${ghostLiveFile.name}")
+                                success("Ghost Live source class selected (best match from ${candidates.size}): ${ghostLiveFile.name}")
                             } else {
                                 // Still multiple - take first as best guess
                                 ghostLiveFile = refinedCandidates.first()
-                                success("Ghost live source class selected (first of ${refinedCandidates.size} refined): ${ghostLiveFile.name}")
+                                success("Ghost Live source class selected (first of ${refinedCandidates.size} refined): ${ghostLiveFile.name}")
                             }
                         }
                     }
@@ -161,9 +161,9 @@ class GhostLive: InstafelPatch() {
 
                     fContent.add(insertLine, lines.joinToString("\n"))
                     FileUtils.writeLines(ghostLiveFile, fContent)
-                    success("Ghost live patch successfully applied to method at line $methodLine")
+                    success("Ghost Live patch successfully applied to method at line $methodLine")
                 } else {
-                    failure("Required method for ghost live cannot be found (need: static/final method with live_viewer_invite string).")
+                    failure("Required method for Ghost Live cannot be found (need: static/final method with live_viewer_invite string).")
                 }
             }
         }
