@@ -88,6 +88,11 @@ class CopyInstafelSources: InstafelPatch() {
                         "managers" to listOf(
                             "PreferenceManager"           // Used by LocalizationUtils.getIflLocale()
                         ),
+                        "ota" to listOf(
+                            "CheckUpdates",               // Called from InitializeInstafel.triggerCheckUpdates() - must be in primary DEX
+                            "IflEnvironment",             // Used by CheckUpdates - must be in primary DEX
+                            "LastCheck"                   // Used by CheckUpdates - must be in primary DEX
+                        ),
                         "" to listOf(
                             "InstafelEnv",                // Used by InitializeInstafel.setContext()
                             "R"                           // R classes must be in primary DEX because Locales references R$drawable
