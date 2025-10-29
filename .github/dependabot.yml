@@ -6,7 +6,7 @@ updates:
       interval: "daily"
     allow:
       - dependency-type: "direct"
-- package-ecosystem: "github-actions"
+  - package-ecosystem: "github-actions"
     # Workflow files stored in the default location of `.github/workflows`
     # You don't need to specify `/.github/worklows` for `directory`. You can use `directory: "/"`.
     directory: "/"
