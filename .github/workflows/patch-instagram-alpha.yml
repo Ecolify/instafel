@@ -179,7 +179,8 @@ jobs:
           echo "Build completed successfully (unclone variant)"
           echo "Build output:"
           ls -lh "$PROJECT_DIR/build/"
-      
+          find .output -type f \( -iname "*.apk" -o -iname "*.jar" -o -iname "*.json" \) -exec ls -la {} \;
+
       
       - name: Upload Instafel App APKs
         if: success() && steps.build-app.outcome == 'success'
