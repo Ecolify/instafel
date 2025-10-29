@@ -125,6 +125,15 @@ class CopyInstafelSources: InstafelPatch() {
                         "activity" to listOf(
                             "ifl_a_menu"                  // Started by InitializeInstafel.startInstafel() from primary DEX - must be in primary DEX
                         ),
+                        "activity/admin" to listOf(
+                            // Admin activities must be in primary DEX to prevent ClassNotFoundException
+                            // when they are instantiated via Intent from other primary DEX classes
+                            "ifl_a_admin_login",              // Can be started from ifl_a_menu (primary DEX)
+                            "ifl_a_admin_dashboard",          // Started from AdminLogin after authentication
+                            "ifl_a_admin_action_updatebackup",  // Started from admin dashboard
+                            "ifl_a_admin_action_approvepreview", // Started from admin dashboard
+                            "ifl_a_admin_pref_manager"        // Started from admin dashboard
+                        ),
                         "" to listOf(
                             "InstafelEnv",                // Used by InitializeInstafel.setContext()
                             "R"                           // R classes must be in primary DEX because Locales references R$drawable
