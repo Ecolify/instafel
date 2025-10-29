@@ -10,10 +10,22 @@ import org.apache.commons.io.FileUtils
 import java.io.File
 
 /**
- * Ghost Screenshot - Prevents screenshot detection
+ * Ghost Screenshot - Prevents screenshot detection notifications
  * 
- * Based on InstaEclipse: hooks void method with long parameter (J)V in classes
- * containing "ScreenshotNotificationManager" string.
+ * REFERENCE: InstaEclipse ScreenshotDetection.java
+ * - Finds classes containing "ScreenshotNotificationManager" string
+ * - Hooks void methods with long parameter signature (J)V
+ * - Blocks execution when Ghost Screenshot is enabled
+ * 
+ * IMPLEMENTATION:
+ * This patch searches for the class containing "ScreenshotNotificationManager" and
+ * injects an early return check at the beginning of the method with signature (J)V.
+ * When GhostModeManager.isGhostScreenshotEnabled() returns true, the method returns
+ * immediately, preventing screenshot notifications from being sent.
+ * 
+ * BEHAVIOR:
+ * - Active: Screenshot notifications are blocked
+ * - Inactive: Normal Instagram screenshot detection works
  */
 @PInfos.PatchInfo(
     name = "Ghost Screenshot",

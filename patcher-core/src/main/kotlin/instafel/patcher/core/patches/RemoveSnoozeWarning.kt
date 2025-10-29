@@ -11,6 +11,37 @@ import kotlinx.coroutines.runBlocking
 import org.apache.commons.io.FileUtils
 import java.io.File
 
+/**
+ * Remove Snooze Warning - Disables Instagram's build expiration warning
+ * 
+ * PURPOSE:
+ * Instagram Alpha and Beta builds have expiration dates. After a certain period,
+ * the app shows a warning that the build is outdated and needs to be updated.
+ * This patch removes that warning by setting the check duration to 0.
+ * 
+ * IMPLEMENTATION:
+ * This patch locates the DogfoodingEligibilityApi initialization and modifies
+ * the days duration parameter to 0, effectively bypassing the expiration check.
+ * 
+ * PROCESS:
+ * 1. Find the class containing "invoke-direct/range" to DogfoodingEligibilityApi
+ * 2. Locate the long-to-int conversion 4 lines before the invoke call
+ * 3. Replace the long-to-int with const/4 vX, 0x0 to set duration to 0
+ * 4. This prevents the expiration warning from appearing
+ * 
+ * TECHNICAL DETAILS:
+ * - DogfoodingEligibilityApi checks build expiration based on days parameter
+ * - The patch modifies the constructor parameter before API initialization
+ * - Uses register name extraction to maintain code correctness
+ * 
+ * BEHAVIOR:
+ * - Active: Build expiration warnings are suppressed
+ * - Allows continued use of Alpha/Beta builds past their expiration date
+ * - Essential for testing and development with older builds
+ * 
+ * NOTE: This is particularly useful for testers and developers who need
+ * to use specific Alpha/Beta versions for extended periods.
+ */
 @PInfos.PatchInfo(
     name = "Remove Snooze Warning",
     shortname = "remove_snooze_warning",

@@ -7,17 +7,43 @@ import org.apache.commons.io.FileUtils
 import java.io.File
 
 /**
- * Network Interceptor patch - intercepts network requests for Ghost Mode
+ * Network Interceptor - Intercepts network requests for Ghost Mode and other features
  * 
- * Based on InstaEclipse Interceptor.java implementation which hooks
- * TigonServiceLayer.startRequest to intercept and block network requests
- * based on URI patterns.
+ * REFERENCE: InstaEclipse Interceptor.java
+ * - Hooks TigonServiceLayer.startRequest to intercept network requests
+ * - Analyzes URI patterns to determine if requests should be blocked
+ * - Replaces blocked URIs with fake endpoint (https://127.0.0.1/404)
  * 
- * This patch:
- * 1. Finds the TigonServiceLayer class
- * 2. Locates the startRequest method
- * 3. Injects NetworkInterceptor.interceptRequest() call at the beginning
- * 4. Blocks requests to ghost mode endpoints by redirecting them
+ * IMPLEMENTATION:
+ * This patch finds the TigonServiceLayer class and its startRequest method with
+ * 3 parameters. It injects a call to NetworkInterceptor.interceptRequest() which:
+ * 1. Uses reflection to find the URI field in the request object
+ * 2. Checks if the URI matches any ghost mode or feature patterns
+ * 3. Replaces blocked URIs with a fake endpoint to prevent the request
+ * 
+ * BLOCKED REQUEST PATTERNS (when respective features are enabled):
+ * 
+ * Ghost Screenshot:
+ * - /screenshot/ and /ephemeral_screenshot/ endpoints
+ * 
+ * Ghost ViewOnce:
+ * - /item_replayed/ endpoints (view once replay tracking)
+ * - Endpoints with /direct in the path followed by /item_seen/ (direct message seen tracking)
+ * 
+ * Ghost Story:
+ * - /api/v2/media/seen/ endpoints (story view tracking)
+ * 
+ * Ghost Live:
+ * - /heartbeat_and_get_viewer_count/ endpoints (live viewer tracking)
+ * 
+ * TECHNICAL DETAILS:
+ * - Uses reflection to locate URI field dynamically (handles obfuscation)
+ * - Caches field name after first successful discovery for performance
+ * - Works in conjunction with method-level patches for comprehensive coverage
+ * 
+ * BEHAVIOR:
+ * - Active: Blocked requests are redirected to https://127.0.0.1/404
+ * - Inactive: All requests pass through normally
  */
 @PInfos.PatchInfo(
     name = "Network Interceptor",

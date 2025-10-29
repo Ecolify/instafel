@@ -9,7 +9,19 @@ import kotlinx.coroutines.runBlocking
 import org.apache.commons.io.FileUtils
 import java.io.File
 
-// Thanks to ReVanced developers for made this patch possible!
+/**
+ * Remove Ads - Blocks sponsored content from appearing in Instagram feed
+ * 
+ * REFERENCE: InstaEclipse AdBlocker.java
+ * - Hooks methods containing "SponsoredContentController.insertItem" string
+ * - Returns false to prevent ad insertion
+ * 
+ * IMPLEMENTATION:
+ * This patch finds the method containing "SponsoredContentController.insertItem" 
+ * and injects an early return with false value to block ads from being inserted.
+ * 
+ * Thanks to ReVanced developers for making this patch possible!
+ */
 @PInfos.PatchInfo(
     name = "Remove Ads",
     shortname = "remove_ads",
@@ -43,7 +55,7 @@ class RemoveAds: InstafelPatch() {
                 }
             }
         },
-        @PInfos.TaskInfo("Change method return")
+        @PInfos.TaskInfo("Change method return to block ads")
         object: InstafelTask() {
             override fun execute() {
                 val fContent = smaliUtils.getSmaliFileContent(removeAdsFile.absolutePath).toMutableList()
@@ -62,16 +74,20 @@ class RemoveAds: InstafelPatch() {
                 }
 
                 if (methodLine != -1) {
+                    // CRITICAL FIX: Return false (0x0) instead of true (0x1) to block ads
+                    // This matches InstaEclipse's AdBlocker.java which uses param.setResult(false)
                     val lines = listOf(
                         "",
-                        "    const/4 v0, 0x1",
+                        "    # Remove Ads - Block sponsored content insertion",
+                        "    # Return false to prevent ad from being inserted",
+                        "    const/4 v0, 0x0",
                         "",
                         "    return v0"
                     )
 
                     fContent.add(methodLine + 2, lines.joinToString("\n"))
                     FileUtils.writeLines(removeAdsFile, fContent)
-                    success("Method return successfully applied")
+                    success("Ad blocking return successfully applied (returns false to block ads)")
                 } else {
                     failure("Required method cannot be found.")
                 }

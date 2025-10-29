@@ -12,6 +12,35 @@ import kotlinx.coroutines.runBlocking
 import java.io.File
 import kotlin.system.exitProcess
 
+/**
+ * Unlock Developer Options - Enables Instagram's hidden developer menu
+ * 
+ * REFERENCE: InstaEclipse devops module
+ * - Enables access to Instagram's internal developer tools and settings
+ * - Similar to enabling Android's Developer Options but for Instagram app
+ * 
+ * IMPLEMENTATION:
+ * This patch locates the developer options constraint check in BaseFragmentActivity
+ * and modifies it to always return true, effectively unlocking developer options.
+ * 
+ * PROCESS:
+ * 1. Find BaseFragmentActivity class (entry point for developer options check)
+ * 2. Locate static method with signature (Lcom/instagram/common/session/UserSession;)Z
+ * 3. Extract the class name from the invoke-static call
+ * 4. Modify the method to always return true (const v0, 0x1)
+ * 
+ * TECHNICAL DETAILS:
+ * - Searches for unique invoke-static pattern with UserSession parameter
+ * - Validates exactly one match to ensure precision
+ * - Adds const v0, 0x1 after move-result to force true return
+ * 
+ * BEHAVIOR:
+ * - Active: Developer options become accessible in Instagram settings
+ * - Provides access to internal debugging tools, logging, and experimental features
+ * - Intended for Alpha/Beta versions of Instagram for best compatibility
+ * 
+ * NOTE: This patch is essential for testing and development purposes
+ */
 @PInfos.PatchInfo(
     name = "Unlock Developer Options",
     shortname = "unlock_developer_options",

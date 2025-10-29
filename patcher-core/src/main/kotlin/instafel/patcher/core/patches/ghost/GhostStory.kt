@@ -10,9 +10,32 @@ import org.apache.commons.io.FileUtils
 import java.io.File
 
 /**
- * Ghost Story - Prevents story view tracking
+ * Ghost Story - Prevents story view tracking (anonymous story viewing)
  * 
- * Based on InstaEclipse: hooks final void methods with 0 parameters containing "media/seen/" string.
+ * REFERENCE: InstaEclipse StorySeen.java
+ * - Finds methods containing "media/seen/" string
+ * - Hooks final void methods with 0 parameters
+ * - Blocks execution when Ghost Story is enabled
+ * 
+ * IMPLEMENTATION:
+ * This patch locates the method responsible for marking stories as seen by searching
+ * for the exact "media/seen/" const-string (without query parameters). It validates
+ * the method is final void with no parameters and injects an early return check.
+ * When GhostModeManager.isGhostStoryEnabled() returns true, story view tracking is blocked.
+ * 
+ * METHOD SIGNATURE REQUIREMENTS:
+ * - Must be final void with no parameters ()V
+ * - Must contain exact "media/seen/" string (not with ? or query params)
+ * 
+ * FILTERING STRATEGY:
+ * - Searches for files containing both const-string "media/seen/" and .method
+ * - Filters by size (100-1000 lines) to get implementation files
+ * - Ensures exact match of "media/seen/" without query parameters
+ * - Validates method is final void with no parameters
+ * 
+ * BEHAVIOR:
+ * - Active: Stories are viewable without marking as seen to the story owner
+ * - Inactive: Normal Instagram story view tracking works
  */
 @PInfos.PatchInfo(
     name = "Ghost Story",
