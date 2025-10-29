@@ -83,8 +83,7 @@ jobs:
             # Instala herramientas esenciales y runtimes
             sudo apt-get install -y --no-install-recommends \
               fd-find jq yq zip unzip p7zip-full tree curl wget \
-              sed gawk perl tar file patch diffutils findutils rename \
-              python3 python3-pip
+              sed gawk perl tar file patch diffutils findutils 
 
             # Instala servidores MCP locales vía npm (instalación global)
             sudo npm install -g --no-progress \
