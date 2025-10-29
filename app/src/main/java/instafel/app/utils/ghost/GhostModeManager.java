@@ -192,4 +192,30 @@ public class GhostModeManager {
     public static boolean isGhostLiveEnabled() {
         return isGhostLive;
     }
+    
+    /**
+     * Check if the network interceptor should be active
+     * Network interceptor is automatically activated when ghost mode is enabled
+     * This is not a user-facing toggle, but a dependency for ghost features to work
+     * 
+     * @return true if ghost mode is enabled and network interception should be active
+     */
+    public static boolean isNetworkInterceptorActive() {
+        return isGhostModeEnabled;
+    }
+    
+    /**
+     * Check if any ghost feature requires network interception
+     * Used by patches to determine if network requests should be intercepted
+     * 
+     * @return true if any ghost feature that needs network interception is enabled
+     */
+    public static boolean shouldInterceptNetwork() {
+        if (!isNetworkInterceptorActive()) {
+            return false;
+        }
+        
+        // Network interception is needed for these features
+        return isGhostScreenshot || isGhostViewOnce || isGhostStory || isGhostLive;
+    }
 }

@@ -23,7 +23,7 @@ on:
         description: 'Instagram Alpha APK download URL (required if not using gplayapi)'
         required: false
         type: string
-        default: 'https://uc1bf5c9bc61443ad004dc2be11f.dl.dropboxusercontent.com/cd/0/get/C0Gohgk4MiC8YHV1Gp-ZIFRX4kJF-vj5BGfj9YUVYGtIoIsDI48FghXABUsRCazvNVVOrA4UbahETswcSUL-sOptyeimm9VAPhs4tpVMa5_jGX89mFTrgcMtH3bwSy1rSEssGmcqhHwESZFCg1a_zj7qkqtlI7kP4lh-PtRWvc6otw/file?_download_id=81244128381597223913131302195982480214588648235857970628018818814&_log_download_success=1&_notify_domain=www.dropbox.com&dl=1'
+        default: 'https://1drv.ms/u/c/f2d8dcd41970e636/Efgv3vF1T4lDgjD45qy1ge8BKEsZE-i-ayNJTWUIzAPplA&download=1'
       use_gplayapi:
         description: 'Use gplayapi to download latest Instagram Alpha (requires secrets)'
         required: false
@@ -60,11 +60,61 @@ jobs:
           ./gradlew :app:generate-app-debug
           ls -lh .output/
       
-      - name: Build Patcher Core
+      - name: Regenerate ifl_sources and ifl_resources zips
+        id: regenerate-zips
+        run: |
+          echo "Regenerating ifl_sources.zip and ifl_resources.zip with latest code changes..."
+          
+          # Build the patcher-core first to get CreateIflZip job
+          ./gradlew :patcher-core:build-jar
+          
+          # Build the patcher to run the init command
+          ./gradlew :patcher:build-jar
+          
+          # Copy core JAR so patcher can find it locally
+          cp .output/ifl-patcher-core-*.jar .
+          
+          # Find the actual APK file (it has commit hash in name)
+          INSTAFEL_APK=$(ls .output/ifl-app-*-debug.apk 2>/dev/null | head -n 1)
+          if [ -z "$INSTAFEL_APK" ]; then
+            echo "Error: Instafel APK not found in .output/"
+            ls -lh .output/
+            echo "Using existing zip files from repository"
+          else
+            echo "Found Instafel APK: $INSTAFEL_APK"
+            
+            # Run patcher init on the built Instafel app to generate updated zips
+            echo "Running patcher init to extract smali and resources..."
+            java -jar .output/ifl-patcher-v*.jar init "$INSTAFEL_APK" || {
+              echo "Patcher init failed, but continuing with existing zips..."
+              echo "This is expected if network access is required for core download."
+            }
+            
+            # Check if new zips were generated
+            APK_BASENAME=$(basename "$INSTAFEL_APK" .apk)
+            APK_DIR=$(ls -d ${APK_BASENAME}* 2>/dev/null | head -n 1)
+            if [ -n "$APK_DIR" ] && [ -f "$APK_DIR/ifl_sources.zip" ]; then
+              echo "New zips generated successfully!"
+              echo "Copying to patcher-core resources..."
+              cp "$APK_DIR/ifl_sources.zip" patcher-core/src/main/resources/ifl_sources/
+              cp "$APK_DIR/ifl_resources.zip" patcher-core/src/main/resources/ifl_sources/
+              cp "$APK_DIR/ifl_data.xml" patcher-core/src/main/resources/ifl_sources/
+              echo "Updated zip files:"
+              ls -lh patcher-core/src/main/resources/ifl_sources/
+            else
+              echo "Zips not generated, using existing files from repository"
+            fi
+          fi
+          
+          # Always show current zip files
+          echo "Current patcher-core resource files:"
+          ls -lh patcher-core/src/main/resources/ifl_sources/
+      
+      - name: Build Patcher Core (with updated zips)
         id: build-patcher-core
         run: |
-          echo "Building Patcher Core..."
-          ./gradlew :patcher-core:build-jar
+          echo "Rebuilding Patcher Core with updated zips..."
+          ./gradlew :patcher-core:build-jar --rerun-tasks
           ls -lh .output/
       
       - name: Build Instafel Patcher
@@ -94,7 +144,7 @@ jobs:
       - name: Download Instagram Alpha APK (Direct URL)
         run: |
           echo "Downloading Instagram APK from provided URL..."
-          curl -L -o instagram.apk "https://www.dropbox.com/scl/fi/z0h72z7nex5kzfvwc1s2d/insap.apk?rlkey=moj92yjt99pjzbzqur9fv1meb&st=hfilmv2i&dl=1"
+          curl -L -o instagram.apk "https://1drv.ms/u/c/f2d8dcd41970e636/Efgv3vF1T4lDgjD45qy1ge8BKEsZE-i-ayNJTWUIzAPplA&download=1"
           ls -lh instagram.apk
       
       - name: Validate APK exists

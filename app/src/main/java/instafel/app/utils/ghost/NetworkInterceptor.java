@@ -7,6 +7,11 @@ import java.net.URI;
  * Network Interceptor for Ghost Mode features
  * Based on InstaEclipse Interceptor.java implementation
  * 
+ * This is NOT a user-facing toggle. The network interceptor is automatically
+ * activated when the main Ghost Mode switch is enabled, and deactivated when
+ * Ghost Mode is disabled. It's a background dependency that allows ghost
+ * features to function by intercepting and blocking specific network requests.
+ * 
  * This class provides URI checking and interception logic using reflection
  * to dynamically access the URI field in request objects, similar to how
  * InstaEclipse does it with Xposed.
@@ -19,11 +24,17 @@ public class NetworkInterceptor {
     
     /**
      * Check if a URI should be blocked based on ghost mode settings
+     * Network interceptor only activates when ghost mode main switch is enabled
      * 
      * @param uri The URI to check
      * @return true if the request should be blocked, false otherwise
      */
     public static boolean shouldBlockRequest(URI uri) {
+        // Network interceptor is only active when ghost mode is enabled
+        if (!GhostModeManager.isGhostModeEnabled) {
+            return false;
+        }
+        
         if (uri == null || uri.getPath() == null) {
             return false;
         }
