@@ -63,7 +63,7 @@ jobs:
         id: build-app
         run: |
           echo "Building Instafel App (Release)..."
-          ./gradlew :app:generate-app-release
+          ./gradlew :app:generate-app-debug
           ls -lh .output/
       
       - name: Build Patcher Core
