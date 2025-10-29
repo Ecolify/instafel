@@ -74,11 +74,13 @@ class CopyInstafelSources: InstafelPatch() {
                             "InitializeInstafel",         // Called from InstagramAppShell.attach()
                             "InstafelCrashHandler",       // Called from InstagramAppShell.attach()
                             "InstafelAdminUser",          // Used by InitializeInstafel.triggerUploadMapping()
-                            "UploadMapping"               // Used by InitializeInstafel.triggerUploadMapping()
+                            "UploadMapping",              // Used by InitializeInstafel.triggerUploadMapping()
+                            "GeneralFn"                   // Used by CheckUpdates and LocalizedStringGetter - must be in primary DEX
                         ),
                         "utils/localization" to listOf(
                             "LocalizationUtils",          // Used by InitializeInstafel.setContext()
-                            "Locales"                     // Used by LocalizationUtils.getDeviceLocale()
+                            "Locales",                    // Used by LocalizationUtils.getDeviceLocale()
+                            "LocalizedStringGetter"       // Used by CheckUpdates.showWelcomeDialog()
                         ),
                         "utils/types" to listOf(
                             "PreferenceKeys"              // Used by LocalizationUtils.getIflLocale()
@@ -86,6 +88,15 @@ class CopyInstafelSources: InstafelPatch() {
                         "utils/ghost" to listOf(
                             "GhostModeManager",           // Used by InitializeInstafel.setContext() - must be in primary DEX
                             "NetworkInterceptor"          // Called from TigonServiceLayer.startRequest (primary DEX) - must be in primary DEX
+                        ),
+                        "utils/dialog" to listOf(
+                            // Dialog classes must be in primary DEX because CheckUpdates.showWelcomeDialog()
+                            // is called during early app initialization from InitializeInstafel.triggerCheckUpdates()
+                            "InstafelDialog",             // Used by CheckUpdates.showWelcomeDialog() - must be in primary DEX
+                            "InstafelDialogItem",         // Used by InstafelDialog
+                            "InstafelDialogMargins",      // Used by InstafelDialog
+                            "InstafelDialogTextType",     // Used by InstafelDialog
+                            "StringInputViews"            // Used by InstafelDialog
                         ),
                         "managers" to listOf(
                             "PreferenceManager",          // Used by LocalizationUtils.getIflLocale()
@@ -95,6 +106,19 @@ class CopyInstafelSources: InstafelPatch() {
                             "CheckUpdates",               // Called from InitializeInstafel.triggerCheckUpdates() - must be in primary DEX
                             "IflEnvironment",             // Used by CheckUpdates - must be in primary DEX
                             "LastCheck"                   // Used by CheckUpdates - must be in primary DEX
+                        ),
+                        "ota/tasks" to listOf(
+                            "VersionTask",                // Instantiated by CheckUpdates.check() - must be in primary DEX
+                            "ChangelogTask",              // Instantiated by CheckUpdates.checkChangelog() - must be in primary DEX
+                            "ChangelogContentTask",       // Instantiated by ChangelogTask.onPostExecute() - must be in primary DEX
+                            "BuildInfoTask"               // Instantiated by VersionTask.onPostExecute() - must be in primary DEX
+                        ),
+                        "api/tasks" to listOf(
+                            "BackupUpdateTask",           // Instantiated by CheckUpdates.checkBackupUpdate() - must be in primary DEX
+                            "BackupUpdateDownloadTask"    // Instantiated by BackupUpdateTask.onPostExecute() - must be in primary DEX
+                        ),
+                        "api/models" to listOf(
+                            "AutoUpdateInfo"              // Used by CheckUpdates.checkBackupUpdate() - must be in primary DEX
                         ),
                         "" to listOf(
                             "InstafelEnv",                // Used by InitializeInstafel.setContext()
