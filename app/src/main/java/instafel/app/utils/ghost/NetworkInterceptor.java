@@ -20,10 +20,20 @@ public class NetworkInterceptor {
     /**
      * Check if a URI should be blocked based on ghost mode settings
      * 
+     * NetworkInterceptor is a dependency/function that is activated when ghost mode is enabled.
+     * It is NOT a separate toggle - it automatically activates when the ghost mode master switch is ON.
+     * When ghost mode is OFF, this interceptor does nothing and all requests pass through normally.
+     * 
      * @param uri The URI to check
      * @return true if the request should be blocked, false otherwise
      */
     public static boolean shouldBlockRequest(URI uri) {
+        // First check: Ghost mode must be enabled for any interception to occur
+        // This is the master switch - if it's off, NetworkInterceptor is inactive
+        if (!GhostModeManager.isEnabled()) {
+            return false;
+        }
+        
         if (uri == null || uri.getPath() == null) {
             return false;
         }
@@ -33,16 +43,33 @@ public class NetworkInterceptor {
         String query = uri.getQuery();
         
         // Ghost Mode URI checks - matching InstaEclipse Interceptor.java
+        // Each feature is checked using isFeatureActive() which verifies both:
+        // 1. Ghost mode master toggle is ON (already checked above)
+        // 2. The specific feature toggle is ON
         
-        // Ghost Screenshot
-        if (GhostModeManager.isGhostScreenshot) {
+        // Ghost Seen - blocks DM read receipt tracking
+        if (GhostModeManager.isFeatureActive(GhostModeManager.isGhostSeen)) {
+            if (path.contains("/direct_v2/threads/") && path.endsWith("/items/") && query != null && query.contains("mark_as_seen")) {
+                return true;
+            }
+        }
+        
+        // Ghost Typing - blocks typing indicator
+        if (GhostModeManager.isFeatureActive(GhostModeManager.isGhostTyping)) {
+            if (path.contains("/direct_v2/threads/") && path.contains("/activity_indicator_seen/")) {
+                return true;
+            }
+        }
+        
+        // Ghost Screenshot - blocks screenshot notification requests
+        if (GhostModeManager.isFeatureActive(GhostModeManager.isGhostScreenshot)) {
             if (path.endsWith("/screenshot/") || path.endsWith("/ephemeral_screenshot/")) {
                 return true;
             }
         }
         
-        // Ghost ViewOnce
-        if (GhostModeManager.isGhostViewOnce) {
+        // Ghost ViewOnce - blocks view once message tracking
+        if (GhostModeManager.isFeatureActive(GhostModeManager.isGhostViewOnce)) {
             if (path.endsWith("/item_replayed/")) {
                 return true;
             }
@@ -51,15 +78,15 @@ public class NetworkInterceptor {
             }
         }
         
-        // Ghost Story
-        if (GhostModeManager.isGhostStory) {
+        // Ghost Story - blocks story view tracking
+        if (GhostModeManager.isFeatureActive(GhostModeManager.isGhostStory)) {
             if (path.contains("/api/v2/media/seen/")) {
                 return true;
             }
         }
         
-        // Ghost Live
-        if (GhostModeManager.isGhostLive) {
+        // Ghost Live - blocks live video viewer tracking
+        if (GhostModeManager.isFeatureActive(GhostModeManager.isGhostLive)) {
             if (path.contains("/heartbeat_and_get_viewer_count/")) {
                 return true;
             }
