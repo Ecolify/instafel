@@ -14,10 +14,8 @@ instaeclipse/
 framework-res.apk
 apktool.jar
 app-debug/
-ifl-patcher-core-*.jar
 
 # Ignore Instafel build output directory
-.output
 
 # Ingore IntelliJ IDEA 
 .intellij_idea
