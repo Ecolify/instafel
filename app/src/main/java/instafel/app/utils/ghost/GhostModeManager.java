@@ -211,7 +211,7 @@ public class GhostModeManager {
      * @return true if any ghost feature that needs network interception is enabled
      */
     public static boolean shouldInterceptNetwork() {
-        if (!isGhostModeEnabled) {
+        if (!isNetworkInterceptorActive()) {
             return false;
         }
         
