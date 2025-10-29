@@ -19,6 +19,22 @@ import instafel.app.ui.TileCompact;
 import instafel.app.utils.GeneralFn;
 import instafel.app.utils.InstafelAdminUser;
 
+/**
+ * Admin Dashboard Activity
+ * 
+ * Central hub for Instafel administrator functions and management tools.
+ * Provides access to various admin operations including backup updates,
+ * preview approvals, and system configuration.
+ * 
+ * Key Features:
+ * - Export mapping files for Instagram version compatibility
+ * - Navigate to backup update management
+ * - Navigate to preview approval system  
+ * - Access shared preferences manager
+ * - Admin logout functionality
+ * 
+ * Must be in primary DEX as it's launched from ifl_a_admin_login and ifl_a_menu (both in primary DEX).
+ */
 public class ifl_a_admin_dashboard extends AppCompatActivity {
 
     TileCompact tileLogout, tileExportMapping, tileUpdateBackup, tilePreferenceManager, tileApprovePreview;
@@ -31,15 +47,21 @@ public class ifl_a_admin_dashboard extends AppCompatActivity {
         updateIflLocale(this, false);
         setContentView(R.layout.ifl_at_admin_dashboard);
 
+        // Initialize managers and UI components
         overridesManager = new OverridesManager(this);
         tileLogout = findViewById(R.id.ifl_tile_admin_action_logout);
         tileExportMapping = findViewById(R.id.ifl_tile_admin_action_export_mapping);
         tilePreferenceManager = findViewById(R.id.ifl_tile_admin_action_sharedpref_manager);
         tileApprovePreview = findViewById(R.id.ifl_tile_admin_update_approve_preview);
-
         tileUpdateBackup = findViewById(R.id.ifl_tile_admin_update_update_backup);
+
+        // Navigate to backup update manager
         tileUpdateBackup.setOnClickListener(view -> GeneralFn.startIntent(ifl_a_admin_dashboard.this, ifl_a_admin_action_updatebackup.class));
+        
+        // Navigate to preview approval screen
         tileApprovePreview.setOnClickListener(view -> GeneralFn.startIntent(ifl_a_admin_dashboard.this, ifl_a_admin_action_approvepreview.class));
+        
+        // Export mapping file for current Instagram version
         tileExportMapping.setOnClickListener(view -> {
             Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
             intent.addCategory(Intent.CATEGORY_OPENABLE);
@@ -48,6 +70,7 @@ public class ifl_a_admin_dashboard extends AppCompatActivity {
             startActivityForResult(intent, 15);
         });
 
+        // Handle admin logout
         tileLogout.setOnClickListener(view -> {
             if (InstafelAdminUser.isUserLogged(ifl_a_admin_dashboard.this)) {
                 InstafelAdminUser.logout(ifl_a_admin_dashboard.this);
@@ -57,15 +80,20 @@ public class ifl_a_admin_dashboard extends AppCompatActivity {
             }
         });
 
+        // Navigate to preferences manager
         tilePreferenceManager.setOnClickListener(view -> GeneralFn.startIntent(ifl_a_admin_dashboard.this, ifl_a_admin_pref_manager.class));
     }
 
+    /**
+     * Handle file selection result for mapping export
+     * Request code 15: Export mapping file destination selection
+     */
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
 
         switch (requestCode) {
-            case 15:
+            case 15: // Mapping file export
                 Uri backup_uri;
                 if (intent != null) {
                     backup_uri = intent.getData();

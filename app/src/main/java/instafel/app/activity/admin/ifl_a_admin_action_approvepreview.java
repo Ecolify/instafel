@@ -32,6 +32,21 @@ import instafel.app.utils.dialog.InstafelDialog;
 import instafel.app.utils.dialog.InstafelDialogMargins;
 import instafel.app.utils.dialog.InstafelDialogTextType;
 
+/**
+ * Admin Approve Preview Activity
+ * 
+ * Enables administrators to approve preview builds of Instafel for specific generations.
+ * Captures changelog information and submits approval requests to the content API.
+ * 
+ * Key Features:
+ * - Display current generation ID
+ * - Multi-line changelog input with custom editor actions
+ * - Submit preview approval with changelog
+ * - Handle approval status responses (SUCCESS, ALREADY_APPROVED)
+ * - Click lock to prevent duplicate submissions
+ * 
+ * Must be in primary DEX as it's launched from ifl_a_admin_dashboard (primary DEX).
+ */
 public class ifl_a_admin_action_approvepreview extends AppCompatActivity implements ApiCallbackInterface {
 
     PreferenceManager preferenceManager;
@@ -70,10 +85,12 @@ public class ifl_a_admin_action_approvepreview extends AppCompatActivity impleme
             }
         });
 
+        // Display current generation ID for approval
         String GENERATION_ID = IflEnvironment.getGenerationId(this);
         tileGenerationId.setSubtitleText(GENERATION_ID);
         buttonText.setText("Approve this preview");
 
+        // Handle approval submission with click lock to prevent duplicates
         button.setOnClickListener(view -> {
             try {
                if (!clickLock) {
