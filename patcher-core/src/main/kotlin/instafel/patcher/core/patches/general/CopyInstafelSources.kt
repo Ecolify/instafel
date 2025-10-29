@@ -72,7 +72,9 @@ class CopyInstafelSources: InstafelPatch() {
                         "utils" to listOf(
                             "InstafelFileProvider",      // ContentProvider - loaded before Application
                             "InitializeInstafel",         // Called from InstagramAppShell.attach()
-                            "InstafelCrashHandler"        // Called from InstagramAppShell.attach()
+                            "InstafelCrashHandler",       // Called from InstagramAppShell.attach()
+                            "InstafelAdminUser",          // Used by InitializeInstafel.triggerUploadMapping()
+                            "UploadMapping"               // Used by InitializeInstafel.triggerUploadMapping()
                         ),
                         "utils/localization" to listOf(
                             "LocalizationUtils",          // Used by InitializeInstafel.setContext()
@@ -86,7 +88,13 @@ class CopyInstafelSources: InstafelPatch() {
                             "NetworkInterceptor"          // Called from TigonServiceLayer.startRequest (primary DEX) - must be in primary DEX
                         ),
                         "managers" to listOf(
-                            "PreferenceManager"           // Used by LocalizationUtils.getIflLocale()
+                            "PreferenceManager",          // Used by LocalizationUtils.getIflLocale()
+                            "OverridesManager"            // Used by InitializeInstafel.triggerUploadMapping()
+                        ),
+                        "ota" to listOf(
+                            "CheckUpdates",               // Called from InitializeInstafel.triggerCheckUpdates() - must be in primary DEX
+                            "IflEnvironment",             // Used by CheckUpdates - must be in primary DEX
+                            "LastCheck"                   // Used by CheckUpdates - must be in primary DEX
                         ),
                         "" to listOf(
                             "InstafelEnv",                // Used by InitializeInstafel.setContext()
