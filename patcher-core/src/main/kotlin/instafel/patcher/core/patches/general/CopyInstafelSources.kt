@@ -123,7 +123,62 @@ class CopyInstafelSources: InstafelPatch() {
                             "AutoUpdateInfo"              // Used by CheckUpdates.checkBackupUpdate() - must be in primary DEX
                         ),
                         "activity" to listOf(
-                            "ifl_a_menu"                  // Started by InitializeInstafel.startInstafel() from primary DEX - must be in primary DEX
+                            // All these activities are started from ifl_a_menu (primary DEX) or other primary DEX classes
+                            // They must be in primary DEX to prevent ClassNotFoundException when instantiated via Intent
+                            "ifl_a_menu",                 // Started by InitializeInstafel.startInstafel() from primary DEX - must be in primary DEX
+                            "ifl_a_ghost_mode",           // Started from ifl_a_menu (primary DEX)
+                            "ifl_a_language",             // Started from ifl_a_menu (primary DEX)
+                            "ifl_a_misc",                 // Started from ifl_a_menu (primary DEX)
+                            "ifl_a_ota"                   // Started from ifl_a_menu (primary DEX)
+                        ),
+                        "activity/about" to listOf(
+                            // About activities started from ifl_a_menu must be in primary DEX
+                            "ifl_a_about",                    // Started from ifl_a_menu (primary DEX)
+                            "ifl_a_build_info",               // Started from ifl_a_about
+                            "ifl_a_patches_info"              // Started from ifl_a_about
+                        ),
+                        "activity/admin" to listOf(
+                            // Admin activities must be in primary DEX to prevent ClassNotFoundException
+                            // when they are instantiated via Intent from other primary DEX classes
+                            "ifl_a_admin_login",              // Can be started from ifl_a_menu (primary DEX)
+                            "ifl_a_admin_dashboard",          // Started from AdminLogin after authentication
+                            "ifl_a_admin_action_updatebackup",  // Started from admin dashboard
+                            "ifl_a_admin_action_approvepreview", // Started from admin dashboard
+                            "ifl_a_admin_pref_manager"        // Started from admin dashboard
+                        ),
+                        "activity/crash_manager" to listOf(
+                            // Crash manager activities started from ifl_a_menu must be in primary DEX
+                            "ifl_a_crash_reports",            // Started from ifl_a_menu (primary DEX)
+                            "ifl_a_crash_viewer"              // Started from ifl_a_crash_reports
+                        ),
+                        "activity/library" to listOf(
+                            // Library activities started from ifl_a_menu must be in primary DEX
+                            "ifl_a_library_menu"              // Started from ifl_a_menu (primary DEX)
+                        ),
+                        "activity/library/backup" to listOf(
+                            // Library backup activities started from library menu must be in primary DEX
+                            "ifl_a_library_backup",           // Started from ifl_a_library_menu
+                            "ifl_a_library_backup_info",      // Started from ifl_a_library_backup
+                            "ifl_a_library_backup_info_author" // Started from ifl_a_library_backup_info
+                        ),
+                        "activity/devmode" to listOf(
+                            // Devmode activities started from ifl_a_menu must be in primary DEX
+                            "ifl_a_devmode",                  // Started from ifl_a_menu (primary DEX)
+                            "ifl_a_devmode_import"            // Started from ifl_a_devmode
+                        ),
+                        "activity/devmode/analyzer" to listOf(
+                            // Devmode analyzer activities must be in primary DEX
+                            "ifl_a_devmode_backup_analyzer",
+                            "ifl_a_devmode_backup_analyzer_menu"
+                        ),
+                        "activity/devmode/backup" to listOf(
+                            // Devmode backup activities must be in primary DEX
+                            "ifl_a_export_backup"
+                        ),
+                        "activity/devmode/comparator" to listOf(
+                            // Devmode comparator activities must be in primary DEX
+                            "ifl_a_devmode_backup_comparator",
+                            "ifl_a_devmode_backup_comparator_menu"
                         ),
                         "" to listOf(
                             "InstafelEnv",                // Used by InitializeInstafel.setContext()
