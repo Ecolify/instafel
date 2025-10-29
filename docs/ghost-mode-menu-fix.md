@@ -183,5 +183,5 @@ The ghost mode menu now correctly:
 ---
 
 **Date:** 2025-10-29  
-**Issue:** Corrije el menu de ghost_mode  
+**Issue:** Corrige el menu de ghost_mode  
 **Build Status:** ✅ Successful
