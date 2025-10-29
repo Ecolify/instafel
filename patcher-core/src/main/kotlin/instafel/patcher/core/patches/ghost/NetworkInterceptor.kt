@@ -28,7 +28,7 @@ import java.io.File
  * 
  * Ghost ViewOnce:
  * - /item_replayed/ endpoints (view once replay tracking)
- * - /direct (path contains direct) with /item_seen/ endpoints (direct message seen tracking)
+ * - Endpoints with /direct in the path followed by /item_seen/ (direct message seen tracking)
  * 
  * Ghost Story:
  * - /api/v2/media/seen/ endpoints (story view tracking)
