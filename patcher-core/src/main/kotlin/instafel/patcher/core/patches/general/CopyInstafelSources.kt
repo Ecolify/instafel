@@ -75,7 +75,8 @@ class CopyInstafelSources: InstafelPatch() {
                             "InstafelCrashHandler",       // Called from InstagramAppShell.attach()
                             "InstafelAdminUser",          // Used by InitializeInstafel.triggerUploadMapping()
                             "UploadMapping",              // Used by InitializeInstafel.triggerUploadMapping()
-                            "GeneralFn"                   // Used by CheckUpdates and LocalizedStringGetter - must be in primary DEX
+                            "GeneralFn",                  // Used by CheckUpdates and LocalizedStringGetter - must be in primary DEX
+                            "OpenIflMenu"                 // Referenced from UserDetailFragment (AddLongClickEvent patch) - must be in primary DEX
                         ),
                         "utils/localization" to listOf(
                             "LocalizationUtils",          // Used by InitializeInstafel.setContext()
